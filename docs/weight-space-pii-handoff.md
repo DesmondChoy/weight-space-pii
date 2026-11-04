@@ -5,7 +5,7 @@ You're helping me (Desmond) run a minimal version of MIT CSAIL's **"Sparks of We
 - Blog post: https://rikiyat.github.io/blog/weight-space-programming/
 - Full logs: https://github.com/RikiyaT/lm_understand-logs. The closest template is `exp8_math/`. Read its `README.md` and `runs/p50c/turns/t001/prompt.txt` before you start.
 
-The harness copies Experiment 8's rules but not its release tooling. The dataset is openpii's Singapore rows, used as they are. Don't add anything beyond this brief unless I ask. The longer first draft is in `weight-space-pii-handoff.full.md`, for reference only.
+The harness copies Experiment 8's rules but not its release tooling. The dataset is openpii's Singapore rows, used as they are. Don't add anything beyond this brief unless I ask.
 
 ---
 

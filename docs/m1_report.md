@@ -2,7 +2,7 @@
 
 M1 sets up a reproducible base for the experiment in [weight-space-pii-handoff.md](weight-space-pii-handoff.md). It covers a pinned Python environment, the model and data at pinned revisions, a signed-in editor CLI, and a first look at how the base model labels Singapore text.
 
-Status: complete, 2026-11-04. Not committed yet.
+Status: complete, 2026-11-04. Committed as `e88a142` on branch `m1-environment`.
 
 ## Experiment overview
 
@@ -94,10 +94,14 @@ The brief's §3 regression row and the M1 download bullet now describe the held-
 
 ## Editor CLI
 
-`claude auth status` reports `"loggedIn": true` with `"authMethod": "claude.ai"` on a Max subscription. A test call with the editor's flags, run from an empty directory outside the project, returned `OK` from `claude-opus-5-5` without an error:
+`claude auth status` reports `"loggedIn": true` with `"authMethod": "claude.ai"` on a Max subscription. A test call with the full editor command from §2 of the brief, run from an empty directory outside the project, returned `OK` from `claude-opus-5-5` without an error. A second call with `--resume` on the same session ID also returned `OK` and reported the same session ID:
 
 ```bash
-claude -p "Reply with the single word OK." --model claude-opus-5-5 --tools "" --strict-mcp-config --disable-slash-commands --output-format json
+claude -p "Reply with the single word OK." --session-id <uuid> --model claude-opus-5-5 --effort max --tools "" --strict-mcp-config --disable-slash-commands --output-format json
+```
+
+```bash
+claude -p "Repeat your previous reply exactly." --resume <uuid> --model claude-opus-5-5 --effort max --tools "" --strict-mcp-config --disable-slash-commands --output-format json
 ```
 
 ## Base model probe
@@ -150,4 +154,4 @@ The repo's latest commit, `866181d` (2026-02-24), changes only the README. The n
 ## Open items
 
 - The Nemotron held-out split matches the author's by inference, as described above.
-- `.venv`, `data/`, and the probe results are local. Nothing from M1 is committed yet.
+- `.venv` and `data/` are local and gitignored, apart from `data/revisions.json`. `fetch.py` rebuilds `data/`.
