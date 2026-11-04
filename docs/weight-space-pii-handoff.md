@@ -106,7 +106,7 @@ Record the seed and the row count after each filter.
 |---|---|---|
 | Practice | 1,000 sampled rows from openpii `train`, SG | Yes, in `/practice` |
 | Main eval | 1,000 sampled rows from openpii `validation`, SG | Never |
-| Regression check | `nvidia/Nemotron-PII` `test` split, fixed sample of 2,000. The model was trained on the `train` split. | Never |
+| Regression check | Fixed sample of 2,000 from the model's own 20k held-out split of `nvidia/Nemotron-PII`. The model's training notebook merged `train` and `test` and re-split 90/10 with seed 42, so 89,895 of the 100,000 `test` rows are training data. | Never |
 
 Before any run, confirm that Nemotron's span labels match the model's label names. Score Nemotron only over labels the model has.
 
@@ -177,7 +177,7 @@ Work in eight milestones. At the end of each one, **⏸ stop**, show me what the
 
 **M1. Environment.**
 - Create `.venv` with `uv`, and pin every dependency in `pyproject.toml` and `uv.lock`.
-- Download the model at a pinned revision, the openpii SG rows from both splits, and the Nemotron-PII `test` split.
+- Download the model at a pinned revision, the openpii SG rows from both splits, and the model's Nemotron-PII held-out split, rebuilt from its training notebook.
 - Check that `claude auth status` reports `"loggedIn": true`. The CLI isn't signed in on this Mac yet.
 - Show me the lockfile, the model and dataset revision hashes, and the base model's labels for three hand-written Singapore sentences with a name, an NRIC, and a phone number.
 

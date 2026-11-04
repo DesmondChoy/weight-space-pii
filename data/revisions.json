@@ -1,0 +1,47 @@
+{
+  "Negative-Star-Innovators/MiniLM-L6-finetuned-pii-detection": {
+    "type": "model",
+    "revision": "e43200abcd5e739eddd31f55929f986b2b912b6b",
+    "files": {
+      "data/model/config.json": "bb0a4533be0b0b6d294387ed144213546e7bcbfef3d24778d6b7462db6558a0e",
+      "data/model/model.safetensors": "25cac79dc5b9f754b9228292d590440ddb8267252bd5cf13d6bd228b1b945cbd",
+      "data/model/tokenizer.json": "cb374d6bc042c22455946f4e09a89d29882a199fdaf8fb25be00dc8b8857a448",
+      "data/model/tokenizer_config.json": "e707880a74194c8f7b9619457d9b503a4a653b9bfe03ba152b73c580c7733194",
+      "data/model/special_tokens_map.json": "5d5b662e421ea9fac075174bb0688ee0d9431699900b90662acd44b2a350503a",
+      "data/model/vocab.txt": "07eced375cec144d27c900241f3e339478dec958f92fddbc551f295c992038a3",
+      "data/model/README.md": "47ce5933853366892c0646c20488b8cd1f2500ff7d7a39758fa9dac1f5e083e4"
+    }
+  },
+  "ai4privacy/pii-masking-openpii-1.5m": {
+    "type": "dataset",
+    "revision": "a785eb528e28be2693c3718a27e066970de5dadb",
+    "filter": "region == 'SG'",
+    "files": {
+      "data/raw/openpii_sg_train.jsonl": "e5c69d8443a006e4158d87bb0f94c1e736885b2e60f239de891956b12b084977",
+      "data/raw/openpii_sg_validation.jsonl": "1e4b06c8f97408da782e80ffa3dccb856de91c6a49f328a20ce458990a067f0c"
+    },
+    "counts": {
+      "train": {
+        "source_rows": 1309912,
+        "sg_rows": 20225
+      },
+      "validation": {
+        "source_rows": 326463,
+        "sg_rows": 5005
+      }
+    }
+  },
+  "nvidia/Nemotron-PII": {
+    "type": "dataset",
+    "revision": "b70ffaf5ff39e079776134c5bf4381f00a9fd1ed",
+    "split": "concatenate(train, test).train_test_split(test_size=0.1, seed=42)['test']",
+    "files": {
+      "data/raw/nemotron_heldout.parquet": "409daa054eebb03008e6312775dcc1e8bd8190fc47630a0e4563e8e0de2c19fe"
+    },
+    "counts": {
+      "model_train_rows": 180000,
+      "heldout_rows": 20000,
+      "heldout_texts_in_model_train": 0
+    }
+  }
+}
