@@ -2,7 +2,7 @@
 
 M2 profiles the openpii Singapore rows in both splits and proposes the scope for M3: the filter, the sample sizes, and the labels to score. It follows §3 and §7 of [weight-space-pii-handoff.md](weight-space-pii-handoff.md). M2 also profiles Nemotron's held-out split, because the M3 label map compares the annotation conventions of the two datasets.
 
-Status: complete, 2026-11-04. Not committed.
+Status: complete, 2026-11-04. Committed as `e96b30d` on `main`.
 
 ## Decisions
 
