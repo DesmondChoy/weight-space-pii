@@ -2,7 +2,7 @@
 
 M1 sets up a reproducible base for the experiment in [weight-space-pii-handoff.md](weight-space-pii-handoff.md). It covers a pinned Python environment, the model and data at pinned revisions, a signed-in editor CLI, and a first look at how the base model labels Singapore text.
 
-Status: complete, 2026-11-04. Committed as `e88a142` on branch `m1-environment`.
+Status: complete, 2026-11-04. Committed as `e88a142`, merged into `main`.
 
 ## Experiment overview
 
