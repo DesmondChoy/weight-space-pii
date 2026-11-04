@@ -22,7 +22,7 @@ text { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
 <text class="th" x="24" y="98" text-anchor="start" dominant-baseline="central">M2 Profile</text>
 <text class="ts" x="24" y="116" text-anchor="start" dominant-baseline="central">Profile the Singapore rows, propose sample sizes and scored labels</text>
 <text class="th" x="24" y="140" text-anchor="start" dominant-baseline="central">M3 Sample and metric</text>
-<text class="ts" x="24" y="158" text-anchor="start" dominant-baseline="central">Draw fixed-seed samples, relabel, write and test the scorer</text>
+<text class="ts" x="24" y="158" text-anchor="start" dominant-baseline="central">Draw the seeded practice sample, relabel, write and test the scorer</text>
 <text class="th" x="24" y="182" text-anchor="start" dominant-baseline="central">M4 Harness</text>
 <text class="ts" x="24" y="200" text-anchor="start" dominant-baseline="central">Build the driver, kernel and forward-pass server; 2-pass dry run</text>
 <text class="th" x="490" y="56" text-anchor="start" dominant-baseline="central">M5 Freeze and baseline</text>
@@ -110,7 +110,7 @@ text { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
 <path d="M425 248 L425 274" class="arr" marker-end="url(#arrow)"/>
 <path d="M630 248 L630 274" class="arr" marker-end="url(#arrow)"/>
 <rect x="125" y="276" width="600" height="36" rx="4" fill="none" stroke="#888780" stroke-width="1" stroke-dasharray="5 4"/>
-<text class="th" x="425" y="294" text-anchor="middle" dominant-baseline="central">Split point: filter to 512 tokens, fixed-seed sample, relabel</text>
+<text class="th" x="425" y="294" text-anchor="middle" dominant-baseline="central">Split point: filter, dedupe, seeded practice sample, relabel</text>
 <path d="M220 312 L220 336" class="arr" marker-end="url(#arrow)"/>
 <path d="M425 312 L425 336" class="arr" marker-end="url(#arrow)"/>
 <path d="M630 312 L630 336" class="arr" marker-end="url(#arrow)"/>
@@ -122,20 +122,20 @@ text { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
 <g class="c-coral">
 <rect x="330" y="338" width="190" height="52" rx="8" stroke-width="0.5"/>
 <text class="th" x="425" y="356" text-anchor="middle" dominant-baseline="central">Main eval</text>
-<text class="ts" x="425" y="376" text-anchor="middle" dominant-baseline="central">1,000 rows</text>
+<text class="ts" x="425" y="376" text-anchor="middle" dominant-baseline="central">5,004 rows, all filtered</text>
 </g>
 <g class="c-coral">
 <rect x="535" y="338" width="190" height="52" rx="8" stroke-width="0.5"/>
 <text class="th" x="630" y="356" text-anchor="middle" dominant-baseline="central">Regression</text>
-<text class="ts" x="630" y="376" text-anchor="middle" dominant-baseline="central">2,000 rows</text>
+<text class="ts" x="630" y="376" text-anchor="middle" dominant-baseline="central">18,515 rows, all filtered</text>
 </g>
 <g class="c-purple">
 <rect x="745" y="276" width="195" height="168" rx="8" stroke-width="0.5"/>
 <text class="th" x="842.5" y="294" text-anchor="middle" dominant-baseline="central">Scoring protocol</text>
 <text class="ts" x="842.5" y="314" text-anchor="middle" dominant-baseline="central">1. Tokenize, max 512</text>
-<text class="ts" x="842.5" y="330" text-anchor="middle" dominant-baseline="central">2. Argmax label per token</text>
-<text class="ts" x="842.5" y="346" text-anchor="middle" dominant-baseline="central">3. BIO repair</text>
-<text class="ts" x="842.5" y="362" text-anchor="middle" dominant-baseline="central">4. Word-level spans</text>
+<text class="ts" x="842.5" y="330" text-anchor="middle" dominant-baseline="central">2. Argmax, first subtoken</text>
+<text class="ts" x="842.5" y="346" text-anchor="middle" dominant-baseline="central">3. BIO repair, word spans</text>
+<text class="ts" x="842.5" y="362" text-anchor="middle" dominant-baseline="central">4. Split names into words</text>
 <text class="ts" x="842.5" y="378" text-anchor="middle" dominant-baseline="central">5. Match gold: exact span + type</text>
 <text class="ts" x="842.5" y="394" text-anchor="middle" dominant-baseline="central">Score: strict micro F1,</text>
 <text class="ts" x="842.5" y="410" text-anchor="middle" dominant-baseline="central">precision, recall,</text>

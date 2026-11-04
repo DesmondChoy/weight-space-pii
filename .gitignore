@@ -1,4 +1,5 @@
 .venv/
 data/*
 !data/revisions.json
+!data/sets.json
 __pycache__/

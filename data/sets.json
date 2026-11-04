@@ -1,0 +1,291 @@
+{
+  "seed": 20261104,
+  "filters": {
+    "sg_train": {
+      "raw": 20225,
+      "fits_512": 20223,
+      "deduped": 20216,
+      "no_text_or_template_in_validation": 20211,
+      "sampled": 1000
+    },
+    "sg_eval": {
+      "raw": 5005,
+      "fits_512": 5005,
+      "deduped": 5004
+    },
+    "nemotron_eval": {
+      "raw": 20000,
+      "fits_512": 18515,
+      "deduped": 18515
+    }
+  },
+  "label_map": {
+    "GIVENNAME": "first_name",
+    "SURNAME": "last_name",
+    "TAXNUM": "national_id"
+  },
+  "ignore_labels": [
+    "IDCARDNUM",
+    "PASSPORTNUM",
+    "DRIVERLICENSENUM",
+    "SOCIALNUM"
+  ],
+  "ignore_spans": {
+    "sg_train": {
+      "DRIVERLICENSENUM": 199,
+      "PASSPORTNUM": 172,
+      "IDCARDNUM": 255,
+      "SOCIALNUM": 159
+    },
+    "sg_eval": {
+      "PASSPORTNUM": 814,
+      "IDCARDNUM": 1429,
+      "DRIVERLICENSENUM": 1062,
+      "SOCIALNUM": 745
+    },
+    "nemotron_eval": {}
+  },
+  "scored_labels": {
+    "sg": [
+      "first_name",
+      "last_name",
+      "national_id"
+    ],
+    "nemotron_gate": [
+      "first_name",
+      "last_name",
+      "national_id"
+    ],
+    "nemotron_regression": [
+      "account_number",
+      "age",
+      "api_key",
+      "bank_routing_number",
+      "biometric_identifier",
+      "blood_type",
+      "certificate_license_number",
+      "city",
+      "company_name",
+      "coordinate",
+      "country",
+      "county",
+      "credit_debit_card",
+      "customer_id",
+      "cvv",
+      "date",
+      "date_of_birth",
+      "date_time",
+      "device_identifier",
+      "education_level",
+      "email",
+      "employee_id",
+      "employment_status",
+      "fax_number",
+      "first_name",
+      "gender",
+      "health_plan_beneficiary_number",
+      "http_cookie",
+      "ipv4",
+      "ipv6",
+      "language",
+      "last_name",
+      "license_plate",
+      "mac_address",
+      "medical_record_number",
+      "national_id",
+      "occupation",
+      "password",
+      "phone_number",
+      "pin",
+      "political_view",
+      "postcode",
+      "race_ethnicity",
+      "religious_belief",
+      "sexuality",
+      "ssn",
+      "state",
+      "street_address",
+      "swift_bic",
+      "tax_id",
+      "time",
+      "unique_id",
+      "url",
+      "user_name",
+      "vehicle_identifier"
+    ]
+  },
+  "gold": {
+    "sg_train": {
+      "spans": {
+        "first_name": 966,
+        "last_name": 777,
+        "national_id": 220
+      },
+      "spans_total": 1963,
+      "scored_entities": {
+        "first_name": 1255,
+        "last_name": 1114,
+        "national_id": 220
+      },
+      "scored_entities_total": 2589
+    },
+    "sg_eval": {
+      "spans": {
+        "first_name": 4810,
+        "last_name": 3962,
+        "national_id": 1034
+      },
+      "spans_total": 9806,
+      "scored_entities": {
+        "first_name": 6244,
+        "last_name": 5696,
+        "national_id": 1034
+      },
+      "scored_entities_total": 12974
+    },
+    "nemotron_eval_sg_labels": {
+      "spans": {
+        "first_name": 13512,
+        "last_name": 9699,
+        "national_id": 550
+      },
+      "spans_total": 23761,
+      "scored_entities": {
+        "first_name": 13572,
+        "last_name": 9821,
+        "national_id": 550
+      },
+      "scored_entities_total": 23943
+    },
+    "nemotron_eval_all_labels": {
+      "spans": {
+        "first_name": 13512,
+        "last_name": 9699,
+        "date": 12627,
+        "street_address": 3231,
+        "religious_belief": 903,
+        "http_cookie": 882,
+        "fax_number": 1248,
+        "api_key": 720,
+        "date_time": 2396,
+        "ipv4": 1155,
+        "company_name": 11299,
+        "email": 9062,
+        "account_number": 2331,
+        "date_of_birth": 3019,
+        "phone_number": 4549,
+        "state": 3230,
+        "age": 1008,
+        "time": 3958,
+        "city": 3221,
+        "postcode": 1260,
+        "employment_status": 1723,
+        "credit_debit_card": 2004,
+        "bank_routing_number": 1325,
+        "medical_record_number": 1783,
+        "health_plan_beneficiary_number": 1587,
+        "education_level": 1709,
+        "url": 6824,
+        "occupation": 5611,
+        "county": 1388,
+        "political_view": 891,
+        "biometric_identifier": 1972,
+        "country": 4298,
+        "coordinate": 1418,
+        "vehicle_identifier": 1388,
+        "license_plate": 1130,
+        "employee_id": 1737,
+        "gender": 1099,
+        "certificate_license_number": 958,
+        "race_ethnicity": 1445,
+        "pin": 1219,
+        "customer_id": 3423,
+        "language": 1401,
+        "swift_bic": 1013,
+        "blood_type": 903,
+        "device_identifier": 639,
+        "user_name": 2265,
+        "sexuality": 525,
+        "cvv": 747,
+        "mac_address": 867,
+        "ssn": 1051,
+        "ipv6": 603,
+        "national_id": 550,
+        "tax_id": 343,
+        "password": 1220,
+        "unique_id": 400
+      },
+      "spans_total": 146769,
+      "scored_entities": {
+        "first_name": 13572,
+        "last_name": 9821,
+        "date": 12627,
+        "street_address": 3231,
+        "religious_belief": 903,
+        "http_cookie": 882,
+        "fax_number": 1248,
+        "api_key": 720,
+        "date_time": 2396,
+        "ipv4": 1155,
+        "company_name": 11299,
+        "email": 9062,
+        "account_number": 2331,
+        "date_of_birth": 3019,
+        "phone_number": 4549,
+        "state": 3230,
+        "age": 1008,
+        "time": 3958,
+        "city": 3221,
+        "postcode": 1260,
+        "employment_status": 1723,
+        "credit_debit_card": 2004,
+        "bank_routing_number": 1325,
+        "medical_record_number": 1783,
+        "health_plan_beneficiary_number": 1587,
+        "education_level": 1709,
+        "url": 6824,
+        "occupation": 5611,
+        "county": 1388,
+        "political_view": 891,
+        "biometric_identifier": 1972,
+        "country": 4298,
+        "coordinate": 1418,
+        "vehicle_identifier": 1388,
+        "license_plate": 1130,
+        "employee_id": 1737,
+        "gender": 1099,
+        "certificate_license_number": 958,
+        "race_ethnicity": 1445,
+        "pin": 1219,
+        "customer_id": 3423,
+        "language": 1401,
+        "swift_bic": 1013,
+        "blood_type": 903,
+        "device_identifier": 639,
+        "user_name": 2265,
+        "sexuality": 525,
+        "cvv": 747,
+        "mac_address": 867,
+        "ssn": 1051,
+        "ipv6": 603,
+        "national_id": 550,
+        "tax_id": 343,
+        "password": 1220,
+        "unique_id": 400
+      },
+      "scored_entities_total": 146951
+    }
+  },
+  "nemotron_label_check": {
+    "nemotron_labels": 55,
+    "model_labels": 55,
+    "nemotron_not_in_model": [],
+    "model_not_in_nemotron": [],
+    "identical": true
+  },
+  "sha256": {
+    "sets/sg_train.jsonl": "cb5c044bfbe7187d40015a411c41c7649caf2e983fc809cbc8dd00cdb93c0c4e",
+    "sets/sg_eval.jsonl": "08afdc968c9bb7030137c4206fa3354eb0d55d8bb8294c6dce5f1a1fb5b029a3",
+    "sets/nemotron_eval.jsonl": "bcc4b167f9d18f1acba44eb7d8d166b64530e5323a315c74800187149354f8f3"
+  }
+}

@@ -76,14 +76,14 @@ lane_box("C", 196, 52, "Held-out split", ["20,000 rows, 0 trained on"])
 for l in "ABC":
     arrow(f"M{cx(l):g} 248 L{cx(l):g} 274")
 out.append('<rect x="125" y="276" width="600" height="36" rx="4" fill="none" stroke="#888780" stroke-width="1" stroke-dasharray="5 4"/>')
-text(425, 294, "Split point: filter to 512 tokens, fixed-seed sample, relabel", "th")
+text(425, 294, "Split point: filter, dedupe, seeded practice sample, relabel", "th")
 for l in "ABC":
     arrow(f"M{cx(l):g} 312 L{cx(l):g} 336")
 lane_box("A", 338, 52, "Practice", ["1,000 rows"], "c-teal")
-lane_box("B", 338, 52, "Main eval", ["1,000 rows"], "c-coral")
-lane_box("C", 338, 52, "Regression", ["2,000 rows"], "c-coral")
+lane_box("B", 338, 52, "Main eval", ["5,004 rows, all filtered"], "c-coral")
+lane_box("C", 338, 52, "Regression", ["18,515 rows, all filtered"], "c-coral")
 lane_box("D", 276, 168, "Scoring protocol", [
-    "1. Tokenize, max 512", "2. Argmax label per token", "3. BIO repair", "4. Word-level spans",
+    "1. Tokenize, max 512", "2. Argmax, first subtoken", "3. BIO repair, word spans", "4. Split names into words",
     "5. Match gold: exact span + type", "Score: strict micro F1,", "precision, recall,", "per-category F1",
 ], "c-purple")
 
@@ -147,7 +147,7 @@ text(x + 40, ly, "Visibility boundary", "ts", "start")
 MILESTONES = [
     ("M1 Environment", "Pin the Python env, download model and data, sign in the editor"),
     ("M2 Profile", "Profile the Singapore rows, propose sample sizes and scored labels"),
-    ("M3 Sample and metric", "Draw fixed-seed samples, relabel, write and test the scorer"),
+    ("M3 Sample and metric", "Draw the seeded practice sample, relabel, write and test the scorer"),
     ("M4 Harness", "Build the driver, kernel and forward-pass server; 2-pass dry run"),
     ("M5 Freeze and baseline", "Lock eval sets and code, score the base model, write the prediction"),
     ("M6 Editor run", "Opus 5.5 edits the weights directly, with 50 forward passes"),
