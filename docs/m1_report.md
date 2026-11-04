@@ -1,24 +1,31 @@
 # M1 report: environment
 
-M1 sets up a reproducible base for the experiment in [weight-space-pii-handoff.md](weight-space-pii-handoff.md). It covers a pinned Python environment, the model and data at pinned revisions, a signed-in editor CLI, and a first look at how the base model labels Singapore text.
+M1 sets up a reproducible base for the experiment in [weight-space-pii-handoff.md](weight-space-pii-handoff.md). It covers four things: a pinned Python environment, the model and data at pinned revisions, a signed-in editor CLI, and a first look at how the base model labels Singapore text.
 
 Status: complete, 2026-11-04. Committed as `e88a142`, merged into `main`.
 
-## Experiment overview
+## The experiment runs in eight milestones
 
 ![Swimlane of milestones M1 to M8 across the practice, main eval, regression, and scoring lanes](figures/e2e_pipeline.svg)
 
-The key at the top of the figure says what each milestone does. The figure is a swimlane diagram. Rows are milestones, read top to bottom. The first three columns are the data sets. Practice is the one the editor sees, and the other two are the hidden evaluation sets. The fourth column holds the scoring protocol and every comparison the experiment reports, each on the row of the milestone where it happens.
+The figure is a swimlane diagram. Rows are milestones, read from top to bottom, and the key at the top says what each milestone does. The first three columns are the data sets. The editor sees the practice set. It never sees the other two, the main eval and the regression set. The fourth column holds the scoring protocol and every comparison the experiment reports. Each comparison sits on the row of the milestone that runs it.
 
-Data is split in two places. First, each source has its own split. For openpii that is train and validation, and for Nemotron-PII it is the model author's 90/10 split. Second, the M3 split point filters, samples, and relabels all three. The dashed vertical line separates what the editor can see from what it never sees. Only the edit artifact crosses it, after the editor run ends.
+The data is split in two places. First, each source has its own split. openpii has `train` and `validation`, and Nemotron-PII has the model author's 90/10 split. Second, the box labelled "Split point" at M3 filters, samples, and relabels all three sets. The dashed vertical line separates what the editor can see from what it never sees. Only the edit crosses that line, after the editor run ends.
 
-The metric is entity-level strict micro F1, computed by the five-step protocol fixed at M3. A predicted entity counts only if both its span and its type match the gold annotation. Purple boxes are scoring steps and comparisons. M4 checks that the forward-pass server and the scoring code give the same scores. M5 scores the base model and applies the C1 gate. M7 scores the edited model on the same locked rows for C2 to C4. M8 compares the per-category result with the M5 prediction (C5). Base-versus-edited comparisons are paired. Both models are scored on the same rows, and the F1 difference is reported with its bootstrap standard error over rows. The exact BIO repair rule is still to be fixed at M3.
+The metric is entity-level strict micro F1, computed by the five-step protocol that M3 fixes. A predicted entity counts only if both its span and its type match the gold annotation. Purple boxes are scoring steps and comparisons, and the figure labels the comparisons C1 to C5:
 
-`docs/figures/e2e_pipeline.py` generates the figure. Edit that script and rerun it to change the figure.
+- M4 checks that the forward-pass server and the scoring code give the same scores.
+- M5 scores the base model and applies the C1 gate.
+- M7 scores the edited model on the same locked rows for comparisons C2 to C4.
+- M8 compares the per-category result with the M5 prediction, which is comparison C5.
 
-## Environment
+Every base-versus-edited comparison is paired. We score both models on the same rows and report the F1 difference with its bootstrap standard error over rows. M3 fixes the exact BIO repair rule.
 
-The project uses `uv` with Python 3.13.14. [pyproject.toml](../pyproject.toml) pins each direct dependency to an exact version, and [uv.lock](../uv.lock) pins all 78 resolved packages.
+[docs/figures/e2e_pipeline.py](figures/e2e_pipeline.py) generates the figure. To change the figure, edit that script and rerun it.
+
+## The environment pins 78 packages
+
+The project uses `uv` with Python 3.13.14. [pyproject.toml](../pyproject.toml) pins each direct dependency to an exact version, and [uv.lock](../uv.lock) pins all 78 resolved packages. The direct dependencies are:
 
 | Package | Version |
 |---|---|
@@ -34,20 +41,20 @@ The project uses `uv` with Python 3.13.14. [pyproject.toml](../pyproject.toml) p
 | safetensors | 0.8.0 |
 | tokenizers | 0.23.3 |
 
-## Model and data
+## The model and data are pinned by revision and hash
 
-[scripts/fetch.py](../scripts/fetch.py) downloads everything at pinned revisions. It writes [data/revisions.json](../data/revisions.json) with each revision, the sha256 of each output file, and the row counts. Everything under `data/` is gitignored except `revisions.json`.
+[scripts/fetch.py](../scripts/fetch.py) downloads the model and data at pinned revisions. It writes [data/revisions.json](../data/revisions.json), which records each revision, the sha256 of each output file, and the row counts. Git ignores everything under `data/` except `revisions.json`.
 
 | Source | Revision | Output | Rows |
 |---|---|---|---|
-| `Negative-Star-Innovators/MiniLM-L6-finetuned-pii-detection` | `e43200abcd5e739eddd31f55929f986b2b912b6b` | `data/model/` | not applicable |
+| `Negative-Star-Innovators/MiniLM-L6-finetuned-pii-detection` | `e43200abcd5e739eddd31f55929f986b2b912b6b` | `data/model/` | Model, no rows |
 | `ai4privacy/pii-masking-openpii-1.5m`, `train`, `region == "SG"` | `a785eb528e28be2693c3718a27e066970de5dadb` | `data/raw/openpii_sg_train.jsonl` | 20,225 of 1,309,912 |
 | `ai4privacy/pii-masking-openpii-1.5m`, `validation`, `region == "SG"` | `a785eb528e28be2693c3718a27e066970de5dadb` | `data/raw/openpii_sg_validation.jsonl` | 5,005 of 326,463 |
 | `nvidia/Nemotron-PII`, the model's held-out split | `b70ffaf5ff39e079776134c5bf4381f00a9fd1ed` | `data/raw/nemotron_heldout.parquet` | 20,000 of 200,000 |
 
-The model config matches the brief. It is BERT with 6 layers, hidden size 384, 12 attention heads, intermediate size 1,536, vocabulary 30,522, and 111 labels. The 5,005 SG validation rows match the count in the brief.
+The model config matches the brief. The model is BERT with 6 layers, hidden size 384, 12 attention heads, intermediate size 1,536, vocabulary 30,522, and 111 labels. The 5,005 SG `validation` rows also match the count in the brief.
 
-Output file hashes (sha256):
+The output files have these sha256 hashes:
 
 | File | sha256 |
 |---|---|
@@ -58,17 +65,17 @@ Output file hashes (sha256):
 | `data/raw/openpii_sg_validation.jsonl` | `1e4b06c8f97408da782e80ffa3dccb856de91c6a49f328a20ce458990a067f0c` |
 | `data/raw/nemotron_heldout.parquet` | `409daa054eebb03008e6312775dcc1e8bd8190fc47630a0e4563e8e0de2c19fe` |
 
-`revisions.json` also lists the hashes of the remaining tokenizer and config files.
+`revisions.json` also lists the hashes of the other tokenizer and config files.
 
-## Change to the brief: Nemotron regression pool
+## The regression check uses the model's held-out split, not Nemotron's `test` split
 
-The brief first said to use Nemotron-PII's `test` split for the regression check, on the understanding that the model trained only on `train`. That understanding was wrong.
+At first, the brief said to use Nemotron-PII's `test` split for the regression check. It assumed that the model trained only on `train`. That assumption was wrong.
 
-Nemotron-PII is the model's home turf, and we use it to check for regressions. The editor never sees it. Its held-out rows are used twice. At M5 they confirm that the base model is weaker on Singapore text than on Nemotron. At M7 they check that the edit didn't make the model worse on Nemotron. The check is valid only if those rows were never part of the model's training data.
+The model trained on Nemotron-PII, and we use Nemotron-PII to check for regressions. The editor never sees it. We use its held-out rows twice. At M5, they confirm that the base model is weaker on Singapore text than on Nemotron. At M7, they check that the edit did not make the model worse on Nemotron. Both checks are valid only if the model never trained on those rows.
 
 ![How Nemotron-PII's held-out split feeds the M5 gate and the M7 regression check](figures/nemotron_role.svg)
 
-The model card links its training code at [Negative-Star-Innovators/local-pii-detector-minilm](https://github.com/Negative-Star-Innovators/local-pii-detector-minilm). The training notebook is [`MiniLM_L6_v2_pii_detector_training_script.ipynb` at commit `61bb78f`](https://github.com/Negative-Star-Innovators/local-pii-detector-minilm/blob/61bb78f0e16f0d2762f8bf63ec5d1ce8e43c378d/MiniLM_L6_v2_pii_detector_training_script.ipynb). That 2026-02-23 commit is the only one that touches the notebook. Its second code cell, under the comment `# 2. Load Data`, merges the two splits and re-splits them:
+The model card links its training code at [Negative-Star-Innovators/local-pii-detector-minilm](https://github.com/Negative-Star-Innovators/local-pii-detector-minilm). The training notebook is [`MiniLM_L6_v2_pii_detector_training_script.ipynb` at commit `61bb78f`](https://github.com/Negative-Star-Innovators/local-pii-detector-minilm/blob/61bb78f0e16f0d2762f8bf63ec5d1ce8e43c378d/MiniLM_L6_v2_pii_detector_training_script.ipynb). That commit, from 2026-02-23, is the only one that touches the notebook. The notebook's second code cell, under the comment `# 2. Load Data`, merges the two splits and splits them again:
 
 ```python
 train_split = load_dataset(DATASET_NAME, split="train")
@@ -77,67 +84,80 @@ raw_datasets = concatenate_datasets([train_split, test_split])
 raw_datasets = raw_datasets.train_test_split(test_size=0.1, seed=42)
 ```
 
-This produces the "180k Training / 20k Validation split" on the [model card at `e43200a`](https://huggingface.co/Negative-Star-Innovators/MiniLM-L6-finetuned-pii-detection/blob/e43200abcd5e739eddd31f55929f986b2b912b6b/README.md). We rebuilt the split on the pinned revision and compared texts by hash:
+That code produces the "180k Training / 20k Validation split" that the [model card at `e43200a`](https://huggingface.co/Negative-Star-Innovators/MiniLM-L6-finetuned-pii-detection/blob/e43200abcd5e739eddd31f55929f986b2b912b6b/README.md) describes. We rebuilt the split on the pinned revision and compared texts by hash:
 
 | Row set | Rows | Texts also in the model's 180k training rows |
 |---|---|---|
 | Nemotron `test` split | 100,000 | 89,895 |
 | Rebuilt 20k held-out split | 20,000 | 0 |
 
-The held-out split draws 10,105 rows from the original `test` split and 9,895 from `train`. The two original splits share no texts.
+The held-out split takes 10,105 rows from the original `test` split and 9,895 from `train`. The original `train` and `test` splits share no texts.
 
-`fetch.py` now rebuilds the held-out split with the same `datasets` call and keeps only that part. It stops with an error if any held-out text appears in the training part. Rebuilding the file from scratch gives the same sha256.
+`fetch.py` now rebuilds the held-out split with the same `datasets` call and keeps only the held-out part. If any held-out text appears in the training part, `fetch.py` stops with an error. A rebuild from scratch gives the same sha256.
 
-That this matches the author's split exactly is inferred, not proven, because the author did not publish their split indices. The evidence is that the split is deterministic (`np.random.default_rng(42).permutation` over the rows concatenated in the notebook's order). Also, the pinned Nemotron revision, last modified 2025-12-17, is the only one that existed when the model was uploaded on 2026-03-08.
+We infer that the rebuilt split matches the author's split exactly, but we cannot prove it, because the author did not publish the split indices. Two facts support the inference:
 
-The brief's §3 regression row and the M1 download bullet now describe the held-out split.
+- The split is deterministic. `datasets` builds it with `np.random.default_rng(42).permutation` over the rows, concatenated in the notebook's order.
+- The pinned Nemotron revision was last modified on 2025-12-17. It was the only revision that existed when the author uploaded the model on 2026-03-08.
 
-## Editor CLI
+The brief's §3 regression row and its M1 download bullet now describe the held-out split.
 
-`claude auth status` reports `"loggedIn": true` with `"authMethod": "claude.ai"` on a Max subscription. A test call with the full editor command from §2 of the brief, run from an empty directory outside the project, returned `OK` from `claude-opus-5-5` without an error. A second call with `--resume` on the same session ID also returned `OK` and reported the same session ID:
+## The editor CLI is signed in and resumes sessions
+
+`claude auth status` reports `"loggedIn": true` with `"authMethod": "claude.ai"` on a Max subscription. We ran a test call with the full editor command from §2 of the brief, from an empty directory outside the project. It returned `OK` from `claude-opus-5-5` without an error:
 
 ```bash
 claude -p "Reply with the single word OK." --session-id <uuid> --model claude-opus-5-5 --effort max --tools "" --strict-mcp-config --disable-slash-commands --output-format json
 ```
 
+A second call with `--resume` on the same session ID also returned `OK` and reported the same session ID:
+
 ```bash
 claude -p "Repeat your previous reply exactly." --resume <uuid> --model claude-opus-5-5 --effort max --tools "" --strict-mcp-config --disable-slash-commands --output-format json
 ```
 
-## Base model probe
+## The base model finds NRICs but mistypes them
 
-[scripts/probe.py](../scripts/probe.py) labels three hand-written Singapore sentences. It takes the argmax label of each word's first subtoken and groups `B-`/`I-` runs of one type into entities. This is a sanity check, not the M3 scoring protocol.
+[scripts/probe.py](../scripts/probe.py) labels three hand-written Singapore sentences. For each word, it takes the argmax label of the word's first subtoken. It then groups each run of `B-` and `I-` labels of one type into an entity. The probe is a sanity check, not the M3 scoring protocol.
 
 | Text | Base model output |
 |---|---|
-| `Tan Wei Ming` | three spans: `first_name`, `last_name`, `last_name` |
-| `Siti Nurhaliza binte Ahmad` | four spans: `first_name`, then `last_name` three times |
-| `Rajesh s/o Kumaran` | `last_name` (`Rajesh`), then `last_name` (`s/o Kumaran`) |
+| `Tan Wei Ming` | Three entities: `first_name`, `last_name`, `last_name` |
+| `Siti Nurhaliza binte Ahmad` | Four entities: `first_name`, then `last_name` three times |
+| `Rajesh s/o Kumaran` | `last_name` on `Rajesh`, then `last_name` on `s/o Kumaran` |
 | `S8812345D`, `S7654321A` | `biometric_identifier` |
 | `NRIC T0234567J` | `certificate_license_number` on `NRIC`, `health_plan_beneficiary_number` on the ID |
-| `+65 9123 4567`, `8765 4321`, `6123 4567`, `+65 8234 5678` | `phone_number`, one correct span each |
+| `+65 9123 4567`, `8765 4321`, `6123 4567`, `+65 8234 5678` | `phone_number`, one correct entity each |
 
-On these three sentences the model detects NRICs but gives them the wrong type, and the wrong type varies. It splits multi-word names into one span per word. It handles Singapore phone numbers cleanly. Three sentences are an indication, not a measurement.
+On these three sentences, the model detects each NRIC but gives it the wrong type, and the wrong type varies. It splits each multi-word name into one entity per word. It labels each Singapore phone number as one correct `phone_number` entity. Three sentences are an indication, not a measurement.
 
-## Reproduce
+## Reproduce M1
 
-```bash
-uv sync
-```
+To rebuild M1 from a fresh clone, run these commands in order:
 
-```bash
-uv run python -I scripts/fetch.py
-```
+1. Install the pinned environment.
 
-```bash
-uv run python -I scripts/probe.py
-```
+	```bash
+	uv sync
+	```
 
-`fetch.py` is safe to rerun. It rehashes existing outputs instead of rewriting them. The first run downloads about 5.6 GB of openpii and Nemotron files into the Hugging Face cache.
+2. Download the model and data, and write `data/revisions.json`.
+
+	```bash
+	uv run python -I scripts/fetch.py
+	```
+
+3. Run the probe.
+
+	```bash
+	uv run python -I scripts/probe.py
+	```
+
+You can rerun `fetch.py` safely. It rehashes existing outputs and does not rewrite them. The first run downloads about 5.6 GB of openpii and Nemotron files into the Hugging Face cache.
 
 ## Sources
 
-Every external source used in M1, pinned to the revision we used. [docs/sources/](sources/) holds archived copies of the two documents the Nemotron finding rests on, so the finding survives if either upstream page changes.
+The table lists every external source that M1 uses, pinned to the revision we used. [docs/sources/](sources/) holds archived copies of the two documents that the Nemotron finding depends on. If either upstream page changes, the evidence stays in this repo.
 
 | Source | Pinned link | Archived copy |
 |---|---|---|
@@ -147,11 +167,11 @@ Every external source used in M1, pinned to the revision we used. [docs/sources/
 | Model weights and tokenizer | [`e43200a`](https://huggingface.co/Negative-Star-Innovators/MiniLM-L6-finetuned-pii-detection/tree/e43200abcd5e739eddd31f55929f986b2b912b6b) | `data/model/`, hashes in `revisions.json` |
 | openpii-1.5m (CC-BY-4.0, Ai4Privacy / Ai Suisse SA) | [`a785eb5`](https://huggingface.co/datasets/ai4privacy/pii-masking-openpii-1.5m/tree/a785eb528e28be2693c3718a27e066970de5dadb/data) | `data/raw/openpii_sg_*.jsonl`, hashes in `revisions.json` |
 | Nemotron-PII | [`b70ffaf`](https://huggingface.co/datasets/nvidia/Nemotron-PII/tree/b70ffaf5ff39e079776134c5bf4381f00a9fd1ed/data) | `data/raw/nemotron_heldout.parquet`, hash in `revisions.json` |
-| `datasets` `train_test_split` | `datasets==5.1.0`, `arrow_dataset.py`, which builds the permutation with `np.random.default_rng(seed)` | not archived, since `uv.lock` pins the package |
+| `datasets` `train_test_split` | `datasets==5.1.0`, `arrow_dataset.py`, which builds the permutation with `np.random.default_rng(seed)` | Not archived, because `uv.lock` pins the package |
 
-The repo's latest commit, `866181d` (2026-02-24), changes only the README. The notebook is identical at both commits.
+The latest commit in the training repo, `866181d` from 2026-02-24, changes only the README. The notebook is the same at both commits.
 
 ## Open items
 
-- The Nemotron held-out split matches the author's by inference, as described above.
-- `.venv` and `data/` are local and gitignored, apart from `data/revisions.json`. `fetch.py` rebuilds `data/`.
+- The rebuilt Nemotron held-out split matches the author's split by inference, not proof. The [held-out split section](#the-regression-check-uses-the-models-held-out-split-not-nemotrons-test-split) gives the evidence.
+- `.venv` and `data/` are local, and git ignores them, apart from `data/revisions.json`. `fetch.py` rebuilds `data/`.
