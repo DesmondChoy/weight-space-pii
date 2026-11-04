@@ -2,7 +2,7 @@
 
 M3 builds the three sets the experiment uses, writes the scoring code, tests it on hand-built cases, and renders 12 rows for review. It follows §5 and §7 of [weight-space-pii-handoff.md](weight-space-pii-handoff.md), with the scope that the [M2 report](m2_report.md) fixed.
 
-Status: complete, 2026-11-04. Desmond reviewed the gold labels and the label map and made the decisions below. Not committed.
+Status: complete, 2026-11-04. Desmond reviewed the gold labels and the label map and made the decisions below. Committed as `0a4019f` on `main`.
 
 ## Decisions
 
