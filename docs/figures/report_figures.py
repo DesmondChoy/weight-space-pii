@@ -36,7 +36,8 @@ def box(out, x, y, w, h, title, lines=(), cls="box"):
     top = y + h / 2 - 8 * len(lines)
     text(out, x + w / 2, top, title, "th")
     for i, ln in enumerate(lines):
-        text(out, x + w / 2, top + 18 + 16 * i, ln, "ts")
+        s, c = ln if isinstance(ln, tuple) else (ln, "ts")
+        text(out, x + w / 2, top + 18 + 16 * i, s, c)
     out.append("</g>")
 
 
@@ -295,14 +296,19 @@ def set_roles():
         dash = ' stroke-dasharray="5 4"' if dashed else ""
         out.append(f'<path d="M{x0} {y0} L{x1} {y1}" class="arr"{dash} marker-end="url(#arrow)"/>')
 
+    m5 = 'fill="none" stroke="#2C2C2A" stroke-width="1.5" stroke-dasharray="6 4"'
+    out.append(f'<rect x="636" y="34" width="308" height="458" rx="12" {m5}/>')
+    text(out, 650, 54, "M5 freezes and scores these three sets", "th", "start")
+
     text(out, xs, 22, "Nemotron-PII: MiniLM's own data, made-up US personas", "th", "start")
     box(out, xs, 74, 230, 60, "Nemotron-PII", ["200,000 rows"])
     box(out, xm, 40, 250, 60, "Training split, 180,000 rows", ["MiniLM was fine-tuned on these", ], "c-purple")
     box(out, xm, 112, 250, 60, "Held-out split, 20,000 rows", ["MiniLM never trained on these"])
     arrow(272, 96, 328, 72)
     arrow(272, 112, 328, 140)
-    box(out, xr, 104, 280, 76, "Regression check", ["18,515 rows that fit in 512 tokens",
-                                                     "test set: did the edit break US text?"], "c-coral")
+    box(out, xr, 76, 280, 96, "Regression check", ["18,515 rows that fit in 512 tokens",
+                                                    "test set: did the edit break US text?",
+                                                    ("M5 baseline F1 0.952, all labels", "tv")], "c-coral")
     arrow(582, 142, 648, 142)
     text(out, 616, 130, "filter", "tl")
 
@@ -310,40 +316,47 @@ def set_roles():
     box(out, xs, 252, 230, 60, "openpii train split", ["20,225 Singapore rows"])
     box(out, xm, 252, 250, 60, "20,211 usable rows", ["filter drops long, duplicate rows", ])
     arrow(272, 282, 328, 282)
-    box(out, xr, 236, 280, 92, "Practice set", ["1,000 rows, a random sample",
-                                                "development set: Opus 5.5 reads",
-                                                "the answers and grades its edits"], "c-teal")
-    arrow(582, 270, 648, 270)
-    text(out, 616, 258, "1,000", "tl")
-    out.append(f'<rect class="dr" x="{xr}" y="340" width="280" height="34" rx="8" stroke-width="1"/>')
-    text(out, xr + 140, 357, "The other 19,211 rows are not used", "ts")
-    arrow(582, 296, 648, 352, dashed=True)
+    box(out, xr, 230, 280, 108, "Practice set", ["1,000 rows, a random sample",
+                                                 "development set: Opus 5.5 reads",
+                                                 "the answers and grades its edits",
+                                                 ("M5 baseline F1 0.682", "tv")], "c-teal")
+    arrow(582, 282, 648, 282)
+    text(out, 616, 270, "1,000", "tl")
+    out.append(f'<rect class="dr" x="{xm}" y="338" width="250" height="34" rx="8" stroke-width="1"/>')
+    text(out, xm + 125, 355, "The other 19,211 rows are not used", "ts")
+    arrow(455, 314, 455, 336, dashed=True)
 
     box(out, xs, 402, 230, 60, "openpii validation split", ["5,005 Singapore rows"])
     box(out, xm, 402, 250, 60, "5,004 usable rows", ["filter drops 1 duplicate"])
     arrow(272, 432, 328, 432)
-    box(out, xr, 394, 280, 76, "Main eval", ["all 5,004 rows",
-                                             "test set: did the edit help Singapore?"], "c-coral")
+    box(out, xr, 384, 280, 96, "Main eval", ["all 5,004 rows",
+                                             "test set: did the edit help Singapore?",
+                                             ("M5 baseline F1 0.674", "tv")], "c-coral")
     arrow(582, 432, 648, 432)
 
-    text(out, xs, 506, "Nothing is trained in this experiment. Opus 5.5 edits MiniLM's weights by hand, so the practice "
+    text(out, xs, 518, "Nothing is trained in this experiment. Opus 5.5 edits MiniLM's weights by hand, so the practice "
          "set is its development set, not training data.", "ts", "start")
-    text(out, xs, 526, "The filter also drops every train row whose text or template appears in validation, so no "
+    text(out, xs, 538, "The filter also drops every train row whose text or template appears in validation, so no "
          "practice row copies a main-eval row.", "ts", "start")
-    ly = 560
+    ly = 572
     for x, cls, label in ((40, "c-purple", "Trained MiniLM, before this experiment"),
                           (330, "c-teal", "Opus 5.5 can read, rows and answers"),
-                          (630, "c-coral", "Hidden test sets, scored at M5 and M7")):
+                          (630, "c-coral", "Hidden test sets: Opus 5.5 never sees them")):
         out.append(f'<g class="{cls}"><rect x="{x}" y="{ly - 7}" width="14" height="14" rx="3" stroke-width="0.5"/></g>')
         text(out, x + 22, ly, label, "ts", "start")
-    write("set_roles.svg", 960, 582, "Where the three sets come from and what each one is for",
+    out.append(f'<rect x="40" y="{ly + 19}" width="14" height="14" rx="3" {m5}/>')
+    text(out, 62, ly + 26, "M5's part: these sets are hashed into lock.json, and the unedited MiniLM is scored on each. "
+         "Everything outside it existed before M5.", "ts", "start")
+    write("set_roles.svg", 960, ly + 48, "Where the three sets come from and what M5 does with them",
           "Two datasets feed the experiment. Nemotron-PII has 200,000 rows of made-up US personas. MiniLM was "
           "fine-tuned on 180,000 of them before this experiment. The other 20,000 were held out, and the 18,515 that "
           "fit in 512 tokens are the regression check, a hidden test set for US text. openpii's Singapore rows were "
           "never seen by MiniLM. From the train split's 20,211 usable rows, a random 1,000 form the practice set, "
           "which Opus 5.5 reads with answers and uses to grade its edits, like a development set. The other 19,211 "
           "are not used. The validation split's 5,004 usable rows are the main eval, the hidden Singapore test set. "
-          "Nothing is trained in the experiment.", out)
+          "A dotted line surrounds the three sets, the part M5 works on: M5 hashes them into lock.json and scores the "
+          "unedited MiniLM on each, F1 0.952 on the regression check over all labels, 0.682 on the practice set and "
+          "0.674 on the main eval. Nothing is trained in the experiment.", out)
 
 
 def baseline_kinds():
