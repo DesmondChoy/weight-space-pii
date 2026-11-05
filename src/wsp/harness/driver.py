@@ -28,6 +28,7 @@ FENCE = re.compile(r"^```[ \t]*([^\n`]*)\n(.*?)^```[ \t]*$", re.MULTILINE | re.D
 SYSTEM_PROMPT = "Answer the user's request."
 CLI_ENV = {"CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1", "DISABLE_AUTOUPDATER": "1"}
 CLI_ENV_PASSED = ("HOME", "USER", "LOGNAME", "PATH", "LANG", "TMPDIR", "SHELL", "CLAUDE_CONFIG_DIR")
+SAFETY_STOP = "stopped by a safety classifier"
 CONTEXT_CHECK = (
     "One last question, about your setup rather than the task. List every tool you can call, quote the "
     "instructions you were given (your system prompt, in full), and list any other context that reached you: "
@@ -103,7 +104,6 @@ class Editor:
         self.cwd, self.log, self.model, self.effort, self.sleep = cwd, log, model, effort, sleep
         self.first_wait, self.max_wait, self.total_wait = first_wait, max_wait, total_wait
         self.session_id = str(uuid.uuid4())
-        self.started = False
         self.total_cost = 0.0
         self.retries: list[dict] = []
 
@@ -119,12 +119,19 @@ class Editor:
                 "cli_cwd": str(self.cwd)}
 
     def _call(self, message: str) -> tuple[EditorReply | None, dict]:
-        """The reply, or None and what went wrong, with any usage and cost the failed call reported."""
-        resume = self.started or session_file(self.session_id) is not None
+        """The reply, or None and what went wrong. A failed call is cut from the CLI's session file, so a resend
+        resumes the conversation as it was and Opus 5.5 never sees the failed attempt."""
+        before = session_file(self.session_id)
+        kept = before.stat().st_size if before else 0
         start = time.monotonic()
-        proc = subprocess.run(self.command(resume), input=message, capture_output=True, text=True,
-                              cwd=self.cwd, env=cli_env())
-        seconds = time.monotonic() - start
+        proc = subprocess.run(self.command(resume=before is not None), input=message, capture_output=True,
+                              text=True, cwd=self.cwd, env=cli_env())
+        reply, failure = self._outcome(proc, time.monotonic() - start, kept)
+        if reply is None:
+            rollback(self.session_id, kept)
+        return reply, failure
+
+    def _outcome(self, proc: subprocess.CompletedProcess, seconds: float, kept: int) -> tuple[EditorReply | None, dict]:
         try:
             out = json.loads(proc.stdout)
         except json.JSONDecodeError:
@@ -136,7 +143,13 @@ class Editor:
         if proc.returncode != 0 or out.get("is_error") or out.get("subtype") != "success":
             return None, {"error": f"exit {proc.returncode}; {str(out.get('result'))[-500:]!r}",
                           "usage": out.get("usage"), "total_cost_usd": out.get("total_cost_usd")}
-        return EditorReply(out.get("result") or "", out.get("usage") or {}, total - self.total_cost, total,
+        blocks, problems = reply_blocks(session_rows(self.session_id, kept), self.model)
+        if problems:
+            return None, {"error": "; ".join(problems), "usage": out.get("usage"),
+                          "total_cost_usd": out.get("total_cost_usd")}
+        if blocks[-1].strip() != str(out.get("result")).strip():
+            raise RuntimeError("the CLI's result is not the last text block in its session file")
+        return EditorReply("\n\n".join(blocks), out.get("usage") or {}, total - self.total_cost, total,
                            out.get("session_id", self.session_id), seconds), {}
 
     def send(self, message: str) -> EditorReply:
@@ -145,7 +158,6 @@ class Editor:
         while True:
             reply, failure = self._call(message)
             if reply is not None:
-                self.started = True
                 self.total_cost = reply.total_cost
                 return reply
             if waited + wait > self.total_wait:
@@ -171,6 +183,50 @@ def cli_version() -> str:
 def session_file(session_id: str) -> Path | None:
     config = Path(os.environ.get("CLAUDE_CONFIG_DIR", Path.home() / ".claude"))
     return next((config / "projects").glob(f"*/{session_id}.jsonl"), None)
+
+
+def session_rows(session_id: str, start: int) -> list[dict]:
+    """The rows the CLI added to the session file from byte `start` on."""
+    path = session_file(session_id)
+    if path is None:
+        return []
+    with path.open("rb") as f:
+        f.seek(start)
+        return [json.loads(line) for line in f.read().splitlines() if line.strip()]
+
+
+def rollback(session_id: str, size: int) -> None:
+    """Cut the session file back to `size` bytes, or remove it when the failed call created it."""
+    path = session_file(session_id)
+    if path is None:
+        return
+    if size == 0:
+        path.unlink()
+    else:
+        with path.open("r+b") as f:
+            f.truncate(size)
+
+
+def reply_blocks(rows: list[dict], model: str) -> tuple[list[str], list[str]]:
+    """The text blocks of one call's reply, and every reason the call does not count. The CLI's `result` holds only
+    the last text block. When Opus 5.5's safeguards stop a reply, the CLI notes it in the conversation and may
+    answer with another model while still reporting success."""
+    blocks, problems = [], []
+    for r in rows:
+        kind, message = r.get("type"), r.get("message") or {}
+        if kind == "system" and str(r.get("subtype", "")).startswith("model_refusal"):
+            problems.append(f"the CLI reported {r['subtype']}")
+        elif kind == "user" and r.get("isMeta") and SAFETY_STOP in json.dumps(message.get("content")):
+            problems.append("a safety classifier stopped a reply and the CLI noted it in the conversation")
+        elif kind == "assistant" and r.get("isApiErrorMessage"):
+            problems.append("the CLI logged an API error as a reply")
+        elif kind == "assistant" and message.get("model") != model:
+            problems.append(f"a reply came from {message.get('model')}, not {model}")
+        elif kind == "assistant":
+            blocks += [b["text"] for b in message.get("content", []) if b.get("type") == "text" and b["text"].strip()]
+    if not blocks and not problems:
+        problems.append("the session file holds no text for this reply")
+    return blocks, problems
 
 
 def compacted(session_id: str) -> bool:

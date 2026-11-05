@@ -791,25 +791,70 @@ class Driver(unittest.TestCase):
         self.assertEqual(events[-1]["kind"], "error")
 
 
-FAKE_CLI = """#!/bin/sh
-d=$(dirname "$0"); env > "$d/env"
-n=$(cat "$d/n" 2>/dev/null || echo 0); n=$((n + 1)); echo $n > "$d/n"
-echo "$@" >> "$d/args"; cat >> "$d/stdin"; echo >> "$d/stdin"
-if [ "$n" -le "$(cat "$d/fails")" ]; then echo '{"type":"result","subtype":"error","is_error":true,"result":"usage limit","total_cost_usd":0.'$n',"usage":{"output_tokens":1}}'; exit 1; fi
-echo '{"type":"result","subtype":"success","is_error":false,"result":"reply '$n'","session_id":"s","total_cost_usd":0.'$n',"usage":{"output_tokens":3}}'
+FAKE_CLI = """#!/usr/bin/env python3
+import json, os, sys
+from pathlib import Path
+d = Path(sys.argv[0]).parent
+(d / "env").write_text("".join(f"{k}={v}\\n" for k, v in os.environ.items()))
+n = int((d / "n").read_text()) + 1 if (d / "n").exists() else 1
+(d / "n").write_text(str(n))
+args = sys.argv[1:]
+with (d / "args").open("a") as f: f.write(" ".join(args) + "\\n")
+message = sys.stdin.read()
+with (d / "stdin").open("a") as f: f.write(message + "\\n")
+sid = args[args.index("--session-id" if "--session-id" in args else "--resume") + 1]
+session = Path(os.environ["CLAUDE_CONFIG_DIR"], "projects", "cwd", sid + ".jsonl")
+session.parent.mkdir(parents=True, exist_ok=True)
+seen = [json.loads(l) for l in session.read_text().splitlines()] if session.exists() else []
+with (d / "resumed").open("a") as f: f.write(json.dumps([r["type"] for r in seen]) + "\\n")
+kind = (d / "plan").read_text().split()[n - 1]
+
+def said(model, text, **extra):
+    return {"type": "assistant", "message": {"model": model, "content": [{"type": "thinking", "thinking": ""},
+                                                                       {"type": "text", "text": text}]}, **extra}
+
+stopped = [{"type": "system", "subtype": "informational", "content": "safeguards stopped the response above"},
+           {"type": "user", "isMeta": True, "message": {"role": "user", "content":
+            "Your response above was stopped by a safety classifier. Do not produce that content again."}}]
+rows = [{"type": "queue-operation"}, {"type": "user", "message": {"role": "user", "content": message}},
+        {"type": "attachment", "attachment": {"type": "date"}}]
+rows += {"ok": [said("claude-opus-5-5", f"reply {n}")],
+         "multi": [said("claude-opus-5-5", f"first {n}"), said("claude-opus-5-5", f"reply {n}")],
+         "classifier": stopped + [said("claude-opus-5-5", f"reply {n}")],
+         "fallback": stopped + [{"type": "system", "subtype": "model_refusal_fallback", "content": "Opus 4.8 is answering"},
+                                said("claude-opus-4-8", f"reply {n}")],
+         "fail": stopped + [{"type": "system", "subtype": "model_refusal_no_fallback", "content": ""},
+                            said("<synthetic>", "API Error: safeguards flagged this message", isApiErrorMessage=True)],
+         }[kind]
+rows.append({"type": "cost-state", "totalCostUSD": n / 10})
+with session.open("a") as f: f.write("".join(json.dumps(r) + "\\n" for r in rows))
+if kind == "fail":
+    print(json.dumps({"type": "result", "subtype": "error", "is_error": True, "result": "usage limit",
+                      "total_cost_usd": n / 10, "usage": {"output_tokens": 1}}))
+    sys.exit(1)
+print(json.dumps({"type": "result", "subtype": "success", "is_error": False, "result": f"reply {n}", "session_id": sid,
+                  "total_cost_usd": n / 10, "usage": {"output_tokens": 3}}))
 """
+
+
+def fake_cli(t: Path, plan: str) -> dict[str, str]:
+    cli = t / "claude"
+    cli.write_text(FAKE_CLI)
+    cli.chmod(cli.stat().st_mode | stat.S_IEXEC)
+    (t / "plan").write_text(plan)
+    return {"PATH": f"{t}:{os.environ['PATH']}", "CLAUDE_CONFIG_DIR": str(t / "config")}
+
+
+def resumed(t: Path) -> list[list[str]]:
+    return [json.loads(l) for l in (t / "resumed").read_text().splitlines()]
 
 
 class EditorCli(unittest.TestCase):
     def test_retries_on_the_same_session_and_resumes_after_the_first_reply(self):
         with tempfile.TemporaryDirectory() as tmp:
             t = Path(tmp)
-            cli = t / "claude"
-            cli.write_text(FAKE_CLI)
-            cli.chmod(cli.stat().st_mode | stat.S_IEXEC)
-            (t / "fails").write_text("2")
-            env = {"PATH": f"{t}:{os.environ['PATH']}", "CLAUDE_CONFIG_DIR": str(t / "config"),
-                   "CLAUDE_EFFORT": "high", "DISABLE_MICROCOMPACT": "1", "ANTHROPIC_API_KEY": "sk-leak"}
+            env = fake_cli(t, "fail fail ok ok") | {"CLAUDE_EFFORT": "high", "DISABLE_MICROCOMPACT": "1",
+                                                     "ANTHROPIC_API_KEY": "sk-leak"}
             logged, slept = [], []
             with mock.patch.dict(os.environ, env):
                 ed = Editor(t, lambda kind, **f: logged.append(kind), sleep=slept.append)
@@ -818,6 +863,7 @@ class EditorCli(unittest.TestCase):
             args = (t / "args").read_text().splitlines()
             stdin = (t / "stdin").read_text().splitlines()
             seen = dict(line.split("=", 1) for line in (t / "env").read_text().splitlines() if "=" in line)
+            starts = resumed(t)
         self.assertEqual({k: seen[k] for k in ("CLAUDE_CODE_DISABLE_AUTO_MEMORY", "DISABLE_AUTOUPDATER",
                                                  "CLAUDE_CONFIG_DIR")},
                          {"CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1", "DISABLE_AUTOUPDATER": "1",
@@ -835,6 +881,36 @@ class EditorCli(unittest.TestCase):
         self.assertIn("--tools  --strict-mcp-config", args[0])
         self.assertIn("--setting-sources  --system-prompt Answer the user's request.", args[0])
         self.assertEqual(stdin, ["hello", "hello", "hello", "again"])
+        self.assertEqual(starts[:3], [[], [], []], "a failed first call leaves no session to resume")
+
+    def test_a_reply_keeps_every_text_block(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            t = Path(tmp)
+            with mock.patch.dict(os.environ, fake_cli(t, "multi")):
+                reply = Editor(t, print).send("hello")
+        self.assertEqual(reply.text, "first 1\n\nreply 1")
+
+    def test_a_refused_or_substituted_reply_is_rolled_back_and_resent(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            t = Path(tmp)
+            with mock.patch.dict(os.environ, fake_cli(t, "ok fallback classifier fail ok")):
+                ed = Editor(t, lambda kind, **f: None, sleep=lambda s: None)
+                ed.send("hello")
+                session = next(Path(t, "config", "projects").glob(f"*/{ed.session_id}.jsonl"))
+                before = session.read_bytes()
+                reply = ed.send("again")
+                after = [json.loads(l) for l in session.read_bytes()[len(before):].splitlines()]
+            starts = resumed(t)
+        self.assertEqual(reply.text, "reply 5")
+        errors = [r["error"] for r in ed.retries]
+        self.assertEqual(len(errors), 3)
+        self.assertIn("claude-opus-4-8", errors[0])
+        self.assertIn("safety classifier", errors[1])
+        self.assertIn("exit 1", errors[2])
+        self.assertTrue(all(s == starts[1] for s in starts[2:]), "every resend resumes the session as it was")
+        self.assertEqual([r["type"] for r in after if r["type"] in ("user", "assistant", "system")],
+                         ["user", "assistant"])
+        self.assertEqual(after[-2]["message"]["model"], "claude-opus-5-5")
 
 
 if __name__ == "__main__":
