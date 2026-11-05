@@ -43,7 +43,7 @@ def run_settings(name: str, budget: int, effort: str = "max", max_turns: int | N
     info = Editor(Path(), print, effort=effort).info()
     cmd = info["cli_command"]
     return {"name": name, "budget": budget, "max_turns": max_turns, "cli_command": cmd[:cmd.index("--session-id")],
-            "cli_env": info["cli_env"], "cli_version": info["cli_version"], "max_python_runs": MAX_PYTHON_RUNS,
+            "cli_env": info["cli_env"], "cli_env_passed": info["cli_env_passed"], "cli_version": info["cli_version"], "max_python_runs": MAX_PYTHON_RUNS,
             "kernel_timeout": inspect.signature(run).parameters["kernel_timeout"].default}
 
 

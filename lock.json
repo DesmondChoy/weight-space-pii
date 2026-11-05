@@ -22,8 +22,19 @@
    "json"
   ],
   "cli_env": {
-   "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1"
+   "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1",
+   "DISABLE_AUTOUPDATER": "1"
   },
+  "cli_env_passed": [
+   "HOME",
+   "USER",
+   "LOGNAME",
+   "PATH",
+   "LANG",
+   "TMPDIR",
+   "SHELL",
+   "CLAUDE_CONFIG_DIR"
+  ],
   "cli_version": "2.1.292 (Claude Code)",
   "max_python_runs": 300,
   "kernel_timeout": 900

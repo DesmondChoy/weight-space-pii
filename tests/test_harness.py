@@ -792,9 +792,10 @@ class Driver(unittest.TestCase):
 
 
 FAKE_CLI = """#!/bin/sh
-n=$(cat "$STATE" 2>/dev/null || echo 0); n=$((n + 1)); echo $n > "$STATE"
-echo "$@" >> "$ARGS"; cat >> "$STDIN"; echo >> "$STDIN"
-if [ "$n" -le "$FAILS" ]; then echo '{"type":"result","subtype":"error","is_error":true,"result":"usage limit","total_cost_usd":0.'$n',"usage":{"output_tokens":1}}'; exit 1; fi
+d=$(dirname "$0"); env > "$d/env"
+n=$(cat "$d/n" 2>/dev/null || echo 0); n=$((n + 1)); echo $n > "$d/n"
+echo "$@" >> "$d/args"; cat >> "$d/stdin"; echo >> "$d/stdin"
+if [ "$n" -le "$(cat "$d/fails")" ]; then echo '{"type":"result","subtype":"error","is_error":true,"result":"usage limit","total_cost_usd":0.'$n',"usage":{"output_tokens":1}}'; exit 1; fi
 echo '{"type":"result","subtype":"success","is_error":false,"result":"reply '$n'","session_id":"s","total_cost_usd":0.'$n',"usage":{"output_tokens":3}}'
 """
 
@@ -806,8 +807,9 @@ class EditorCli(unittest.TestCase):
             cli = t / "claude"
             cli.write_text(FAKE_CLI)
             cli.chmod(cli.stat().st_mode | stat.S_IEXEC)
-            env = {"PATH": f"{t}:{os.environ['PATH']}", "STATE": str(t / "n"), "ARGS": str(t / "args"),
-                   "STDIN": str(t / "stdin"), "FAILS": "2", "CLAUDE_CONFIG_DIR": str(t / "config")}
+            (t / "fails").write_text("2")
+            env = {"PATH": f"{t}:{os.environ['PATH']}", "CLAUDE_CONFIG_DIR": str(t / "config"),
+                   "CLAUDE_EFFORT": "high", "DISABLE_MICROCOMPACT": "1", "ANTHROPIC_API_KEY": "sk-leak"}
             logged, slept = [], []
             with mock.patch.dict(os.environ, env):
                 ed = Editor(t, lambda kind, **f: logged.append(kind), sleep=slept.append)
@@ -815,6 +817,12 @@ class EditorCli(unittest.TestCase):
                 second = ed.send("again")
             args = (t / "args").read_text().splitlines()
             stdin = (t / "stdin").read_text().splitlines()
+            seen = dict(line.split("=", 1) for line in (t / "env").read_text().splitlines() if "=" in line)
+        self.assertEqual({k: seen[k] for k in ("CLAUDE_CODE_DISABLE_AUTO_MEMORY", "DISABLE_AUTOUPDATER",
+                                                 "CLAUDE_CONFIG_DIR")},
+                         {"CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1", "DISABLE_AUTOUPDATER": "1",
+                          "CLAUDE_CONFIG_DIR": str(t / "config")})
+        self.assertFalse({"CLAUDE_EFFORT", "DISABLE_MICROCOMPACT", "ANTHROPIC_API_KEY", "CLAUDECODE"} & seen.keys())
         self.assertEqual((first.text, second.text), ("reply 3", "reply 4"))
         self.assertEqual((first.cost, first.total_cost, second.total_cost), (0.3, 0.3, 0.4))
         self.assertAlmostEqual(second.cost, 0.1)

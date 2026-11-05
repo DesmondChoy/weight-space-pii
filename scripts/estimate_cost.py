@@ -1,12 +1,13 @@
-"""M5 cost and wall-time estimate for the 50-pass run, extrapolated from M4 dry run 2's per-turn usage.
+"""M5 usage and wall-time estimate for the 50-pass run, extrapolated from dry run 3's per-turn usage.
 
-Dry run 1 is left out because its per-call `cost` field holds the CLI's running total, the bug the M4 report
-lists as fixed before dry run 2. Per-token prices come from a least-squares fit of each call's reported cost to
-its token counts. The context grows by a fitted number of tokens per turn, and every turn rereads it from the
-cache, so cost grows with the square of the turn count. The estimate ignores compaction and restarts. They cut
-the reread context but write a new one to the cache, so the cost is roughly an upper bound for a given turn
-count. The wall time is a floor: dry run 2's code was trivial and it made one forward pass. Writes
-runs/base/estimate.json.
+Dry run 3 is the only run with the locked prompt, which asks Opus 5.5 to explain every step, so its replies are
+longer than dry run 2's. The run uses the claude.ai subscription, so the dollars are the API-price equivalent
+the CLI reports: a measure of how much of the subscription's usage allowance a run takes, not a charge.
+Per-token prices come from a least-squares fit of each call's reported cost to its token counts. The context
+grows by a fitted number of tokens per turn, and every turn rereads it from the cache, so usage grows with the
+square of the turn count. The estimate ignores compaction and restarts. They cut the reread context but write a
+new one to the cache, so the estimate is roughly an upper bound for a given turn count. The wall time is a floor:
+dry run 3 made one forward pass, on the unedited model. Writes runs/base/estimate.json.
 """
 
 import json
@@ -15,7 +16,7 @@ import numpy as np
 
 from wsp.data import ROOT
 
-RUN = "dry2"
+RUN = "dry3"
 TOKENS = ("input_tokens", "cache_creation_input_tokens", "cache_read_input_tokens", "output_tokens")
 TURN_SCENARIOS = {"paper p10c": 74, "paper p50c": 158, "long": 250}
 FORWARDS = 50

@@ -15,7 +15,13 @@ from wsp.lock import LOCK, RENDERED_PROMPT, check, run_settings
 
 
 def check_locked_run(name: str, budget: int, effort: str, max_turns: int | None, overwrite: bool) -> None:
-    if not LOCK.exists() or name != (lock := check())["run"]["name"]:
+    if not LOCK.exists():
+        return
+    locked = (lock := check())["run"]["name"]
+    if name != locked and name.strip().casefold() == locked.casefold():
+        raise ValueError(f"{name!r} is too close to the locked run's name, and this disk ignores case; "
+                         f"use exactly {locked!r}")
+    if name != locked:
         return
     if _git_head()["dirty"]:
         raise RuntimeError(f"the git tree has uncommitted changes; {name} must start from a commit")

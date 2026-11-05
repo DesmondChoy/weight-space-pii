@@ -2,7 +2,7 @@
 
 M5 freezes everything that decides a score, then scores the unedited MiniLM on every set. It writes `lock.json`, checks that the Singapore data leaves something to repair, records a prediction for each category, and estimates what the 50-pass run in M6 will cost. It follows §4, §5 and §7 of [weight-space-pii-handoff.md](weight-space-pii-handoff.md), with the decisions in the M2, M3 and M4 reports.
 
-Status: built and run on 2026-11-05, and committed on `main` in six commits. Re-frozen in a seventh commit after a second review. Waiting for Desmond to review the items under "Show me".
+Status: built and run on 2026-11-05 and committed on `main`, where `git log` lists every M5 commit. The lock was re-frozen four times after reviews, all on 2026-11-05. Waiting for Desmond to review the items under "Show me".
 
 ## What you need to know first
 
@@ -34,7 +34,7 @@ These choices fill gaps in the brief. Desmond can change any of them before M6.
 |---|---|---|
 | Restart sentence in the prompt | §6 says `notes.md` "is shown to you again if the conversation is restarted", and §2 step 5 builds the restart only if a run fills the context | Keep the sentence, word for word as in the brief and the paper. The restart lives in the driver, which the lock does not cover, so it can still be built before or during M6 |
 | What the lock covers | Eval sets, scoring code, forward-pass server, prompt | Those four, plus MiniLM's files, the environment (`uv.lock`, the `srt` pin in `kernel_host.py`, and the Node version), the code that defines the prediction's categories, the prediction itself, and the run settings. This closes the M4 open item that `srt` sat outside `uv.lock` |
-| The driver | Not named | Not hashed, so the restart can still be built. The lock instead records every value the driver passes to Opus 5.5 or states in the prompt: the exact `claude` command, its environment, the CLI version, 300 code runs, 900 s per run, and no turn cap |
+| The driver | Not named | Not hashed, so the restart can still be built. The lock instead records every value the driver passes to Opus 5.5 or states in the prompt: the exact `claude` command, its whole environment, the CLI version, 300 code runs, 900 s per run, and no turn cap |
 | Run name | Not set | `p50`, after the paper's `p50c`. The name sets the paths in the prompt, so the lock fixes it |
 | Gate standard error | "twice its bootstrap standard error" | Check both readings: the Singapore F1's own standard error, and the standard error of the gap. The gate passes only if both pass |
 | Where the prediction lives | The run folder | [docs/m5_prediction.md](m5_prediction.md). `runs/` is gitignored, and the driver refuses to start a run whose folder exists. M6 copies the file into `runs/p50/` |
@@ -43,25 +43,29 @@ These choices fill gaps in the brief. Desmond can change any of them before M6.
 
 ## The lock
 
-[scripts/freeze.py](../scripts/freeze.py) renders the 50-pass prompt into [docs/m5_task_prompt.txt](m5_task_prompt.txt), then writes `lock.json` through [src/wsp/lock.py](../src/wsp/lock.py). It hashes 25 files in seven groups and records the run settings. `lock.json` has SHA-256 `6b5d6ba5…0704c8`, and `runs/base/baseline.json` records the same hash. `wsp.lock.write` refuses to replace an existing lock, so the freeze happens once.
+[scripts/freeze.py](../scripts/freeze.py) renders the 50-pass prompt into [docs/m5_task_prompt.txt](m5_task_prompt.txt), then writes `lock.json` through [src/wsp/lock.py](../src/wsp/lock.py). It hashes 25 files in seven groups and records the run settings. `lock.json` has SHA-256 `6b5d6ba5…0704c8`, and `runs/base/baseline.json` records the same hash. `wsp.lock.write` refuses to replace an existing lock, so every freeze is deliberate: the old lock has to be deleted by hand first.
 
-The run settings are what `wsp.lock.run_settings` returns. It builds the driver's own `Editor` and takes the exact `claude` command it would run, without the session ID. It adds the environment, the output of `claude --version` (2.1.292), the cap of 300 code runs, the 900 s kernel timeout and the turn cap, which is none. `scripts/run_editor.py` recomputes these for the run it is asked to start. It refuses `p50` if any of them differ, if `runs/p50/` already exists without `--overwrite`, or if the rendered prompt differs from the frozen one. It checks the folder before it touches the box, so an accidental rerun cannot wipe Opus 5.5's `work/` folder. A check against the real lock refused effort `high`, budget 49 and a turn cap of 30, each with the name of the setting that differed, and allowed the locked settings.
+The run settings are what `wsp.lock.run_settings` returns. It builds the driver's own `Editor` and takes the exact `claude` command it would run, without the session ID. It adds the CLI's environment, the output of `claude --version` (2.1.292), the cap of 300 code runs, the 900 s kernel timeout and the turn cap, which is none. `scripts/run_editor.py` recomputes these for the run it is asked to start. It refuses `p50` if any of them differ, if `runs/p50/` already exists without `--overwrite`, or if the rendered prompt differs from the frozen one. It checks the folder before it touches the box, so an accidental rerun cannot wipe Opus 5.5's `work/` folder. A check against the real lock refused effort `high`, budget 49 and a turn cap of 30, each with the name of the setting that differed, and allowed the locked settings. It also refuses names such as `P50` or `p50 ` that match the locked name once case and spaces are ignored. This disk ignores case, so `P50` would otherwise skip every check and still write into `runs/p50/`.
+
+The CLI's environment is built from scratch, not copied from the launcher. The Claude desktop app sets about 37 Claude variables, among them `CLAUDE_EFFORT=high` and `DISABLE_MICROCOMPACT=1`, and dry runs 2 and 3 inherited all of them. `--effort max` still won: every reply in both runs logged effort `max`. The driver now passes only `HOME`, `USER`, `LOGNAME`, `PATH`, `LANG`, `TMPDIR`, `SHELL` and `CLAUDE_CONFIG_DIR`, and sets `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1` and `DISABLE_AUTOUPDATER=1`, so the CLI cannot update itself mid-run. The lock records both lists. A real call through the new environment signed in with the subscription, answered at effort `max`, and logged `sdk-cli` as its entrypoint, where the dry runs logged `claude-desktop`.
 
 ![Seven groups of files and the run settings go into lock.json, which the M5 baseline, the M6 run and the M7 evaluation each check](figures/lock_checks.svg)
 
-This figure shows what the lock covers and who checks it. The purple boxes at the top are seven groups of files and the run settings. All of them go into `lock.json`, one SHA-256 hash per file plus the settings themselves. The three boxes at the bottom are the steps that compare the working tree with `lock.json` before they run. The green ones exist now. `scripts/baseline.py` refuses to score if any file differs. `scripts/run_editor.py` refuses to start the locked run unless its settings match too, and it renders the prompt it would send and compares it with the frozen copy. M7's scoring script does not exist yet and must call the same check.
+This figure shows what the lock covers and who checks it. The purple boxes at the top are seven groups of files and the run settings. All of them go into `lock.json`, one SHA-256 hash per file plus the settings themselves. The three boxes at the bottom are the steps that compare the working tree with `lock.json` before they run. The green ones exist now. `scripts/baseline.py` refuses to score if any file differs. `scripts/run_editor.py` refuses to start the locked run unless its settings match too, and it renders the prompt it would send and compares it with the frozen copy. M7's scoring script does not exist yet and must call the same check. [docs/figures/report_figures.py](figures/report_figures.py) generates it.
 
-The rendered prompt differs from the M4 dry-run prompt in three ways. The budget is 50 instead of 2, and the box name is `p50` instead of `dry2`, the two changes the M4 report expected. The third is the paper's "EXPLAIN EVERY STEP" paragraph, added by the fourth freeze below.
+The rendered prompt differs from the M4 dry-run prompt in three ways. The budget is 50 instead of 2, and the box name is `p50` instead of `dry2`, the two changes the M4 report expected. The third is the paper's "EXPLAIN EVERY STEP" paragraph, added by the fourth freeze below. Two clauses of the prompt appear in no report, though both were already in the M4 prompt. One says that on the standard PII texts all 55 categories are scored and the `tax_id` rule is off. The other says the forward-pass tool grades practice items per category under the same scoring rules.
 
 `wsp.lock.check` compares every hash and the Node version, and raises with a list of what differs. [tests/test_lock.py](../tests/test_lock.py) covers an unchanged tree, a changed file, a missing file, and a second freeze.
 
-### The lock was written four times
+### The lock was written five times
 
 The first freeze hashed 22 files in six groups. An independent review found that it left out the run settings, so `--effort high` would have passed every check. It also left out the code that defines the prediction's categories. Nothing was committed, so M5 deleted the first lock and froze again with the settings and the `baseline` group added. All 22 hashes from the first lock are unchanged in the second. The baseline was rerun against the second lock and gave identical scores, gate and per-kind tables.
 
-The second lock was committed. A later review, described under "Second review" below, found two flaws in the prediction. Desmond approved a third freeze to fix them before M6, since M6 has not run and the prediction still comes before any result. Two files changed. `docs/m5_prediction.md` got the fixes, and `scripts/baseline.py` now records the Python, PyTorch and Transformers versions, the platform and the thread count in `baseline.json`. The other 23 hashes and the run settings are unchanged, and the rendered prompt is byte for byte the same. The baseline rerun against the third lock gave MiniLM predictions with the same SHA-256 on all three sets, and identical scores, gate and per-kind tables.
+The second lock was committed. A later review, described under "Second review" below, found two flaws in the prediction. On 2026-11-05 Desmond approved a third freeze to fix them before M6, since M6 has not run and the prediction still comes before any result. Two files changed. `docs/m5_prediction.md` got the fixes, and `scripts/baseline.py` now records the Python, PyTorch and Transformers versions, the platform and the thread count in `baseline.json`. The other 23 hashes and the run settings are unchanged, and the rendered prompt is byte for byte the same. The baseline rerun against the third lock gave MiniLM predictions with the same SHA-256 on all three sets, and identical scores, gate and per-kind tables.
 
-A comparison of our prompt with the paper's found that the paper's final prompt, `exp8_math/runs/p50c/message.txt`, holds an "EXPLAIN EVERY STEP" paragraph that its first-turn prompt, the one the brief adapted, does not. Desmond approved a fourth freeze to add it. The paragraph asks for 3 to 8 sentences before every block and a summary of the path to the edits in the final answer. Two files changed, the template `src/wsp/harness/task_prompt.txt` and the rendered `docs/m5_task_prompt.txt`. The paragraph matches the paper's character for character. The run settings are unchanged, and the baseline rerun gave the same prediction hashes and identical scores again. The paper also sent back a block that came without an explanation, at most twice in a row. That check is still unbuilt, as the M4 report lists, so the paragraph is an instruction only.
+A comparison of our prompt with the paper's found that the paper's final prompt, `exp8_math/runs/p50c/message.txt`, holds an "EXPLAIN EVERY STEP" paragraph that its first-turn prompt, the one the brief adapted, does not. On 2026-11-05 Desmond approved a fourth freeze to add it. The paragraph asks for 3 to 8 sentences before every block and a summary of the path to the edits in the final answer. Two files changed, the template `src/wsp/harness/task_prompt.txt` and the rendered `docs/m5_task_prompt.txt`. The paragraph matches the paper's character for character. The run settings are unchanged, and the baseline rerun gave the same prediction hashes and identical scores again. The paper also sent back a block that came without an explanation, at most twice in a row. That check is still unbuilt, as the M4 report lists, so the paragraph is an instruction only.
+
+A third review, by Fable 5.1, found that the CLI inherited the launcher's whole environment. On 2026-11-05 Desmond approved a fifth freeze to build the environment from an allowlist, described under "The lock" above. No file hash changed. Two run settings did: `cli_env` gained `DISABLE_AUTOUPDATER=1`, and the new `cli_env_passed` lists the passed-through variables. The baseline rerun gave the same prediction hashes and identical scores.
 
 ## Baseline
 
@@ -86,7 +90,7 @@ Per label, on the three scored labels:
 
 ![Baseline F1 of the unedited MiniLM on each scored label, Singapore against Nemotron: first_name 0.580 against 0.985, last_name 0.743 against 0.984, and national_id 0.737 against 0.959. Pooled over the three labels it scores 0.674 against 0.984, the pair the gate compares](figures/baseline_f1.svg)
 
-This figure draws the per-label table. Each label has a pair of bars, Singapore in red above Nemotron in grey. MiniLM trails on all three labels, and most on `first_name`. The pair below the line pools the three labels, and it is the pair the gate compares. Pooled F1 counts every entity together rather than averaging the three labels. `first_name` has the most entities, so it pulls the pooled score to 0.674, below the mean of the three, 0.687.
+This figure draws the per-label table. Each label has a pair of bars, Singapore in red above Nemotron in grey. MiniLM trails on all three labels, and most on `first_name`. The pair below the line pools the three labels, and it is the pair the gate compares. Pooled F1 counts every entity together rather than averaging the three labels. `first_name` has the most entities, so it pulls the pooled score to 0.674, below the mean of the three, 0.687. [docs/figures/report_figures.py](figures/report_figures.py) generates it.
 
 On Singapore text, MiniLM makes 5,555 errors. 3,051 are the wrong type, 689 are missed entities, 619 are wrong boundaries, and 1,196 are false positives.
 
@@ -111,7 +115,7 @@ F1 says how far each label falls short. It does not say which entities MiniLM ge
 
 ![Baseline share of Singapore test entities the unedited MiniLM gets exactly right, by kind. NRICs without tax context are 0% right, most tagged biometric_identifier or missed. Later words of given names are 5% right, 1,227 of 1,434 tagged last_name. The other kinds are 62% to 89% right](figures/baseline_kinds.svg)
 
-Each bar is the share of one kind's entities that MiniLM tags exactly right, with the exact span and the right label. The bars are grouped under the label they belong to. The figure uses this share rather than F1 because a false positive has no gold entity, so it belongs to no kind. The misses are not spread evenly. Two kinds are almost never right, and the note on each says what MiniLM outputs instead. The bar outlined in green is the one kind the prediction expects the edit to fix.
+Each bar is the share of one kind's entities that MiniLM tags exactly right, with the exact span and the right label. The bars are grouped under the label they belong to. The figure uses this share rather than F1 because a false positive has no gold entity, so it belongs to no kind. The misses are not spread evenly. Two kinds are almost never right, and the note on each says what MiniLM outputs instead. The bar outlined in green is the one kind the prediction expects the edit to fix. [docs/figures/report_figures.py](figures/report_figures.py) generates it.
 
 The table gives the counts and the most common errors on the main eval:
 
@@ -146,21 +150,23 @@ Two patterns show up that no table above isolates:
 
 ## Cost estimate
 
-[scripts/estimate_cost.py](../scripts/estimate_cost.py) extrapolates from dry run 2. It leaves out dry run 1, whose per-call `cost` field holds the CLI's running total, the logging bug M4 fixed. A least-squares fit of dry run 2's per-call costs to its token counts recovers the prices exactly, with a largest error of 4 × 10⁻¹⁶ dollars. The prices are $4 per million input tokens, $8 to write the cache, $0.20 to read it, and $20 for output.
+[scripts/estimate_cost.py](../scripts/estimate_cost.py) extrapolates from dry run 3, the only run with the locked prompt. The run uses the claude.ai subscription, so nothing is billed. The dollars are the API-price equivalent the CLI reports, which measures how much of the subscription's usage allowance a run takes. A least-squares fit of dry run 3's per-call costs to its token counts recovers the prices exactly, with a largest error of 5 × 10⁻¹⁶ dollars. The prices are $4 per million input tokens, $8 to write the cache, $0.20 to read it, and $20 for output.
 
-Each turn in dry run 2 added about 3,800 tokens of context and 2,900 output tokens. Every turn rereads the whole context from the cache, so cost grows with the square of the turn count. The paper's only 50-pass run, `p50c`, took 158 turns. Its 10-pass run took 74.
+Each turn in dry run 3 added about 4,700 tokens of context and 3,800 output tokens. Every turn rereads the whole context from the cache, so usage grows with the square of the turn count. The paper's only 50-pass run, `p50c`, took 158 turns. Its 10-pass run took 74.
 
-| Scenario | Turns | Cost | Wall time | Context at the end |
+| Scenario | Turns | API-price equivalent | Wall time | Context at the end |
 |---|---|---|---|---|
-| As long as the paper's 10-pass run | 74 | $8.67 | 0.8 h | 284,000 tokens |
-| As long as the paper's 50-pass run | 158 | $23.58 | 1.6 h | 605,000 tokens |
-| Long | 250 | $46.09 | 2.5 h | 956,000 tokens |
+| As long as the paper's 10-pass run | 74 | $10.95 | 0.9 h | 349,000 tokens |
+| As long as the paper's 50-pass run | 158 | $29.63 | 1.8 h | 744,000 tokens |
+| Long | 250 | $57.69 | 2.9 h | 1,177,000 tokens |
+
+The first estimate used dry run 2 and was about 20% low. Fitted to dry run 2, the model gives $1.12 for dry run 3's 12 turns, which cost $1.43. Dry run 3's replies are longer, 3,766 output tokens a turn against 2,876, which fits the EXPLAIN EVERY STEP paragraph it added. That cause is inferred, not measured.
 
 These numbers are estimates, and each rests on an assumption that M6 will test:
 
-- The wall time is a floor. It counts 35 s per reply, the dry-run mean. Code runs in dry run 2 took 0.04 s on average and its one forward pass took 6 s. Real analysis code and forward passes with activations will take longer. The paper's `p50c` took 20.3 hours, but most of that was Qwen generating text, which MiniLM does not do.
-- The estimate assumes the context grows without limit. If the CLI compacts the conversation, the reread context shrinks, but the new context is written to the cache at $8 per million tokens. The cost is roughly an upper bound for a given turn count. The context window of Opus 5.5 is not recorded anywhere in this project, so whether 605,000 tokens fits is unmeasured.
-- The cost is the API-price equivalent the CLI reports. The run uses the claude.ai subscription, so the real limit is the subscription's usage cap, not dollars.
+- The wall time is a floor. It counts 40 s per reply, the dry run 3 mean. Code runs in dry run 3 took 0.02 s on average and its one forward pass took 5 s. Real analysis code and forward passes with activations will take longer. The paper's `p50c` took 20.3 hours, but most of that was Qwen generating text, which MiniLM does not do.
+- The estimate assumes the context grows without limit. Opus 5.5's context window in Claude Code is 1,000,000 tokens, as the CLI's `/context` command reported on 2026-11-05, with 33,000 held back before it compacts. A run as long as `p50c` ends near 744,000 tokens and fits. A run past about 205 turns would be compacted. Compaction shrinks the reread context but writes the new one to the cache, so the estimate is roughly an upper bound for a given turn count.
+- The real limit is the subscription's usage cap. If the run reaches it, the driver waits and resends on the same conversation for up to 6 hours in all, then stops with an error.
 
 ## Show me
 
@@ -260,6 +266,18 @@ A short run with Opus 5.5 tested the new records and the EXPLAIN EVERY STEP para
 
 The run folder is in `runs/dry3/`. The sandbox, 2.1 GB, was deleted.
 
+### Third review
+
+After dry run 3, Desmond had Fable 5.1 review M5 again. It reran the baseline, the lock check and the tests, and rendered the figures. Every result matched. Opus 5.5 checked each finding before acting on it.
+
+| Finding | Severity | Action |
+|---|---|---|
+| The CLI inherits the launcher's whole environment, and nothing records it | High | Fixed in the fifth freeze. The environment is an allowlist, recorded in the lock. The inherited `CLAUDE_EFFORT=high` had not changed the effort |
+| The driver writes every message after the first and is not hashed | Medium | An M7 open item, below. `run.json`'s commit already pins the driver, so no separate hash was added |
+| The cost estimate is about 20% low | Medium | Refitted on dry run 3, and reworded as subscription usage |
+| A name such as `P50` skips the locked run's checks | Medium | Fixed in `run_editor.py`, outside the lock |
+| Stale report text: the commit count, "the freeze happens once", undated approvals, figure scripts, two prompt clauses | Low | Fixed |
+
 A turn cap was considered and dropped. The paper's runs had none: a run continued until every pass was used, with only the 300 code runs capped.
 
 ## Open items
@@ -267,7 +285,8 @@ A turn cap was considered and dropped. The paper's runs had none: a run continue
 - **M7's scoring must call `wsp.lock.check` and compare the lock hash with `baseline.json`.** The script does not exist yet.
 - **M7 must pair Nemotron rows by position, never by id.** Joining `pred_nemotron_eval.jsonl` by id drops the regression F1 from 0.952 to 0.905. M7 should check that both files have the same rows in the same order.
 - **M7 must compare `run.json` with the locked settings, whatever the run is named.** It should also refuse a run whose `run.json` says the git tree was dirty.
+- **M7 must check that the harness code did not change between the lock and the run.** The driver, `lock.py` and `run_editor.py` are not hashed, so the restart can still be built. `run.json` names the run's git commit, and the locked run refuses a tree with uncommitted changes. M7 should diff those files from the fifth freeze's commit to the run's commit and accept only the restart.
 - **M7 should check each forward pass's edit.** Rebuild `forward/<k>/edit.npz` with `apply_npz` and compare the hashes with `forward/<k>/edit_manifest.json`.
-- **A `claude` update blocks M6.** The lock records CLI version 2.1.292. If the CLI updates itself before M6, `run_editor.py` refuses to start, and the M4 context check has to be repeated on the new version before the lock is renewed.
-- **The restart is still unbuilt, and the paper's run needed it.** The paper restarted its conversation every 40 turns, and `p50c` used 4 conversations. At 158 turns this run's context would reach about 605,000 tokens. If that exceeds the window, the CLI compacts the conversation instead, and Opus 5.5 does not see `notes.md` again as the prompt promises. `run.json` records whether compaction happened. The restart is a driver change outside the lock.
+- **A `claude` update blocks M6.** The lock records CLI version 2.1.292. The run's own CLI cannot update itself, since the driver sets `DISABLE_AUTOUPDATER=1`, but another launch of `claude` can. If the CLI updates before M6, `run_editor.py` refuses to start, and the M4 context check has to be repeated on the new version before the lock is renewed.
+- **The restart is still unbuilt, and the paper's run needed it.** The paper restarted its conversation every 40 turns, and `p50c` used 4 conversations. At 158 turns this run's context would reach about 744,000 tokens, inside the 1,000,000-token window. Past about 205 turns the CLI compacts the conversation instead, and Opus 5.5 does not see `notes.md` again as the prompt promises. `run.json` records whether compaction happened. The restart is a driver change outside the lock.
 - **The M4 open items about usage limits and daemonized children are unchanged.**

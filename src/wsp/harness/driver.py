@@ -26,6 +26,8 @@ MAX_PYTHON_RUNS = 300
 USAGE_KEYS = ("input_tokens", "cache_creation_input_tokens", "cache_read_input_tokens", "output_tokens")
 FENCE = re.compile(r"^```[ \t]*([^\n`]*)\n(.*?)^```[ \t]*$", re.MULTILINE | re.DOTALL)
 SYSTEM_PROMPT = "Answer the user's request."
+CLI_ENV = {"CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1", "DISABLE_AUTOUPDATER": "1"}
+CLI_ENV_PASSED = ("HOME", "USER", "LOGNAME", "PATH", "LANG", "TMPDIR", "SHELL", "CLAUDE_CONFIG_DIR")
 CONTEXT_CHECK = (
     "One last question, about your setup rather than the task. List every tool you can call, quote the "
     "instructions you were given (your system prompt, in full), and list any other context that reached you: "
@@ -113,16 +115,15 @@ class Editor:
 
     def info(self) -> dict:
         return {"model": self.model, "effort": self.effort, "session_id": self.session_id, "cli_version": cli_version(),
-                "cli_command": self.command(resume=False), "cli_env": {"CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1"},
+                "cli_command": self.command(resume=False), "cli_env": CLI_ENV, "cli_env_passed": list(CLI_ENV_PASSED),
                 "cli_cwd": str(self.cwd)}
 
     def _call(self, message: str) -> tuple[EditorReply | None, dict]:
         """The reply, or None and what went wrong, with any usage and cost the failed call reported."""
         resume = self.started or session_file(self.session_id) is not None
-        env = os.environ | {"CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1"}
         start = time.monotonic()
         proc = subprocess.run(self.command(resume), input=message, capture_output=True, text=True,
-                              cwd=self.cwd, env=env)
+                              cwd=self.cwd, env=cli_env())
         seconds = time.monotonic() - start
         try:
             out = json.loads(proc.stdout)
@@ -156,8 +157,15 @@ class Editor:
             wait = min(wait * 2, self.max_wait)
 
 
+def cli_env() -> dict[str, str]:
+    """The CLI's whole environment. A launcher such as the Claude desktop app sets dozens of Claude variables,
+    effort and compaction among them, and none of them may reach the run, so only CLI_ENV_PASSED is copied."""
+    return {k: os.environ[k] for k in CLI_ENV_PASSED if k in os.environ} | CLI_ENV
+
+
 def cli_version() -> str:
-    return subprocess.run(["claude", "--version"], capture_output=True, text=True, check=True).stdout.strip()
+    return subprocess.run(["claude", "--version"], capture_output=True, text=True, check=True,
+                          env=cli_env()).stdout.strip()
 
 
 def session_file(session_id: str) -> Path | None:
