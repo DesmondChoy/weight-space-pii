@@ -2,7 +2,7 @@
 
 M5 freezes everything that decides a score, then scores the unedited MiniLM on every set. It writes `lock.json`, checks that the Singapore data leaves something to repair, records a prediction for each category, and estimates what the 50-pass run in M6 will cost. It follows §4, §5 and §7 of [weight-space-pii-handoff.md](weight-space-pii-handoff.md), with the decisions in the M2, M3 and M4 reports.
 
-Status: built and run on 2026-11-05, and committed on `main` in six commits. Waiting for Desmond to review the items under "Show me".
+Status: built and run on 2026-11-05, and committed on `main` in six commits. Re-frozen in a seventh commit after a second review. Waiting for Desmond to review the items under "Show me".
 
 ## What you need to know first
 
@@ -42,7 +42,7 @@ These choices fill gaps in the brief. Desmond can change any of them before M6.
 
 ## The lock
 
-[scripts/freeze.py](../scripts/freeze.py) renders the 50-pass prompt into [docs/m5_task_prompt.txt](m5_task_prompt.txt), then writes `lock.json` through [src/wsp/lock.py](../src/wsp/lock.py). It hashes 25 files in seven groups and records the run settings. `lock.json` has SHA-256 `fe387f86…4f53d9`, and `runs/base/baseline.json` records the same hash. `wsp.lock.write` refuses to replace an existing lock, so the freeze happens once.
+[scripts/freeze.py](../scripts/freeze.py) renders the 50-pass prompt into [docs/m5_task_prompt.txt](m5_task_prompt.txt), then writes `lock.json` through [src/wsp/lock.py](../src/wsp/lock.py). It hashes 25 files in seven groups and records the run settings. `lock.json` has SHA-256 `e62ad21d…5c3b22`, and `runs/base/baseline.json` records the same hash. `wsp.lock.write` refuses to replace an existing lock, so the freeze happens once.
 
 The run settings are what `wsp.lock.run_settings` returns. It builds the driver's own `Editor` and takes the exact `claude` command it would run, without the session ID. It adds the environment, the output of `claude --version` (2.1.292), the cap of 300 code runs, the 900 s kernel timeout and the turn cap, which is none. `scripts/run_editor.py` recomputes these for the run it is asked to start. It refuses `p50` if any of them differ, if `runs/p50/` already exists without `--overwrite`, or if the rendered prompt differs from the frozen one. It checks the folder before it touches the box, so an accidental rerun cannot wipe Opus 5.5's `work/` folder. A check against the real lock refused effort `high`, budget 49 and a turn cap of 30, each with the name of the setting that differed, and allowed the locked settings.
 
@@ -54,13 +54,17 @@ The rendered prompt matches the M4 dry-run prompt except in two places, the budg
 
 `wsp.lock.check` compares every hash and the Node version, and raises with a list of what differs. [tests/test_lock.py](../tests/test_lock.py) covers an unchanged tree, a changed file, a missing file, and a second freeze.
 
-### The lock was written twice
+### The lock was written three times
 
 The first freeze hashed 22 files in six groups. An independent review found that it left out the run settings, so `--effort high` would have passed every check. It also left out the code that defines the prediction's categories. Nothing was committed, so M5 deleted the first lock and froze again with the settings and the `baseline` group added. All 22 hashes from the first lock are unchanged in the second. The baseline was rerun against the second lock and gave identical scores, gate and per-kind tables.
+
+The second lock was committed. A later review, described under "Second review" below, found two flaws in the prediction. Desmond approved a third freeze to fix them before M6, since M6 has not run and the prediction still comes before any result. Two files changed. `docs/m5_prediction.md` got the fixes, and `scripts/baseline.py` now records the Python, PyTorch and Transformers versions, the platform and the thread count in `baseline.json`. The other 23 hashes and the run settings are unchanged, and the rendered prompt is byte for byte the same. The baseline rerun against the third lock gave MiniLM predictions with the same SHA-256 on all three sets, and identical scores, gate and per-kind tables.
 
 ## Baseline
 
 [scripts/baseline.py](../scripts/baseline.py) checks the lock, runs the unedited MiniLM on all three sets, and grades each with `wsp.score.grade`. It writes `runs/base/baseline.json` and MiniLM's predicted spans for every row, `runs/base/pred_<set>.jsonl`, which M7 needs for the paired comparison. The run takes 2 minutes on CPU.
+
+The predictions are reproducible on this machine, a MacBook Pro with an M4 Pro. Three runs of the main eval gave the same spans on all 5,004 rows: with 1 PyTorch thread, with 14, and on the Apple GPU through MPS. The GPU took 5.4 s against 10.5 s on CPU. Scoring stays on CPU anyway. The saving is a few minutes in a run of hours, and moving to the GPU would change `predict.py` and the server, both locked, for a guarantee only measured on one set. Another machine may differ in the last bits of a logit and flip a near-tie, so M7 should score on this machine and compare its environment with the one `baseline.json` records.
 
 This is the base row of the main table from §5 of the brief. The ± values are bootstrap standard errors over rows.
 
@@ -126,7 +130,7 @@ Two findings matter for M6 and M7.
 
 ## Prediction
 
-[docs/m5_prediction.md](m5_prediction.md) records the prediction for each kind before the run. It predicts that the edit fixes NRICs without tax context and leaves every name kind unchanged. Overall Singapore F1 rises by 0.005 to 0.015, and the regression check stays within two standard errors. It also says which results would contradict the paper's pattern. The prediction has its own commit on `main`, made before M6, so its timestamp shows it came before the run.
+[docs/m5_prediction.md](m5_prediction.md) records the prediction for each kind before the run. It predicts that the edit fixes NRICs without tax context and leaves every name kind unchanged. Overall Singapore F1 rises by 0.002 to 0.011, from 33 to 205 more NRICs right. The Nemotron scores stay within 0.005 of the base. It also says which results would contradict the paper's pattern. The prediction has its own commit on `main`, made before M6, so its timestamp shows it came before the run.
 
 ## Failing rows
 
@@ -211,13 +215,37 @@ A separate Opus 5.5 subagent reviewed the M5 code. It had the brief and the earl
 |---|---|---|
 | The lock leaves out the run settings, such as effort and the system prompt | High | Fixed. The lock records them and `run_editor.py` checks them |
 | Nothing protects `lock.json` itself, which is untracked | Medium | Fixed. `lock.json` and the prediction are committed. M7 still has to compare the lock hash with `baseline.json` |
-| The prediction's categories and the prediction are outside the lock | Medium | Fixed. They are the `baseline` group, and `baseline.json` records the hash of each prediction file |
+| The prediction's categories and the prediction are outside the lock | Medium | Fixed. They are the `baseline` group, and `baseline.json` records the hash of each `pred_<set>.jsonl` file of MiniLM's spans |
 | `check_locked_run` uses `assert` and can wipe `work/` on a rerun | Low | Fixed. It raises errors and checks the run folder first |
 | The wall time is a floor, and compaction rewrites the cache | Low | Fixed in the estimate's wording |
+
+### Second review
+
+After the second lock was committed, Desmond asked for a review of M5. Opus 5.5 reviewed it in the main session, and a Fable 5.1 subagent reviewed it separately without that session's conclusions. Both recomputed every number in this report and the prediction from `runs/base/` and found them right. The findings:
+
+| Finding | Severity | Action |
+|---|---|---|
+| The prediction's regression rule, two paired standard errors, flags 10 wrong entities out of 146,951 as a change | Medium | Fixed in the third lock. Unchanged now means within 0.005 |
+| The prediction's F1 range, 0.005 to 0.015, did not follow from its own claims | Medium | Fixed in the third lock. It is now 0.002 to 0.011 |
+| 917 ids in `nemotron_eval.jsonl` appear on two rows. Nemotron wrote each template once with a US persona and once with an international one under the same id | Medium | Open for M7, below. The baseline pairs rows by position, so its scores are right |
+| `run_editor.py` checks the settings only when the run is named `p50` | Medium | Open for M7, below |
+| The run folder leaves out records a rerun or audit would need | Medium | Open for M6, below |
+| The test suite shares sandbox folders, so two test runs at once can fail | Low | Not fixed. Run one test process at a time |
+| The cost estimate assumes every turn reads the context from the cache | Low | Not fixed. A slow code run could let the cache expire, which costs a few dollars per miss |
+
+A turn cap was considered and dropped. The paper's runs had none: a run continued until every pass was used, with only the 300 code runs capped.
 
 ## Open items
 
 - **M7's scoring must call `wsp.lock.check` and compare the lock hash with `baseline.json`.** The script does not exist yet.
+- **M7 must pair Nemotron rows by position, never by id.** Joining `pred_nemotron_eval.jsonl` by id drops the regression F1 from 0.952 to 0.905. M7 should check that both files have the same rows in the same order.
+- **M7 must compare `run.json` with the locked settings, whatever the run is named.** It should also refuse a run whose `run.json` says the git tree was dirty.
+- **The run folder misses five records a rerun or audit needs.** These are driver changes, outside the lock, and should be made before M6:
+  1. Which edit each forward pass ran. `forward/<k>/` keeps the request and the result but not the edit Opus 5.5 had saved at that moment, so a mid-run pass cannot be checked.
+  2. The CLI version and the lock hash in `run.json`.
+  3. The CLI's own session file. It lives in `~/.claude/projects/`, outside the run folder, and holds the served model id and stop reason of every reply.
+  4. Opus 5.5's notes and small files from `work/`. They stay in `~/wsp-sandbox/p50/` and are wiped if the run is rerun.
+  5. A refusal to start the locked run from a dirty git tree.
 - **A `claude` update blocks M6.** The lock records CLI version 2.1.292. If the CLI updates itself before M6, `run_editor.py` refuses to start, and the M4 context check has to be repeated on the new version before the lock is renewed.
 - **The restart is still unbuilt, and the paper's run needed it.** The paper restarted its conversation every 40 turns, and `p50c` used 4 conversations. At 158 turns this run's context would reach about 605,000 tokens. If that exceeds the window, the CLI compacts the conversation instead, and Opus 5.5 does not see `notes.md` again as the prompt promises. `run.json` records whether compaction happened. The restart is a driver change outside the lock.
 - **The M4 open items about usage limits and daemonized children are unchanged.**

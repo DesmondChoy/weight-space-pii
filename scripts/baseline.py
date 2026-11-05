@@ -6,7 +6,11 @@ gate, and outcomes per entity kind) and pred_<set>.jsonl (MiniLM's spans per row
 
 import json
 import math
+import platform
 from collections import Counter, defaultdict
+
+import torch
+import transformers
 
 from wsp.data import ROOT, SETS, read_jsonl
 from wsp.lock import LOCK, check, sha256_file
@@ -68,6 +72,9 @@ def main() -> None:
     gate["passes"] = gate["passes_on_singapore_se"] and gate["passes_on_gap_se"]
 
     result = {"lock_sha256": sha256_file(LOCK),
+              "environment": {"python": platform.python_version(), "platform": platform.platform(),
+                              "torch": torch.__version__, "transformers": transformers.__version__,
+                              "device": "cpu", "torch_threads": torch.get_num_threads()},
               "pred_sha256": {s: sha256_file(OUT / f"pred_{s}.jsonl") for s in preds},
               "scores": scores, "gate": gate,
               "kinds": {"singapore": kind_table(docs["sg_eval"], preds["sg_eval"]),

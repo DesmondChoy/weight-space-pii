@@ -4,9 +4,13 @@ Written on 2026-11-05, before the M6 run, as §4 of the [brief](weight-space-pii
 
 The brief asks for this file in the run folder. `runs/` is gitignored, and the M4 driver refuses to start a run whose folder already exists, so the committed copy lives here. M6 copies it into `runs/p50/` after the run.
 
+Revised on 2026-11-05, still before the M6 run, after a review of M5. The first version had two flaws. It called the regression check unchanged only if the edited F1 stayed within two paired standard errors. On 18,515 rows that error is so small that losing 10 entities out of 146,951 already counted as a change. Its range for overall Singapore F1 also did not follow from its own claims. The categories and their predictions are unchanged.
+
 ## What "fixed" means
 
-A category counts as **fixed** if the share of its entities that MiniLM gets right rises by at least 10 percentage points on the main eval. It counts as **unchanged** if the share moves by less than that. A fall of 10 points or more counts as **broken**. For the regression check, **unchanged** means the edited F1 is within two paired bootstrap standard errors of the base F1.
+A category counts as **fixed** if the share of its entities that MiniLM gets right rises by at least 10 percentage points on the main eval. It counts as **unchanged** if the share moves by less than that. A fall of 10 points or more counts as **broken**.
+
+For the Nemotron scores, **unchanged** means the edited F1 is no more than 0.005 below or above the base F1. The score counts as **worse** only if it falls by more than 0.005 and by more than two paired bootstrap standard errors, so neither noise nor a negligible shift can trigger it. **Better** is the same rule upward. M7 reports the paired difference and its standard error either way.
 
 ## Prediction
 
@@ -27,7 +31,7 @@ Each share is the share of entities right on the main eval, 5,004 rows. Every pr
 
 | Score | Base | Prediction |
 |---|---|---|
-| Singapore F1, main eval | 0.674 ± 0.004 | Rises by 0.005 to 0.015. A perfect fix of all 323 NRICs without tax context would add 0.017, so this is the most a fix of those NRICs alone can give. The 89 wrong NRICs with tax context could add about 0.005 more. |
+| Singapore F1, main eval | 0.674 ± 0.004 | Rises by 0.002 to 0.011. Each NRIC without tax context that becomes right adds about 0.00005. "Fixed" needs at least 33 of the 323 right, which adds 0.0017. The 118 that MiniLM misses completely stay missed, so at most 205 can be fixed, which adds 0.0105. The range assumes every other kind stays where it is. |
 | Nemotron F1, three scored labels | 0.984 ± 0.001 | Unchanged |
 | Nemotron F1, all labels (regression check) | 0.952 ± 0.001 | Unchanged. The labels most at risk are the ones an NRIC edit could shift: `national_id` 0.960, `tax_id` 0.967, `biometric_identifier` 0.996, `health_plan_beneficiary_number` 0.988. |
 

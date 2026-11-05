@@ -65,9 +65,9 @@
    "src/wsp/harness/kernel_host.py": "f18875878c35d89e38d8f6534e4bce7b65437042b7a7e6662a531d86be316004"
   },
   "baseline": {
-   "scripts/baseline.py": "a849d3e8deb59bf0d68181861d58d1d8916345144c019a17ea80e4390b68303c",
+   "scripts/baseline.py": "41d682fd3a94e6fce0802054a45c8e745686cb55190ad253d82a78f5640aefa4",
    "src/wsp/outcomes.py": "e0d8c05b706eb6118a1c861d61a9861ec56d28d0181e368349cb6e0ca82a8098",
-   "docs/m5_prediction.md": "b64e9b4e1bf2fe4ad7d258941df86f207a2d4c87d791a4141eca6f3ca632aaa4"
+   "docs/m5_prediction.md": "e7749837c7104f642717e3de43594944eb9622518118c29a5e2888ddea34e1fe"
   }
  }
 }
