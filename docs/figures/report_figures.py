@@ -1,5 +1,5 @@
-"""Generate the figures in the M2, M3 and M4 reports: data_sets, example_rows, label_translation, tax_id_cases,
-harness, and edit_checks."""
+"""Generate the figures in the M2 to M5 reports: data_sets, example_rows, label_translation, tax_id_cases,
+harness, edit_checks, lock_checks, set_roles, and baseline_kinds."""
 
 from pathlib import Path
 
@@ -250,9 +250,147 @@ def edit_checks():
           "of.", out)
 
 
+def lock_checks():
+    out = []
+    text(out, 40, 22, "What lock.json freezes", "th", "start")
+    groups = [("sets", ["the three sets", "and sets.json"]),
+              ("scoring", ["score.py, predict.py,", "data.py"]),
+              ("forward-pass server", ["server.py, edit.py,", "kernel.py, box.py"]),
+              ("prompt", ["template, prompt.py,", "the 50-pass prompt"]),
+              ("model", ["MiniLM's six files"]),
+              ("environment", ["uv.lock, the srt pin,", "the Node version"]),
+              ("baseline", ["baseline.py, outcomes.py,", "the prediction"]),
+              ("run settings", ["CLI command and version,", "limits, no turn cap"])]
+    for i, (title, lines) in enumerate(groups):
+        box(out, 40 + 225 * (i % 4), 40 + 92 * (i // 4), 210, 76, title, lines, "c-purple")
+    out.append('<path d="M480 210 L480 240" class="arr" marker-end="url(#arrow)"/>')
+    box(out, 330, 242, 300, 56, "lock.json", ["one SHA-256 per file, plus the run settings"])
+    text(out, 40, 336, "Where the tree is checked against it", "th", "start")
+    checks = [("M5 baseline", ["scripts/baseline.py", "refuses to score"], "c-teal"),
+              ("M6 editor run", ["scripts/run_editor.py also checks", "the settings and the prompt"], "c-teal"),
+              ("M7 evaluation", ["the edited model is", "scored the same way"], "box")]
+    for i, (title, lines, cls) in enumerate(checks):
+        x = 40 + 310 * i
+        box(out, x, 390, 260, 76, title, lines, cls)
+        out.append(f'<path d="M480 300 L{x + 130} 388" class="arr" marker-end="url(#arrow)"/>')
+    text(out, 40, 496, "Any changed or missing file, or another Node version, stops the step with a list of what "
+         "differs.", "ts", "start")
+    ly = 528
+    for x, cls, label in ((40, "c-teal", "Built and run in M5"), (240, "box", "Runs later")):
+        out.append(f'<g class="{cls}"><rect x="{x}" y="{ly - 7}" width="14" height="14" rx="3" stroke-width="0.5"/></g>')
+        text(out, x + 22, ly, label, "ts", "start")
+    write("lock_checks.svg", 960, 550, "What lock.json freezes and where it is checked",
+          "Seven groups of files, the sets, the scoring code, the forward-pass server, the prompt, MiniLM's files, the "
+          "environment and the baseline code with the prediction, are hashed once into lock.json, together with the "
+          "run settings: the exact CLI command, the CLI version and the limits. The M5 baseline, the M6 editor run "
+          "and the M7 evaluation each compare the tree with lock.json and stop if any file changed. The M6 run also "
+          "checks its settings and re-renders its prompt.", out)
+
+
+def set_roles():
+    out = []
+    xs, xm, xr = 40, 330, 650
+
+    def arrow(x0, y0, x1, y1, dashed=False):
+        dash = ' stroke-dasharray="5 4"' if dashed else ""
+        out.append(f'<path d="M{x0} {y0} L{x1} {y1}" class="arr"{dash} marker-end="url(#arrow)"/>')
+
+    text(out, xs, 22, "Nemotron-PII: MiniLM's own data, made-up US personas", "th", "start")
+    box(out, xs, 74, 230, 60, "Nemotron-PII", ["200,000 rows"])
+    box(out, xm, 40, 250, 60, "Training split, 180,000 rows", ["MiniLM was fine-tuned on these", ], "c-purple")
+    box(out, xm, 112, 250, 60, "Held-out split, 20,000 rows", ["MiniLM never trained on these"])
+    arrow(272, 96, 328, 72)
+    arrow(272, 112, 328, 140)
+    box(out, xr, 104, 280, 76, "Regression check", ["18,515 rows that fit in 512 tokens",
+                                                     "test set: did the edit break US text?"], "c-coral")
+    arrow(582, 142, 648, 142)
+    text(out, 616, 130, "filter", "tl")
+
+    text(out, xs, 222, "openpii: Singapore rows, MiniLM never saw any", "th", "start")
+    box(out, xs, 252, 230, 60, "openpii train split", ["20,225 Singapore rows"])
+    box(out, xm, 252, 250, 60, "20,211 usable rows", ["filter drops long, duplicate rows", ])
+    arrow(272, 282, 328, 282)
+    box(out, xr, 236, 280, 92, "Practice set", ["1,000 rows, a random sample",
+                                                "development set: Opus 5.5 reads",
+                                                "the answers and grades its edits"], "c-teal")
+    arrow(582, 270, 648, 270)
+    text(out, 616, 258, "1,000", "tl")
+    out.append(f'<rect class="dr" x="{xr}" y="340" width="280" height="34" rx="8" stroke-width="1"/>')
+    text(out, xr + 140, 357, "The other 19,211 rows are not used", "ts")
+    arrow(582, 296, 648, 352, dashed=True)
+
+    box(out, xs, 402, 230, 60, "openpii validation split", ["5,005 Singapore rows"])
+    box(out, xm, 402, 250, 60, "5,004 usable rows", ["filter drops 1 duplicate"])
+    arrow(272, 432, 328, 432)
+    box(out, xr, 394, 280, 76, "Main eval", ["all 5,004 rows",
+                                             "test set: did the edit help Singapore?"], "c-coral")
+    arrow(582, 432, 648, 432)
+
+    text(out, xs, 506, "Nothing is trained in this experiment. Opus 5.5 edits MiniLM's weights by hand, so the practice "
+         "set is its development set, not training data.", "ts", "start")
+    text(out, xs, 526, "The filter also drops every train row whose text or template appears in validation, so no "
+         "practice row copies a main-eval row.", "ts", "start")
+    ly = 560
+    for x, cls, label in ((40, "c-purple", "Trained MiniLM, before this experiment"),
+                          (330, "c-teal", "Opus 5.5 can read, rows and answers"),
+                          (630, "c-coral", "Hidden test sets, scored at M5 and M7")):
+        out.append(f'<g class="{cls}"><rect x="{x}" y="{ly - 7}" width="14" height="14" rx="3" stroke-width="0.5"/></g>')
+        text(out, x + 22, ly, label, "ts", "start")
+    write("set_roles.svg", 960, 582, "Where the three sets come from and what each one is for",
+          "Two datasets feed the experiment. Nemotron-PII has 200,000 rows of made-up US personas. MiniLM was "
+          "fine-tuned on 180,000 of them before this experiment. The other 20,000 were held out, and the 18,515 that "
+          "fit in 512 tokens are the regression check, a hidden test set for US text. openpii's Singapore rows were "
+          "never seen by MiniLM. From the train split's 20,211 usable rows, a random 1,000 form the practice set, "
+          "which Opus 5.5 reads with answers and uses to grade its edits, like a development set. The other 19,211 "
+          "are not used. The validation split's 5,004 usable rows are the main eval, the hidden Singapore test set. "
+          "Nothing is trained in the experiment.", out)
+
+
+def baseline_kinds():
+    out = []
+    x0, bw = 330, 520
+    text(out, 40, 22, "The gate: F1 on the three scored labels", "th", "start")
+    for i, (name, f1, cls) in enumerate((("Singapore main eval, 5,004 rows", 0.674, "c-coral"),
+                                         ("Nemotron held-out, 18,515 rows", 0.984, "box"))):
+        y = 48 + 34 * i
+        text(out, 40, y + 11, name, "ts", "start")
+        out.append(f'<g class="{cls}"><rect x="{x0}" y="{y}" width="{bw * f1:g}" height="22" rx="3" stroke-width="0.5"/></g>')
+        text(out, x0 + bw * f1 + 8, y + 11, f"{f1:.3f}", "tv", "start")
+    text(out, 40, 130, "Gap 0.310. The gate needs more than twice its standard error, 2 × 0.0044 = 0.0087. It passes.",
+         "ts", "start")
+    text(out, 40, 176, "Share of entities MiniLM gets right on the main eval, by kind", "th", "start")
+    kinds = [("NRIC, no tax context", 323, 0.0, True), ("NRIC, tax context", 711, 0.8748, False),
+             ("Given name, several words, later word", 1434, 0.0516, False),
+             ("Given name, one word", 3376, 0.6182, False), ("Given name, several words, first word", 1434, 0.6667, False),
+             ("Surname, one word", 2688, 0.8943, False), ("Surname, several words, first word", 1274, 0.8124, False),
+             ("Surname, several words, later word", 1734, 0.8287, False)]
+    for i, (name, n, share, fixed) in enumerate(kinds):
+        y = 196 + 30 * i
+        text(out, 40, y + 10, f"{name} ({n:,})", "ts", "start")
+        cls = "c-teal" if fixed else "box"
+        out.append(f'<rect x="{x0}" y="{y}" width="{bw}" height="20" rx="3" fill="#FAFAF7" '
+                   f'stroke="{"#0F6E56" if fixed else "#E5E3DA"}" stroke-width="{1 if fixed else 0.5}"/>')
+        if share:
+            out.append(f'<g class="{cls}"><rect x="{x0}" y="{y}" width="{bw * share:g}" height="20" rx="3" '
+                       f'stroke-width="0.5"/></g>')
+        text(out, x0 + bw + 10, y + 10, f"{share:.0%}", "tv", "start")
+    ly = 196 + 30 * len(kinds) + 16
+    for x, cls, label in ((40, "c-teal", "Predicted fixed by the edit"), (280, "box", "Predicted unchanged")):
+        out.append(f'<g class="{cls}"><rect x="{x}" y="{ly - 7}" width="14" height="14" rx="3" stroke-width="0.5"/></g>')
+        text(out, x + 22, ly, label, "ts", "start")
+    write("baseline_kinds.svg", 960, ly + 22, "Where the unedited MiniLM fails",
+          "Top: on the three scored labels, MiniLM scores F1 0.674 on the Singapore main eval and 0.984 on Nemotron, "
+          "a gap of 0.310, far above the gate's threshold of 0.0087. Bottom: the share of entities right on the main "
+          "eval for each kind. NRICs without tax context are 0% right and are the one kind predicted to be fixed. "
+          "Later words of given names are 5% right. The other kinds are 62% to 89% right.", out)
+
+
 data_sets()
 example_rows()
 label_translation()
 tax_id_cases()
 harness()
 edit_checks()
+lock_checks()
+set_roles()
+baseline_kinds()

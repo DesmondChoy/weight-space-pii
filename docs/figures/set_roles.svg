@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="582" viewBox="0 0 960 582" role="img">
+<title>Where the three sets come from and what each one is for</title>
+<desc>Two datasets feed the experiment. Nemotron-PII has 200,000 rows of made-up US personas. MiniLM was fine-tuned on 180,000 of them before this experiment. The other 20,000 were held out, and the 18,515 that fit in 512 tokens are the regression check, a hidden test set for US text. openpii's Singapore rows were never seen by MiniLM. From the train split's 20,211 usable rows, a random 1,000 form the practice set, which Opus 5.5 reads with answers and uses to grade its edits, like a development set. The other 19,211 are not used. The validation split's 5,004 usable rows are the main eval, the hidden Singapore test set. Nothing is trained in the experiment.</desc>
+<style>
+text { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+.th { font-size: 14px; font-weight: 500; fill: #2C2C2A; }
+.ts { font-size: 12px; fill: #5F5E5A; }
+.tl { font-size: 11px; fill: #5F5E5A; }
+.mono { font-family: Menlo, Consolas, "DejaVu Sans Mono", monospace; font-size: 13px; fill: #2C2C2A; }
+.box rect { fill: #F1EFE8; stroke: #888780; }
+.arr { stroke: #5F5E5A; stroke-width: 1.5; fill: none; }
+.c-teal rect, rect.c-teal { fill: #E1F5EE; stroke: #0F6E56; } .c-teal .th { fill: #085041; } .c-teal .ts { fill: #0F6E56; }
+.c-coral rect, rect.c-coral { fill: #FAECE7; stroke: #993C1D; } .c-coral .th { fill: #712B13; } .c-coral .ts { fill: #993C1D; }
+rect.sc { fill: #E1F5EE; stroke: #0F6E56; } text.sc { fill: #085041; font-weight: 500; }
+rect.dr { fill: none; stroke: #888780; stroke-dasharray: 4 3; }
+.c-purple rect { fill: #EEEDFE; stroke: #534AB7; } .c-purple .th { fill: #3C3489; } .c-purple .ts { fill: #534AB7; }
+.card { fill: #FAFAF7; stroke: #E5E3DA; }
+rect.tag { fill: #FBEAF0; stroke: #993556; }
+.tv { font-size: 12px; font-weight: 500; fill: #2C2C2A; }
+.ok { font-size: 12px; font-weight: 500; fill: #3B6D11; } .bad { font-size: 12px; font-weight: 500; fill: #A32D2D; }
+</style>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#5F5E5A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+<rect x="0" y="0" width="960" height="582" fill="#FFFFFF"/>
+<text class="th" x="40" y="22" text-anchor="start" dominant-baseline="central">Nemotron-PII: MiniLM's own data, made-up US personas</text>
+<g class="box"><rect x="40" y="74" width="230" height="60" rx="8" stroke-width="0.5"/>
+<text class="th" x="155" y="96" text-anchor="middle" dominant-baseline="central">Nemotron-PII</text>
+<text class="ts" x="155" y="114" text-anchor="middle" dominant-baseline="central">200,000 rows</text>
+</g>
+<g class="c-purple"><rect x="330" y="40" width="250" height="60" rx="8" stroke-width="0.5"/>
+<text class="th" x="455" y="62" text-anchor="middle" dominant-baseline="central">Training split, 180,000 rows</text>
+<text class="ts" x="455" y="80" text-anchor="middle" dominant-baseline="central">MiniLM was fine-tuned on these</text>
+</g>
+<g class="box"><rect x="330" y="112" width="250" height="60" rx="8" stroke-width="0.5"/>
+<text class="th" x="455" y="134" text-anchor="middle" dominant-baseline="central">Held-out split, 20,000 rows</text>
+<text class="ts" x="455" y="152" text-anchor="middle" dominant-baseline="central">MiniLM never trained on these</text>
+</g>
+<path d="M272 96 L328 72" class="arr" marker-end="url(#arrow)"/>
+<path d="M272 112 L328 140" class="arr" marker-end="url(#arrow)"/>
+<g class="c-coral"><rect x="650" y="104" width="280" height="76" rx="8" stroke-width="0.5"/>
+<text class="th" x="790" y="126" text-anchor="middle" dominant-baseline="central">Regression check</text>
+<text class="ts" x="790" y="144" text-anchor="middle" dominant-baseline="central">18,515 rows that fit in 512 tokens</text>
+<text class="ts" x="790" y="160" text-anchor="middle" dominant-baseline="central">test set: did the edit break US text?</text>
+</g>
+<path d="M582 142 L648 142" class="arr" marker-end="url(#arrow)"/>
+<text class="tl" x="616" y="130" text-anchor="middle" dominant-baseline="central">filter</text>
+<text class="th" x="40" y="222" text-anchor="start" dominant-baseline="central">openpii: Singapore rows, MiniLM never saw any</text>
+<g class="box"><rect x="40" y="252" width="230" height="60" rx="8" stroke-width="0.5"/>
+<text class="th" x="155" y="274" text-anchor="middle" dominant-baseline="central">openpii train split</text>
+<text class="ts" x="155" y="292" text-anchor="middle" dominant-baseline="central">20,225 Singapore rows</text>
+</g>
+<g class="box"><rect x="330" y="252" width="250" height="60" rx="8" stroke-width="0.5"/>
+<text class="th" x="455" y="274" text-anchor="middle" dominant-baseline="central">20,211 usable rows</text>
+<text class="ts" x="455" y="292" text-anchor="middle" dominant-baseline="central">filter drops long, duplicate rows</text>
+</g>
+<path d="M272 282 L328 282" class="arr" marker-end="url(#arrow)"/>
+<g class="c-teal"><rect x="650" y="236" width="280" height="92" rx="8" stroke-width="0.5"/>
+<text class="th" x="790" y="258" text-anchor="middle" dominant-baseline="central">Practice set</text>
+<text class="ts" x="790" y="276" text-anchor="middle" dominant-baseline="central">1,000 rows, a random sample</text>
+<text class="ts" x="790" y="292" text-anchor="middle" dominant-baseline="central">development set: Opus 5.5 reads</text>
+<text class="ts" x="790" y="308" text-anchor="middle" dominant-baseline="central">the answers and grades its edits</text>
+</g>
+<path d="M582 270 L648 270" class="arr" marker-end="url(#arrow)"/>
+<text class="tl" x="616" y="258" text-anchor="middle" dominant-baseline="central">1,000</text>
+<rect class="dr" x="650" y="340" width="280" height="34" rx="8" stroke-width="1"/>
+<text class="ts" x="790" y="357" text-anchor="middle" dominant-baseline="central">The other 19,211 rows are not used</text>
+<path d="M582 296 L648 352" class="arr" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
+<g class="box"><rect x="40" y="402" width="230" height="60" rx="8" stroke-width="0.5"/>
+<text class="th" x="155" y="424" text-anchor="middle" dominant-baseline="central">openpii validation split</text>
+<text class="ts" x="155" y="442" text-anchor="middle" dominant-baseline="central">5,005 Singapore rows</text>
+</g>
+<g class="box"><rect x="330" y="402" width="250" height="60" rx="8" stroke-width="0.5"/>
+<text class="th" x="455" y="424" text-anchor="middle" dominant-baseline="central">5,004 usable rows</text>
+<text class="ts" x="455" y="442" text-anchor="middle" dominant-baseline="central">filter drops 1 duplicate</text>
+</g>
+<path d="M272 432 L328 432" class="arr" marker-end="url(#arrow)"/>
+<g class="c-coral"><rect x="650" y="394" width="280" height="76" rx="8" stroke-width="0.5"/>
+<text class="th" x="790" y="416" text-anchor="middle" dominant-baseline="central">Main eval</text>
+<text class="ts" x="790" y="434" text-anchor="middle" dominant-baseline="central">all 5,004 rows</text>
+<text class="ts" x="790" y="450" text-anchor="middle" dominant-baseline="central">test set: did the edit help Singapore?</text>
+</g>
+<path d="M582 432 L648 432" class="arr" marker-end="url(#arrow)"/>
+<text class="ts" x="40" y="506" text-anchor="start" dominant-baseline="central">Nothing is trained in this experiment. Opus 5.5 edits MiniLM's weights by hand, so the practice set is its development set, not training data.</text>
+<text class="ts" x="40" y="526" text-anchor="start" dominant-baseline="central">The filter also drops every train row whose text or template appears in validation, so no practice row copies a main-eval row.</text>
+<g class="c-purple"><rect x="40" y="553" width="14" height="14" rx="3" stroke-width="0.5"/></g>
+<text class="ts" x="62" y="560" text-anchor="start" dominant-baseline="central">Trained MiniLM, before this experiment</text>
+<g class="c-teal"><rect x="330" y="553" width="14" height="14" rx="3" stroke-width="0.5"/></g>
+<text class="ts" x="352" y="560" text-anchor="start" dominant-baseline="central">Opus 5.5 can read, rows and answers</text>
+<g class="c-coral"><rect x="630" y="553" width="14" height="14" rx="3" stroke-width="0.5"/></g>
+<text class="ts" x="652" y="560" text-anchor="start" dominant-baseline="central">Hidden test sets, scored at M5 and M7</text>
+</svg>

@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="550" viewBox="0 0 960 550" role="img">
+<title>What lock.json freezes and where it is checked</title>
+<desc>Seven groups of files, the sets, the scoring code, the forward-pass server, the prompt, MiniLM's files, the environment and the baseline code with the prediction, are hashed once into lock.json, together with the run settings: the exact CLI command, the CLI version and the limits. The M5 baseline, the M6 editor run and the M7 evaluation each compare the tree with lock.json and stop if any file changed. The M6 run also checks its settings and re-renders its prompt.</desc>
+<style>
+text { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+.th { font-size: 14px; font-weight: 500; fill: #2C2C2A; }
+.ts { font-size: 12px; fill: #5F5E5A; }
+.tl { font-size: 11px; fill: #5F5E5A; }
+.mono { font-family: Menlo, Consolas, "DejaVu Sans Mono", monospace; font-size: 13px; fill: #2C2C2A; }
+.box rect { fill: #F1EFE8; stroke: #888780; }
+.arr { stroke: #5F5E5A; stroke-width: 1.5; fill: none; }
+.c-teal rect, rect.c-teal { fill: #E1F5EE; stroke: #0F6E56; } .c-teal .th { fill: #085041; } .c-teal .ts { fill: #0F6E56; }
+.c-coral rect, rect.c-coral { fill: #FAECE7; stroke: #993C1D; } .c-coral .th { fill: #712B13; } .c-coral .ts { fill: #993C1D; }
+rect.sc { fill: #E1F5EE; stroke: #0F6E56; } text.sc { fill: #085041; font-weight: 500; }
+rect.dr { fill: none; stroke: #888780; stroke-dasharray: 4 3; }
+.c-purple rect { fill: #EEEDFE; stroke: #534AB7; } .c-purple .th { fill: #3C3489; } .c-purple .ts { fill: #534AB7; }
+.card { fill: #FAFAF7; stroke: #E5E3DA; }
+rect.tag { fill: #FBEAF0; stroke: #993556; }
+.tv { font-size: 12px; font-weight: 500; fill: #2C2C2A; }
+.ok { font-size: 12px; font-weight: 500; fill: #3B6D11; } .bad { font-size: 12px; font-weight: 500; fill: #A32D2D; }
+</style>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#5F5E5A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+<rect x="0" y="0" width="960" height="550" fill="#FFFFFF"/>
+<text class="th" x="40" y="22" text-anchor="start" dominant-baseline="central">What lock.json freezes</text>
+<g class="c-purple"><rect x="40" y="40" width="210" height="76" rx="8" stroke-width="0.5"/>
+<text class="th" x="145" y="62" text-anchor="middle" dominant-baseline="central">sets</text>
+<text class="ts" x="145" y="80" text-anchor="middle" dominant-baseline="central">the three sets</text>
+<text class="ts" x="145" y="96" text-anchor="middle" dominant-baseline="central">and sets.json</text>
+</g>
+<g class="c-purple"><rect x="265" y="40" width="210" height="76" rx="8" stroke-width="0.5"/>
+<text class="th" x="370" y="62" text-anchor="middle" dominant-baseline="central">scoring</text>
+<text class="ts" x="370" y="80" text-anchor="middle" dominant-baseline="central">score.py, predict.py,</text>
+<text class="ts" x="370" y="96" text-anchor="middle" dominant-baseline="central">data.py</text>
+</g>
+<g class="c-purple"><rect x="490" y="40" width="210" height="76" rx="8" stroke-width="0.5"/>
+<text class="th" x="595" y="62" text-anchor="middle" dominant-baseline="central">forward-pass server</text>
+<text class="ts" x="595" y="80" text-anchor="middle" dominant-baseline="central">server.py, edit.py,</text>
+<text class="ts" x="595" y="96" text-anchor="middle" dominant-baseline="central">kernel.py, box.py</text>
+</g>
+<g class="c-purple"><rect x="715" y="40" width="210" height="76" rx="8" stroke-width="0.5"/>
+<text class="th" x="820" y="62" text-anchor="middle" dominant-baseline="central">prompt</text>
+<text class="ts" x="820" y="80" text-anchor="middle" dominant-baseline="central">template, prompt.py,</text>
+<text class="ts" x="820" y="96" text-anchor="middle" dominant-baseline="central">the 50-pass prompt</text>
+</g>
+<g class="c-purple"><rect x="40" y="132" width="210" height="76" rx="8" stroke-width="0.5"/>
+<text class="th" x="145" y="162" text-anchor="middle" dominant-baseline="central">model</text>
+<text class="ts" x="145" y="180" text-anchor="middle" dominant-baseline="central">MiniLM's six files</text>
+</g>
+<g class="c-purple"><rect x="265" y="132" width="210" height="76" rx="8" stroke-width="0.5"/>
+<text class="th" x="370" y="154" text-anchor="middle" dominant-baseline="central">environment</text>
+<text class="ts" x="370" y="172" text-anchor="middle" dominant-baseline="central">uv.lock, the srt pin,</text>
+<text class="ts" x="370" y="188" text-anchor="middle" dominant-baseline="central">the Node version</text>
+</g>
+<g class="c-purple"><rect x="490" y="132" width="210" height="76" rx="8" stroke-width="0.5"/>
+<text class="th" x="595" y="154" text-anchor="middle" dominant-baseline="central">baseline</text>
+<text class="ts" x="595" y="172" text-anchor="middle" dominant-baseline="central">baseline.py, outcomes.py,</text>
+<text class="ts" x="595" y="188" text-anchor="middle" dominant-baseline="central">the prediction</text>
+</g>
+<g class="c-purple"><rect x="715" y="132" width="210" height="76" rx="8" stroke-width="0.5"/>
+<text class="th" x="820" y="154" text-anchor="middle" dominant-baseline="central">run settings</text>
+<text class="ts" x="820" y="172" text-anchor="middle" dominant-baseline="central">CLI command and version,</text>
+<text class="ts" x="820" y="188" text-anchor="middle" dominant-baseline="central">limits, no turn cap</text>
+</g>
+<path d="M480 210 L480 240" class="arr" marker-end="url(#arrow)"/>
+<g class="box"><rect x="330" y="242" width="300" height="56" rx="8" stroke-width="0.5"/>
+<text class="th" x="480" y="262" text-anchor="middle" dominant-baseline="central">lock.json</text>
+<text class="ts" x="480" y="280" text-anchor="middle" dominant-baseline="central">one SHA-256 per file, plus the run settings</text>
+</g>
+<text class="th" x="40" y="336" text-anchor="start" dominant-baseline="central">Where the tree is checked against it</text>
+<g class="c-teal"><rect x="40" y="390" width="260" height="76" rx="8" stroke-width="0.5"/>
+<text class="th" x="170" y="412" text-anchor="middle" dominant-baseline="central">M5 baseline</text>
+<text class="ts" x="170" y="430" text-anchor="middle" dominant-baseline="central">scripts/baseline.py</text>
+<text class="ts" x="170" y="446" text-anchor="middle" dominant-baseline="central">refuses to score</text>
+</g>
+<path d="M480 300 L170 388" class="arr" marker-end="url(#arrow)"/>
+<g class="c-teal"><rect x="350" y="390" width="260" height="76" rx="8" stroke-width="0.5"/>
+<text class="th" x="480" y="412" text-anchor="middle" dominant-baseline="central">M6 editor run</text>
+<text class="ts" x="480" y="430" text-anchor="middle" dominant-baseline="central">scripts/run_editor.py also checks</text>
+<text class="ts" x="480" y="446" text-anchor="middle" dominant-baseline="central">the settings and the prompt</text>
+</g>
+<path d="M480 300 L480 388" class="arr" marker-end="url(#arrow)"/>
+<g class="box"><rect x="660" y="390" width="260" height="76" rx="8" stroke-width="0.5"/>
+<text class="th" x="790" y="412" text-anchor="middle" dominant-baseline="central">M7 evaluation</text>
+<text class="ts" x="790" y="430" text-anchor="middle" dominant-baseline="central">the edited model is</text>
+<text class="ts" x="790" y="446" text-anchor="middle" dominant-baseline="central">scored the same way</text>
+</g>
+<path d="M480 300 L790 388" class="arr" marker-end="url(#arrow)"/>
+<text class="ts" x="40" y="496" text-anchor="start" dominant-baseline="central">Any changed or missing file, or another Node version, stops the step with a list of what differs.</text>
+<g class="c-teal"><rect x="40" y="521" width="14" height="14" rx="3" stroke-width="0.5"/></g>
+<text class="ts" x="62" y="528" text-anchor="start" dominant-baseline="central">Built and run in M5</text>
+<g class="box"><rect x="240" y="521" width="14" height="14" rx="3" stroke-width="0.5"/></g>
+<text class="ts" x="262" y="528" text-anchor="start" dominant-baseline="central">Runs later</text>
+</svg>
