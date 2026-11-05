@@ -7,7 +7,7 @@ import subprocess
 from pathlib import Path
 
 from wsp.data import ROOT
-from wsp.harness.driver import MAX_PYTHON_RUNS, Editor, run
+from wsp.harness.driver import MAX_PYTHON_RUNS, Editor, cli_version, run
 
 LOCK = ROOT / "lock.json"
 RENDERED_PROMPT = "docs/m5_task_prompt.txt"
@@ -37,17 +37,13 @@ def node_version() -> str:
     return subprocess.run(["node", "--version"], capture_output=True, text=True, check=True).stdout.strip()
 
 
-def claude_version() -> str:
-    return subprocess.run(["claude", "--version"], capture_output=True, text=True, check=True).stdout.strip()
-
-
 def run_settings(name: str, budget: int, effort: str = "max", max_turns: int | None = None) -> dict:
     """Everything the driver decides about what Opus 5.5 sees, other than the prompt: the exact CLI command
     without its session ID, the CLI's environment and version, and the limits the prompt states."""
     info = Editor(Path(), print, effort=effort).info()
     cmd = info["cli_command"]
     return {"name": name, "budget": budget, "max_turns": max_turns, "cli_command": cmd[:cmd.index("--session-id")],
-            "cli_env": info["cli_env"], "cli_version": claude_version(), "max_python_runs": MAX_PYTHON_RUNS,
+            "cli_env": info["cli_env"], "cli_version": info["cli_version"], "max_python_runs": MAX_PYTHON_RUNS,
             "kernel_timeout": inspect.signature(run).parameters["kernel_timeout"].default}
 
 

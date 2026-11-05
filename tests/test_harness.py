@@ -21,6 +21,7 @@ from wsp.harness.edit import apply_npz, read_edits, sha256, write_edit
 from wsp.harness.kernel import refusal
 from wsp.harness.kernel_host import Kernel
 from wsp.harness.server import Request, RequestError, Server, hf_name, parse_request
+from wsp.lock import sha256_file
 
 WEIGHTS = MODEL_DIR / "model.safetensors"
 PRACTICE = read_jsonl(SETS / "sg_train.jsonl")
@@ -657,9 +658,19 @@ class Driver(unittest.TestCase):
         self.assertEqual([(t["name"], t["entries_changed"]) for t in manifest["tensors"]], [(MLP, 1)])
         self.assertEqual(sha256(apply_npz(rundir / "edit" / "edit.npz", WEIGHTS)[MLP]),
                          manifest["tensors"][0]["sha256_edited"])
+        self.assertEqual(sorted(p.name for p in (rundir / "forward" / "1").iterdir()),
+                         ["edit.npz", "edit_manifest.json", "pred.jsonl", "request.json", "summary.json"])
+        self.assertEqual(sorted(p.name for p in (rundir / "forward" / "2").iterdir()),
+                         ["edit_manifest.json", "meta.json", "pred.jsonl", "request.json", "summary.json"])
         for k in ("1", "2"):
-            self.assertEqual(sorted(p.name for p in (rundir / "forward" / k).iterdir()),
-                             sorted(["pred.jsonl", "request.json", "summary.json"] + (["meta.json"] if k == "2" else [])))
+            ran = json.loads((rundir / "forward" / k / "edit_manifest.json").read_text())
+            self.assertEqual((ran["tensors"], ran["npz"]), (manifest["tensors"], "1/edit.npz"))
+        self.assertEqual(sha256(apply_npz(rundir / "forward" / "1" / "edit.npz", WEIGHTS)[MLP]),
+                         manifest["tensors"][0]["sha256_edited"])
+        self.assertFalse((rundir / ".edit_snapshot").exists())
+        saved = json.loads((rundir / "run.json").read_text())
+        self.assertEqual(saved["lock_sha256"], sha256_file(ROOT / "lock.json"))
+        self.assertFalse(saved["cli_session_copied"])
         self.assertEqual([e["kind"] for e in events if e["kind"] != "user"],
                          ["assistant", "python", "assistant", "forward_failed", "assistant", "assistant", "invalid",
                           "assistant", "python", "assistant", "forward", "assistant", "forward", "assistant",
@@ -716,6 +727,53 @@ class Driver(unittest.TestCase):
             _, result, rundir, _ = self.run_fake(["no block", "done"], budget=5, max_turns=2)
         self.assertEqual(result["edit_error"], "OSError: disk full")
         self.assertTrue((rundir / "run.json").exists())
+
+    def test_each_pass_records_the_edit_it_ran(self):
+        save = f"w = load('{GAMMA}'); w[0] += {{}}; save_edit('{GAMMA}', w)"
+        texts = json.dumps({"model": "edited", "texts": ["a"]})
+        replies = [block("forward", json.dumps({"model": "original", "texts": ["a"]})),
+                   block("python", save.format(0.5)), block("forward", texts),
+                   block("python", save.format(0.25)), block("forward", texts), "done"]
+        _, result, rundir, _ = self.run_fake(replies, budget=3)
+        ran = [json.loads((rundir / "forward" / k / "edit_manifest.json").read_text()) for k in ("1", "2", "3")]
+        self.assertEqual((ran[0]["n_tensors"], ran[0]["npz"]), (0, None))
+        self.assertEqual([r["npz"] for r in ran[1:]], ["2/edit.npz", "3/edit.npz"])
+        for k, r in zip(("2", "3"), ran[1:], strict=True):
+            rebuilt = apply_npz(rundir / "forward" / k / "edit.npz", WEIGHTS)[GAMMA]
+            self.assertEqual(sha256(rebuilt), r["tensors"][0]["sha256_edited"])
+        self.assertNotEqual(ran[1]["tensors"], ran[2]["tensors"])
+        self.assertEqual(result["passes_used"], 3)
+
+    def test_small_work_files_are_kept_and_nothing_else(self):
+        code = textwrap.dedent("""\
+            import os
+            os.makedirs('sub', exist_ok=True); os.makedirs('fwd_9', exist_ok=True)
+            open('notes.md', 'w').write('finding: 42')
+            open('sub/plan.txt', 'w').write('plan')
+            open('big.bin', 'wb').write(b'x' * (2 << 20))
+            open('pred_1.jsonl', 'w').write('{}')
+            open('fwd_9/a.npy', 'wb').write(b'arr')
+            os.symlink('/etc/hosts', 'hosts_link')
+            open('linked.txt', 'w').write('x'); os.link('linked.txt', 'linked_again.txt')
+            'ok'""")
+        _, result, rundir, _ = self.run_fake([block("python", code), "done"], budget=5, max_turns=2)
+        notes = rundir / "work_notes"
+        kept = sorted(str(p.relative_to(notes)) for p in notes.rglob("*") if p.is_file())
+        self.assertEqual(kept, ["notes.md", "sub/plan.txt"])
+        self.assertEqual((notes / "notes.md").read_text(), "finding: 42")
+        self.assertEqual(sorted(result["work_notes"]["skipped"]),
+                         [["big.bin", f"{2 << 20} bytes"], ["hosts_link", "symlink"],
+                          ["linked.txt", "not a plain file"], ["linked_again.txt", "not a plain file"]])
+
+    def test_the_cli_session_file_is_copied(self):
+        with tempfile.TemporaryDirectory() as config:
+            session = Path(config, "projects", "some-cwd", "fake-session.jsonl")
+            session.parent.mkdir(parents=True)
+            session.write_text('{"type": "assistant"}\n')
+            with mock.patch.dict(os.environ, {"CLAUDE_CONFIG_DIR": config}):
+                _, result, rundir, _ = self.run_fake(["no block", "done"], budget=5, max_turns=2)
+            self.assertTrue(result["cli_session_copied"])
+            self.assertEqual((rundir / "cli_session.jsonl").read_text(), session.read_text())
 
     def test_run_files_are_written_when_the_session_fails(self):
         tmp = tempfile.TemporaryDirectory()

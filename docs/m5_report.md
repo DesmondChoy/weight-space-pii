@@ -229,9 +229,23 @@ After the second lock was committed, Desmond asked for a review of M5. Opus 5.5 
 | The prediction's F1 range, 0.005 to 0.015, did not follow from its own claims | Medium | Fixed in the third lock. It is now 0.002 to 0.011 |
 | 917 ids in `nemotron_eval.jsonl` appear on two rows. Nemotron wrote each template once with a US persona and once with an international one under the same id | Medium | Open for M7, below. The baseline pairs rows by position, so its scores are right |
 | `run_editor.py` checks the settings only when the run is named `p50` | Medium | Open for M7, below |
-| The run folder leaves out records a rerun or audit would need | Medium | Open for M6, below |
+| The run folder leaves out five records an audit would need | Medium | Fixed in the driver, outside the lock. See "Records added to the run folder" below |
 | The test suite shares sandbox folders, so two test runs at once can fail | Low | Not fixed. Run one test process at a time |
 | The cost estimate assumes every turn reads the context from the cache | Low | Not fixed. A slow code run could let the cache expire, which costs a few dollars per miss |
+
+### Records added to the run folder
+
+M4 built the run folder to the list in §2 of the brief, which summarises the paper's logs and leaves out two of the paper's files: the raw event stream of each turn and Opus 5.5's own notes. M4 also never reads `work/` back, because Opus 5.5's code can plant symlinks there. The dry runs made no real edits, so the gaps did not show. The driver now writes five more records:
+
+| Record | Where | Why |
+|---|---|---|
+| The edit each forward pass ran | `forward/<k>/edit_manifest.json`, and `forward/<k>/edit.npz` when the edit changed since the last pass. The manifest names the file that holds its diff | A mid-run result can be checked against the weights that produced it. An `original` pass records no edit |
+| The CLI version and the lock hash | `run.json`, `cli_version` and `lock_sha256` | M7 can tie the run to the locked settings |
+| The CLI's own session file | `cli_session.jsonl` | It holds the served model id and the stop reason of every reply. The CLI keeps it outside the project |
+| Opus 5.5's small files from `work/` | `work_notes/`, with what was left out and why in `run.json` | `notes.md` and Opus 5.5's other files survive a rerun. Files over 1 MB, symlinks and hard links are left out, and the copy never follows a link |
+| A refusal to start `p50` from uncommitted code | `scripts/run_editor.py` | `run.json`'s git commit then names the exact code that ran |
+
+Three tests in [tests/test_harness.py](../tests/test_harness.py) cover them: the per-pass edits rebuild to the hashes in their manifests, only small plain files are copied, and the session file is copied. The refusal was checked on the uncommitted tree.
 
 A turn cap was considered and dropped. The paper's runs had none: a run continued until every pass was used, with only the 300 code runs capped.
 
@@ -240,12 +254,7 @@ A turn cap was considered and dropped. The paper's runs had none: a run continue
 - **M7's scoring must call `wsp.lock.check` and compare the lock hash with `baseline.json`.** The script does not exist yet.
 - **M7 must pair Nemotron rows by position, never by id.** Joining `pred_nemotron_eval.jsonl` by id drops the regression F1 from 0.952 to 0.905. M7 should check that both files have the same rows in the same order.
 - **M7 must compare `run.json` with the locked settings, whatever the run is named.** It should also refuse a run whose `run.json` says the git tree was dirty.
-- **The run folder misses five records a rerun or audit needs.** These are driver changes, outside the lock, and should be made before M6:
-  1. Which edit each forward pass ran. `forward/<k>/` keeps the request and the result but not the edit Opus 5.5 had saved at that moment, so a mid-run pass cannot be checked.
-  2. The CLI version and the lock hash in `run.json`.
-  3. The CLI's own session file. It lives in `~/.claude/projects/`, outside the run folder, and holds the served model id and stop reason of every reply.
-  4. Opus 5.5's notes and small files from `work/`. They stay in `~/wsp-sandbox/p50/` and are wiped if the run is rerun.
-  5. A refusal to start the locked run from a dirty git tree.
+- **M7 should check each forward pass's edit.** Rebuild `forward/<k>/edit.npz` with `apply_npz` and compare the hashes with `forward/<k>/edit_manifest.json`.
 - **A `claude` update blocks M6.** The lock records CLI version 2.1.292. If the CLI updates itself before M6, `run_editor.py` refuses to start, and the M4 context check has to be repeated on the new version before the lock is renewed.
 - **The restart is still unbuilt, and the paper's run needed it.** The paper restarted its conversation every 40 turns, and `p50c` used 4 conversations. At 158 turns this run's context would reach about 605,000 tokens. If that exceeds the window, the CLI compacts the conversation instead, and Opus 5.5 does not see `notes.md` again as the prompt promises. `run.json` records whether compaction happened. The restart is a driver change outside the lock.
 - **The M4 open items about usage limits and daemonized children are unchanged.**

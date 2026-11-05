@@ -9,7 +9,7 @@ import json
 
 from wsp.data import ROOT
 from wsp.harness.box import RUNS_ROOT, setup_box
-from wsp.harness.driver import run
+from wsp.harness.driver import _git_head, run
 from wsp.harness.prompt import render
 from wsp.lock import LOCK, RENDERED_PROMPT, check, run_settings
 
@@ -17,6 +17,8 @@ from wsp.lock import LOCK, RENDERED_PROMPT, check, run_settings
 def check_locked_run(name: str, budget: int, effort: str, max_turns: int | None, overwrite: bool) -> None:
     if not LOCK.exists() or name != (lock := check())["run"]["name"]:
         return
+    if _git_head()["dirty"]:
+        raise RuntimeError(f"the git tree has uncommitted changes; {name} must start from a commit")
     if (RUNS_ROOT / name).exists() and not overwrite:
         raise FileExistsError(f"{RUNS_ROOT / name} exists; pass --overwrite to replace it")
     settings = run_settings(name, budget, effort, max_turns)

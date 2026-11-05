@@ -1,9 +1,11 @@
 """The editor loop: send the task, run each reply's block, reply with the result, and log everything."""
 
+import hashlib
 import json
 import os
 import re
 import shutil
+import stat
 import subprocess
 import time
 import traceback
@@ -14,7 +16,7 @@ from pathlib import Path
 from typing import Protocol
 
 from wsp.data import ROOT, read_jsonl
-from wsp.harness.box import RUNS_ROOT, SANDBOX_ROOT, Box, RunDir, setup_box
+from wsp.harness.box import RUNS_ROOT, SANDBOX_ROOT, Box, RunDir, _rmtree, open_dir, setup_box
 from wsp.harness.edit import write_edit
 from wsp.harness.kernel_host import Kernel
 from wsp.harness.prompt import render
@@ -110,7 +112,7 @@ class Editor:
                 *(["--resume", self.session_id] if resume else ["--session-id", self.session_id])]
 
     def info(self) -> dict:
-        return {"model": self.model, "effort": self.effort, "session_id": self.session_id,
+        return {"model": self.model, "effort": self.effort, "session_id": self.session_id, "cli_version": cli_version(),
                 "cli_command": self.command(resume=False), "cli_env": {"CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1"},
                 "cli_cwd": str(self.cwd)}
 
@@ -154,6 +156,10 @@ class Editor:
             wait = min(wait * 2, self.max_wait)
 
 
+def cli_version() -> str:
+    return subprocess.run(["claude", "--version"], capture_output=True, text=True, check=True).stdout.strip()
+
+
 def session_file(session_id: str) -> Path | None:
     config = Path(os.environ.get("CLAUDE_CONFIG_DIR", Path.home() / ".claude"))
     return next((config / "projects").glob(f"*/{session_id}.jsonl"), None)
@@ -191,6 +197,7 @@ class Loop:
     failed_forwards: int = 0
     invalid_replies: int = 0
     turn: int = 0
+    last_edit: tuple[list, str] | None = None
 
     @property
     def left(self) -> int:
@@ -231,7 +238,9 @@ class Loop:
             return f"No forward passes are left, so nothing was run. {self.final_choice}"
         k = self.passes_used + 1
         try:
-            result = self.server.handle(k, self.server.parse(raw))
+            req = self.server.parse(raw)
+            edit = self._snapshot_edit(req.model)
+            result = self.server.handle(k, req)
         except RequestError as e:
             self.failed_forwards += 1
             self.transcript.log("forward_failed", turn=self.turn, request=raw, reason=str(e))
@@ -243,7 +252,7 @@ class Loop:
                     f"Forward passes left: {self.left}.")
         summary = result.summary
         self.passes_used = k
-        self._save_forward(k, raw, result)
+        self._save_forward(k, raw, result, edit)
         self.transcript.log("forward", turn=self.turn, k=k, request=raw, summary=summary)
         msg = (f"Forward pass {k} of {self.budget} done; per-item results in {summary['pred_file']}. Summary:\n"
                f"```\n{json.dumps(summary, indent=1)}\n```\nForward passes left: {self.left}.")
@@ -251,7 +260,23 @@ class Loop:
             msg += f"\n\nAll {self.budget} forward passes are used. {self.final_choice}"
         return msg
 
-    def _save_forward(self, k: int, raw: str, result: Result) -> None:
+    def _snapshot_edit(self, model: str) -> dict:
+        """The edit this pass is about to run, written to a scratch folder: the manifest, and edit.npz unless the
+        edit is the one the last recorded pass ran. An "original" pass runs no edit."""
+        scratch = self.rundir.root / ".edit_snapshot"
+        _rmtree(scratch)
+        if model == "original":
+            return {"tensors": [], "n_tensors": 0, "entries_changed": 0, "npz": None}
+        try:
+            manifest = write_edit(self.box, self.box.weights, scratch)
+        except Exception as e:
+            return {"error": f"{type(e).__name__}: {e}", "npz": None}
+        if self.last_edit is not None and manifest["tensors"] == self.last_edit[0]:
+            (scratch / "edit.npz").unlink()
+            return {**manifest, "npz": self.last_edit[1]}
+        return {**manifest, "npz": "new"}
+
+    def _save_forward(self, k: int, raw: str, result: Result, edit: dict) -> None:
         d = self.rundir.forward / str(k)
         d.mkdir(parents=True)
         (d / "request.json").write_text(raw + "\n")
@@ -259,6 +284,75 @@ class Loop:
         (d / "pred.jsonl").write_text(result.pred, encoding="utf-8")
         if result.meta is not None:
             (d / "meta.json").write_text(json.dumps(result.meta, ensure_ascii=False) + "\n", encoding="utf-8")
+        if edit["npz"] == "new":
+            os.replace(self.rundir.root / ".edit_snapshot" / "edit.npz", d / "edit.npz")
+            edit = {**edit, "npz": f"{k}/edit.npz"}
+            self.last_edit = (edit["tensors"], edit["npz"])
+        (d / "edit_manifest.json").write_text(json.dumps(edit, indent=1) + "\n")
+
+
+WORK_NOTE_MAX_BYTES = 1 << 20
+WORK_NOTES_MAX_BYTES = 20 << 20
+
+
+def _work_note_skipped(rel: str, is_dir: bool) -> bool:
+    """Files the run folder already holds elsewhere: the edit, each pass's predictions, and its arrays."""
+    top = rel.split("/")[0]
+    return top == "edited" or (is_dir and top.startswith("fwd_")) or (rel == top and top.startswith("pred_"))
+
+
+def copy_work_notes(box: Box, dest: Path) -> dict:
+    """Copy the small regular files in work/ to dest, never following a symlink or reading a hard link, since
+    the kernel controls everything under work/. Returns what was copied and what was left out, and why."""
+    copied, skipped, total = [], [], 0
+
+    def walk(dir_fd: int, prefix: str, depth: int) -> None:
+        nonlocal total
+        for entry in sorted(os.scandir(dir_fd), key=lambda e: e.name):
+            rel = prefix + entry.name
+            if entry.is_symlink():
+                skipped.append([rel, "symlink"])
+            elif entry.is_dir(follow_symlinks=False):
+                if _work_note_skipped(rel, True):
+                    continue
+                if depth >= 8:
+                    skipped.append([rel, "too deep"])
+                    continue
+                fd = os.open(entry.name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=dir_fd)
+                try:
+                    walk(fd, rel + "/", depth + 1)
+                finally:
+                    os.close(fd)
+            elif not _work_note_skipped(rel, False):
+                try:
+                    fd = os.open(entry.name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=dir_fd)
+                except OSError:
+                    skipped.append([rel, "cannot be opened"])
+                    continue
+                with os.fdopen(fd, "rb") as f:
+                    st = os.fstat(fd)
+                    if not stat.S_ISREG(st.st_mode) or st.st_nlink != 1:
+                        skipped.append([rel, "not a plain file"])
+                    elif st.st_size > WORK_NOTE_MAX_BYTES or total + st.st_size > WORK_NOTES_MAX_BYTES:
+                        skipped.append([rel, f"{st.st_size} bytes"])
+                    else:
+                        data = f.read(st.st_size)
+                        (dest / rel).parent.mkdir(parents=True, exist_ok=True)
+                        (dest / rel).write_bytes(data)
+                        copied.append(rel)
+                        total += len(data)
+
+    fd = open_dir(box.root, "work")
+    try:
+        walk(fd, "", 0)
+    finally:
+        os.close(fd)
+    return {"copied": len(copied), "bytes": total, "skipped": skipped}
+
+
+def _lock_sha256() -> str | None:
+    path = ROOT / "lock.json"
+    return hashlib.sha256(path.read_bytes()).hexdigest() if path.is_file() else None
 
 
 def _git_head() -> dict:
@@ -339,12 +433,23 @@ def run(name: str, budget: int, max_turns: int | None = None, effort: str = "max
         raise
     finally:
         kernel.close()
+        _rmtree(rundir.root / ".edit_snapshot")
         if edit is None:
             edit = _write_edit(box, rundir)
         manifest, edit_error = edit
         rundir.final_answer.write_text(
             final.rstrip("\n") + "\n" if final is not None else f"[No final answer: the run stopped with {error}]\n")
+        try:
+            work_notes = copy_work_notes(box, rundir.root / "work_notes")
+        except Exception as e:
+            work_notes = {"error": f"{type(e).__name__}: {e}"}
         info = editor.info()
+        session = session_file(info["session_id"])
+        try:
+            if session is not None:
+                shutil.copyfile(session, rundir.root / "cli_session.jsonl")
+        except OSError:
+            session = None
         result = {
             **info, "budget": budget, "max_turns": max_turns, "turns": loop.turn, "ended_by": ended_by,
             "error": error, "python_runs": loop.python_runs, "passes_used": loop.passes_used,
@@ -353,7 +458,8 @@ def run(name: str, budget: int, max_turns: int | None = None, effort: str = "max
             "wall_seconds": round(time.monotonic() - start, 1), "compacted": compacted(info["session_id"]),
             "cli_retries": editor.retries, "context_check": context is not None,
             "edit": manifest and {k: manifest[k] for k in ("n_tensors", "entries_changed")},
-            "edit_error": edit_error, "git": _git_head(), "box": str(box.root),
+            "edit_error": edit_error, "work_notes": work_notes, "cli_session_copied": session is not None,
+            "lock_sha256": _lock_sha256(), "git": _git_head(), "box": str(box.root),
         }
         rundir.run_json.write_text(json.dumps(result, indent=1) + "\n")
         transcript.close()
