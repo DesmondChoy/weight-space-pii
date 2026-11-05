@@ -1,5 +1,5 @@
 """Generate the figures in the M2 to M5 reports: data_sets, example_rows, label_translation, tax_id_cases,
-harness, edit_checks, lock_checks, set_roles, and baseline_kinds."""
+harness, edit_checks, lock_checks, set_roles, baseline_f1, and baseline_kinds."""
 
 from pathlib import Path
 
@@ -359,43 +359,94 @@ def set_roles():
           "0.674 on the main eval. Nothing is trained in the experiment.", out)
 
 
+def swatch(out, x, y, cls):
+    out.append(f'<g class="{cls}"><rect x="{x}" y="{y - 7}" width="14" height="14" rx="3" stroke-width="0.5"/></g>')
+
+
+def baseline_f1():
+    out = []
+    x0, bw = 330, 520
+
+    def f1_pair(y, sg, nem):
+        for dy, f1, cls in ((0, sg, "c-coral"), (20, nem, "box")):
+            out.append(f'<g class="{cls}"><rect x="{x0}" y="{y + dy}" width="{bw * f1:g}" height="16" rx="3" '
+                       f'stroke-width="0.5"/></g>')
+            text(out, x0 + bw * f1 + 8, y + dy + 8, f"{f1:.3f}", "tv", "start")
+
+    text(out, 40, 22, "Baseline: F1 of the unedited MiniLM on each scored label", "th", "start")
+    text(out, 40, 44, "Measured in M5, before any edit. Each pair compares Singapore test text with test text like "
+         "MiniLM's own training data.", "ts", "start")
+    for x, cls, label in ((40, "c-coral", "Singapore test set (main eval), 5,004 rows"),
+                          (400, "box", "Nemotron held-out test set, 18,515 rows")):
+        swatch(out, x, 74, cls)
+        text(out, x + 22, 74, label, "ts", "start")
+    labels = [("first_name", "6,244 Singapore entities", 0.5796, 0.9847),
+              ("last_name", "5,696 Singapore entities", 0.7431, 0.9835),
+              ("national_id", "1,034 Singapore entities", 0.7374, 0.959)]
+    for i, (name, sub, sg, nem) in enumerate(labels):
+        y = 100 + 52 * i
+        text(out, 40, y + 8, name, "mono", "start")
+        text(out, 40, y + 26, sub, "tl", "start")
+        f1_pair(y, sg, nem)
+    out.append('<path d="M40 258 L900 258" stroke="#E5E3DA" stroke-width="1"/>')
+    text(out, 40, 278, "All three, pooled", "th", "start")
+    text(out, 40, 296, "the gate compares these two", "tl", "start")
+    f1_pair(270, 0.674, 0.9836)
+    text(out, 40, 332, "Pooled F1 counts every entity together, so first_name, with the most entities, pulls it below "
+         "the mean of the three, 0.687.", "ts", "start")
+    text(out, 40, 350, "Gap 0.310. The gate needs more than twice its standard error, 2 × 0.0044 = 0.0087. It passes.",
+         "ts", "start")
+    write("baseline_f1.svg", 960, 372, "Baseline F1 of the unedited MiniLM by scored label",
+          "F1 of the unedited MiniLM, measured in M5, on each scored label, Singapore test set against Nemotron "
+          "held-out test set. first_name 0.580 against 0.985, last_name 0.743 against 0.984, national_id 0.737 against "
+          "0.959. Pooled over the three labels, which is what the gate compares, Singapore scores 0.674 and Nemotron "
+          "0.984, a gap of 0.310, far above the gate's threshold of 0.0087.", out)
+
+
 def baseline_kinds():
     out = []
     x0, bw = 330, 520
-    text(out, 40, 22, "The gate: F1 on the three scored labels", "th", "start")
-    for i, (name, f1, cls) in enumerate((("Singapore main eval, 5,004 rows", 0.674, "c-coral"),
-                                         ("Nemotron held-out, 18,515 rows", 0.984, "box"))):
-        y = 48 + 34 * i
-        text(out, 40, y + 11, name, "ts", "start")
-        out.append(f'<g class="{cls}"><rect x="{x0}" y="{y}" width="{bw * f1:g}" height="22" rx="3" stroke-width="0.5"/></g>')
-        text(out, x0 + bw * f1 + 8, y + 11, f"{f1:.3f}", "tv", "start")
-    text(out, 40, 130, "Gap 0.310. The gate needs more than twice its standard error, 2 × 0.0044 = 0.0087. It passes.",
-         "ts", "start")
-    text(out, 40, 176, "Share of entities MiniLM gets right on the main eval, by kind", "th", "start")
-    kinds = [("NRIC, no tax context", 323, 0.0, True), ("NRIC, tax context", 711, 0.8748, False),
-             ("Given name, several words, later word", 1434, 0.0516, False),
-             ("Given name, one word", 3376, 0.6182, False), ("Given name, several words, first word", 1434, 0.6667, False),
-             ("Surname, one word", 2688, 0.8943, False), ("Surname, several words, first word", 1274, 0.8124, False),
-             ("Surname, several words, later word", 1734, 0.8287, False)]
-    for i, (name, n, share, fixed) in enumerate(kinds):
-        y = 196 + 30 * i
-        text(out, 40, y + 10, f"{name} ({n:,})", "ts", "start")
-        cls = "c-teal" if fixed else "box"
-        out.append(f'<rect x="{x0}" y="{y}" width="{bw}" height="20" rx="3" fill="#FAFAF7" '
-                   f'stroke="{"#0F6E56" if fixed else "#E5E3DA"}" stroke-width="{1 if fixed else 0.5}"/>')
-        if share:
-            out.append(f'<g class="{cls}"><rect x="{x0}" y="{y}" width="{bw * share:g}" height="20" rx="3" '
-                       f'stroke-width="0.5"/></g>')
-        text(out, x0 + bw + 10, y + 10, f"{share:.0%}", "tv", "start")
-    ly = 196 + 30 * len(kinds) + 16
+    text(out, 40, 22, "Baseline: which Singapore entities the unedited MiniLM gets right, by kind", "th", "start")
+    text(out, 40, 44, "Singapore test set (the main eval, 5,004 rows). Each bar is the share of one kind's entities that "
+         "MiniLM tags exactly right.", "ts", "start")
+    text(out, 40, 62, "The misses are not spread evenly: two kinds are almost never right. The prediction says which "
+         "kinds the edit will fix.", "ts", "start")
+    groups = [("national_id", [("NRIC, no tax context", 323, 0.0, True,
+                                "most tagged biometric_identifier (168) or missed (118)"),
+                               ("NRIC, tax context", 711, 0.8748, False, "")]),
+              ("first_name", [("Given name, several words, later word", 1434, 0.0516, False,
+                               "1,227 of 1,434 tagged last_name"),
+                              ("Given name, one word", 3376, 0.6182, False, ""),
+                              ("Given name, several words, first word", 1434, 0.6667, False, "")]),
+              ("last_name", [("Surname, one word", 2688, 0.8943, False, ""),
+                             ("Surname, several words, first word", 1274, 0.8124, False, ""),
+                             ("Surname, several words, later word", 1734, 0.8287, False, "")])]
+    y = 84
+    for label, kinds in groups:
+        text(out, 40, y + 10, label, "mono", "start")
+        y += 26
+        for name, n, share, fixed, note in kinds:
+            text(out, 56, y + 10, f"{name} ({n:,})", "ts", "start")
+            cls = "c-teal" if fixed else "box"
+            out.append(f'<rect x="{x0}" y="{y}" width="{bw}" height="20" rx="3" fill="#FAFAF7" '
+                       f'stroke="{"#0F6E56" if fixed else "#E5E3DA"}" stroke-width="{1 if fixed else 0.5}"/>')
+            if share:
+                out.append(f'<g class="{cls}"><rect x="{x0}" y="{y}" width="{bw * share:g}" height="20" rx="3" '
+                           f'stroke-width="0.5"/></g>')
+            if note:
+                text(out, x0 + bw * share + 10, y + 10, note, "tl", "start")
+            text(out, x0 + bw + 10, y + 10, f"{share:.0%}", "tv", "start")
+            y += 30
+        y += 6
+    ly = y + 10
     for x, cls, label in ((40, "c-teal", "Predicted fixed by the edit"), (280, "box", "Predicted unchanged")):
-        out.append(f'<g class="{cls}"><rect x="{x}" y="{ly - 7}" width="14" height="14" rx="3" stroke-width="0.5"/></g>')
+        swatch(out, x, ly, cls)
         text(out, x + 22, ly, label, "ts", "start")
-    write("baseline_kinds.svg", 960, ly + 22, "Where the unedited MiniLM fails",
-          "Top: on the three scored labels, MiniLM scores F1 0.674 on the Singapore main eval and 0.984 on Nemotron, "
-          "a gap of 0.310, far above the gate's threshold of 0.0087. Bottom: the share of entities right on the main "
-          "eval for each kind. NRICs without tax context are 0% right and are the one kind predicted to be fixed. "
-          "Later words of given names are 5% right. The other kinds are 62% to 89% right.", out)
+    write("baseline_kinds.svg", 960, ly + 22, "Baseline share right by kind of Singapore entity",
+          "The share of entities the unedited MiniLM tags with the exact span and the right label on the Singapore test "
+          "set, the main eval, split by kind and grouped by scored label. NRICs without tax context are 0% right, most "
+          "tagged biometric_identifier or missed, and are the one kind predicted to be fixed. Later words of given "
+          "names are 5% right, 1,227 of 1,434 tagged last_name. The other kinds are 62% to 89% right.", out)
 
 
 data_sets()
@@ -406,4 +457,5 @@ harness()
 edit_checks()
 lock_checks()
 set_roles()
+baseline_f1()
 baseline_kinds()

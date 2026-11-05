@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="960" height="474" viewBox="0 0 960 474" role="img">
-<title>Where the unedited MiniLM fails</title>
-<desc>Top: on the three scored labels, MiniLM scores F1 0.674 on the Singapore main eval and 0.984 on Nemotron, a gap of 0.310, far above the gate's threshold of 0.0087. Bottom: the share of entities right on the main eval for each kind. NRICs without tax context are 0% right and are the one kind predicted to be fixed. Later words of given names are 5% right. The other kinds are 62% to 89% right.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="452" viewBox="0 0 960 452" role="img">
+<title>Baseline share right by kind of Singapore entity</title>
+<desc>The share of entities the unedited MiniLM tags with the exact span and the right label on the Singapore test set, the main eval, split by kind and grouped by scored label. NRICs without tax context are 0% right, most tagged biometric_identifier or missed, and are the one kind predicted to be fixed. Later words of given names are 5% right, 1,227 of 1,434 tagged last_name. The other kinds are 62% to 89% right.</desc>
 <style>
 text { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
 .th { font-size: 14px; font-weight: 500; fill: #2C2C2A; }
@@ -20,49 +20,48 @@ rect.tag { fill: #FBEAF0; stroke: #993556; }
 .ok { font-size: 12px; font-weight: 500; fill: #3B6D11; } .bad { font-size: 12px; font-weight: 500; fill: #A32D2D; }
 </style>
 <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#5F5E5A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
-<rect x="0" y="0" width="960" height="474" fill="#FFFFFF"/>
-<text class="th" x="40" y="22" text-anchor="start" dominant-baseline="central">The gate: F1 on the three scored labels</text>
-<text class="ts" x="40" y="59" text-anchor="start" dominant-baseline="central">Singapore main eval, 5,004 rows</text>
-<g class="c-coral"><rect x="330" y="48" width="350.48" height="22" rx="3" stroke-width="0.5"/></g>
-<text class="tv" x="688.48" y="59" text-anchor="start" dominant-baseline="central">0.674</text>
-<text class="ts" x="40" y="93" text-anchor="start" dominant-baseline="central">Nemotron held-out, 18,515 rows</text>
-<g class="box"><rect x="330" y="82" width="511.68" height="22" rx="3" stroke-width="0.5"/></g>
-<text class="tv" x="849.68" y="93" text-anchor="start" dominant-baseline="central">0.984</text>
-<text class="ts" x="40" y="130" text-anchor="start" dominant-baseline="central">Gap 0.310. The gate needs more than twice its standard error, 2 × 0.0044 = 0.0087. It passes.</text>
-<text class="th" x="40" y="176" text-anchor="start" dominant-baseline="central">Share of entities MiniLM gets right on the main eval, by kind</text>
-<text class="ts" x="40" y="206" text-anchor="start" dominant-baseline="central">NRIC, no tax context (323)</text>
-<rect x="330" y="196" width="520" height="20" rx="3" fill="#FAFAF7" stroke="#0F6E56" stroke-width="1"/>
-<text class="tv" x="860" y="206" text-anchor="start" dominant-baseline="central">0%</text>
-<text class="ts" x="40" y="236" text-anchor="start" dominant-baseline="central">NRIC, tax context (711)</text>
-<rect x="330" y="226" width="520" height="20" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
-<g class="box"><rect x="330" y="226" width="454.896" height="20" rx="3" stroke-width="0.5"/></g>
-<text class="tv" x="860" y="236" text-anchor="start" dominant-baseline="central">87%</text>
-<text class="ts" x="40" y="266" text-anchor="start" dominant-baseline="central">Given name, several words, later word (1,434)</text>
-<rect x="330" y="256" width="520" height="20" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
-<g class="box"><rect x="330" y="256" width="26.832" height="20" rx="3" stroke-width="0.5"/></g>
-<text class="tv" x="860" y="266" text-anchor="start" dominant-baseline="central">5%</text>
-<text class="ts" x="40" y="296" text-anchor="start" dominant-baseline="central">Given name, one word (3,376)</text>
-<rect x="330" y="286" width="520" height="20" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
-<g class="box"><rect x="330" y="286" width="321.464" height="20" rx="3" stroke-width="0.5"/></g>
-<text class="tv" x="860" y="296" text-anchor="start" dominant-baseline="central">62%</text>
-<text class="ts" x="40" y="326" text-anchor="start" dominant-baseline="central">Given name, several words, first word (1,434)</text>
-<rect x="330" y="316" width="520" height="20" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
-<g class="box"><rect x="330" y="316" width="346.684" height="20" rx="3" stroke-width="0.5"/></g>
-<text class="tv" x="860" y="326" text-anchor="start" dominant-baseline="central">67%</text>
-<text class="ts" x="40" y="356" text-anchor="start" dominant-baseline="central">Surname, one word (2,688)</text>
-<rect x="330" y="346" width="520" height="20" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
-<g class="box"><rect x="330" y="346" width="465.036" height="20" rx="3" stroke-width="0.5"/></g>
-<text class="tv" x="860" y="356" text-anchor="start" dominant-baseline="central">89%</text>
-<text class="ts" x="40" y="386" text-anchor="start" dominant-baseline="central">Surname, several words, first word (1,274)</text>
-<rect x="330" y="376" width="520" height="20" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
-<g class="box"><rect x="330" y="376" width="422.448" height="20" rx="3" stroke-width="0.5"/></g>
-<text class="tv" x="860" y="386" text-anchor="start" dominant-baseline="central">81%</text>
-<text class="ts" x="40" y="416" text-anchor="start" dominant-baseline="central">Surname, several words, later word (1,734)</text>
-<rect x="330" y="406" width="520" height="20" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
-<g class="box"><rect x="330" y="406" width="430.924" height="20" rx="3" stroke-width="0.5"/></g>
-<text class="tv" x="860" y="416" text-anchor="start" dominant-baseline="central">83%</text>
-<g class="c-teal"><rect x="40" y="445" width="14" height="14" rx="3" stroke-width="0.5"/></g>
-<text class="ts" x="62" y="452" text-anchor="start" dominant-baseline="central">Predicted fixed by the edit</text>
-<g class="box"><rect x="280" y="445" width="14" height="14" rx="3" stroke-width="0.5"/></g>
-<text class="ts" x="302" y="452" text-anchor="start" dominant-baseline="central">Predicted unchanged</text>
+<rect x="0" y="0" width="960" height="452" fill="#FFFFFF"/>
+<text class="th" x="40" y="22" text-anchor="start" dominant-baseline="central">Baseline: which Singapore entities the unedited MiniLM gets right, by kind</text>
+<text class="ts" x="40" y="44" text-anchor="start" dominant-baseline="central">Singapore test set (the main eval, 5,004 rows). Each bar is the share of one kind's entities that MiniLM tags exactly right.</text>
+<text class="ts" x="40" y="62" text-anchor="start" dominant-baseline="central">The misses are not spread evenly: two kinds are almost never right. The prediction says which kinds the edit will fix.</text>
+<text class="mono" x="40" y="94" text-anchor="start" dominant-baseline="central">national_id</text>
+<text class="ts" x="56" y="120" text-anchor="start" dominant-baseline="central">NRIC, no tax context (323)</text>
+<rect x="330" y="110" width="520" height="20" rx="3" fill="#FAFAF7" stroke="#0F6E56" stroke-width="1"/>
+<text class="tl" x="340" y="120" text-anchor="start" dominant-baseline="central">most tagged biometric_identifier (168) or missed (118)</text>
+<text class="tv" x="860" y="120" text-anchor="start" dominant-baseline="central">0%</text>
+<text class="ts" x="56" y="150" text-anchor="start" dominant-baseline="central">NRIC, tax context (711)</text>
+<rect x="330" y="140" width="520" height="20" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
+<g class="box"><rect x="330" y="140" width="454.896" height="20" rx="3" stroke-width="0.5"/></g>
+<text class="tv" x="860" y="150" text-anchor="start" dominant-baseline="central">87%</text>
+<text class="mono" x="40" y="186" text-anchor="start" dominant-baseline="central">first_name</text>
+<text class="ts" x="56" y="212" text-anchor="start" dominant-baseline="central">Given name, several words, later word (1,434)</text>
+<rect x="330" y="202" width="520" height="20" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
+<g class="box"><rect x="330" y="202" width="26.832" height="20" rx="3" stroke-width="0.5"/></g>
+<text class="tl" x="366.832" y="212" text-anchor="start" dominant-baseline="central">1,227 of 1,434 tagged last_name</text>
+<text class="tv" x="860" y="212" text-anchor="start" dominant-baseline="central">5%</text>
+<text class="ts" x="56" y="242" text-anchor="start" dominant-baseline="central">Given name, one word (3,376)</text>
+<rect x="330" y="232" width="520" height="20" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
+<g class="box"><rect x="330" y="232" width="321.464" height="20" rx="3" stroke-width="0.5"/></g>
+<text class="tv" x="860" y="242" text-anchor="start" dominant-baseline="central">62%</text>
+<text class="ts" x="56" y="272" text-anchor="start" dominant-baseline="central">Given name, several words, first word (1,434)</text>
+<rect x="330" y="262" width="520" height="20" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
+<g class="box"><rect x="330" y="262" width="346.684" height="20" rx="3" stroke-width="0.5"/></g>
+<text class="tv" x="860" y="272" text-anchor="start" dominant-baseline="central">67%</text>
+<text class="mono" x="40" y="308" text-anchor="start" dominant-baseline="central">last_name</text>
+<text class="ts" x="56" y="334" text-anchor="start" dominant-baseline="central">Surname, one word (2,688)</text>
+<rect x="330" y="324" width="520" height="20" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
+<g class="box"><rect x="330" y="324" width="465.036" height="20" rx="3" stroke-width="0.5"/></g>
+<text class="tv" x="860" y="334" text-anchor="start" dominant-baseline="central">89%</text>
+<text class="ts" x="56" y="364" text-anchor="start" dominant-baseline="central">Surname, several words, first word (1,274)</text>
+<rect x="330" y="354" width="520" height="20" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
+<g class="box"><rect x="330" y="354" width="422.448" height="20" rx="3" stroke-width="0.5"/></g>
+<text class="tv" x="860" y="364" text-anchor="start" dominant-baseline="central">81%</text>
+<text class="ts" x="56" y="394" text-anchor="start" dominant-baseline="central">Surname, several words, later word (1,734)</text>
+<rect x="330" y="384" width="520" height="20" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
+<g class="box"><rect x="330" y="384" width="430.924" height="20" rx="3" stroke-width="0.5"/></g>
+<text class="tv" x="860" y="394" text-anchor="start" dominant-baseline="central">83%</text>
+<g class="c-teal"><rect x="40" y="423" width="14" height="14" rx="3" stroke-width="0.5"/></g>
+<text class="ts" x="62" y="430" text-anchor="start" dominant-baseline="central">Predicted fixed by the edit</text>
+<g class="box"><rect x="280" y="423" width="14" height="14" rx="3" stroke-width="0.5"/></g>
+<text class="ts" x="302" y="430" text-anchor="start" dominant-baseline="central">Predicted unchanged</text>
 </svg>

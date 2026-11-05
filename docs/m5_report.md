@@ -19,16 +19,12 @@ The brief and four earlier reports hold the background. This section restates wh
 
 The figure shows points 3 to 6. Read each band from left to right, from source dataset, through the filter, to the set. The top band is Nemotron-PII, MiniLM's own data. Its purple training split shaped MiniLM before this experiment (point 3), and its held-out split becomes the regression check (point 6). The lower two bands are openpii's Singapore rows. The train split gives the green practice set (points 4 and 5), the only set Opus 5.5 can open, and the validation split gives the main eval (point 6). The two red sets are hidden from Opus 5.5.
 
-The dotted line marks M5's part. Everything outside it existed before M5: MiniLM's training, and the filters and samples from M2 and M3. M5 hashes the three sets inside it into `lock.json` and scores the unedited MiniLM on each. The regression check's 0.952 covers all of MiniLM's labels, because an edit could break a label, such as `email`, that the Singapore sets do not score. The gate further down compares the same three labels on both datasets, so it shows Nemotron at 0.984.
+The dotted line marks M5's part. Everything outside it existed before M5: MiniLM's training, and the filters and samples from M2 and M3. M5 hashes the three sets inside it into `lock.json` and scores the unedited MiniLM on each. The regression check's 0.952 covers all of MiniLM's labels, because an edit could break a label, such as `email`, that the Singapore sets do not score. The gate further down compares the same three labels on both datasets, so it shows Nemotron at 0.984. [docs/figures/report_figures.py](figures/report_figures.py) generates this figure and the others in this report.
 
 7. **Three labels count on Singapore text.** They are `first_name`, `last_name` and `national_id`, where `national_id` means an NRIC. M3 set two scoring rules. Names are scored one word at a time, and a `tax_id` tag on an NRIC counts as right.
 8. **M3 found that the NRIC failure depends on the words before it.** When "tax" appears in the 60 characters before an NRIC, MiniLM tags it `tax_id`, which scores as right. Without "tax" there, MiniLM got none of the practice NRICs right. M3 named this the likely target of an edit.
 9. **M4 built the harness and dry-ran it.** The harness is the driver, a sandboxed Python kernel, the forward-pass server, and the `save_edit` rules. Two dry runs with Opus 5.5 showed it works end to end, and recorded the tokens and dollars each turn costs.
 10. **M5's job is to freeze the experiment and measure the starting point.** After M5, nothing that decides a score or what Opus 5.5 sees may change. M5 hashes the sets, the scoring code, the server, the prompt, MiniLM's files, the environment and the baseline code into `lock.json`, together with the settings the run will use. It then scores the unedited MiniLM. That baseline is what M7 compares the edited MiniLM against.
-
-![On the three scored labels MiniLM scores 0.674 on Singapore text and 0.984 on Nemotron, and NRICs without tax context are the one kind at 0%](figures/baseline_kinds.svg)
-
-The second figure shows the baseline. The top two bars are the gate, F1 on the three scored labels for each dataset. The lower bars split the Singapore entities by kind and show the share MiniLM gets right. The bar outlined in green is the one kind the prediction expects the edit to fix. [docs/figures/report_figures.py](figures/report_figures.py) generates both figures and the lock figure below.
 
 ## Decisions
 
@@ -81,6 +77,10 @@ Per label, on the three scored labels:
 | `national_id` | 0.737 | 0.953 | 0.602 | 0.959 |
 | All three | 0.674 | 0.684 | 0.664 | 0.984 |
 
+![Baseline F1 of the unedited MiniLM on each scored label, Singapore against Nemotron: first_name 0.580 against 0.985, last_name 0.743 against 0.984, and national_id 0.737 against 0.959. Pooled over the three labels it scores 0.674 against 0.984, the pair the gate compares](figures/baseline_f1.svg)
+
+This figure draws the per-label table. Each label has a pair of bars, Singapore in red above Nemotron in grey. MiniLM trails on all three labels, and most on `first_name`. The pair below the line pools the three labels, and it is the pair the gate compares. Pooled F1 counts every entity together rather than averaging the three labels. `first_name` has the most entities, so it pulls the pooled score to 0.674, below the mean of the three, 0.687.
+
 On Singapore text, MiniLM makes 5,555 errors. 3,051 are the wrong type, 689 are missed entities, 619 are wrong boundaries, and 1,196 are false positives.
 
 On the practice set the baseline gives F1 0.682, the same value M3 reported. The frozen pipeline reproduces the earlier number.
@@ -100,7 +100,13 @@ The gap is 36 times the stricter threshold, so the reading does not matter.
 
 [src/wsp/outcomes.py](../src/wsp/outcomes.py) records what happened to each gold entity and sorts it by kind. On practice it reproduces M3's numbers exactly: 134 of 159 NRICs right with tax context, 0 of 61 without. Its count of right entities equals the grader's true positives, 1,738 on practice.
 
-On the main eval:
+F1 says how far each label falls short. It does not say which entities MiniLM gets wrong, and the prediction and the edit work at that level. So this section splits each label's entities in the main eval, the Singapore test set, into kinds. A kind is a group of entities that MiniLM might handle differently, such as NRICs with and without the word "tax" before them, or the first and later words of a name.
+
+![Baseline share of Singapore test entities the unedited MiniLM gets exactly right, by kind. NRICs without tax context are 0% right, most tagged biometric_identifier or missed. Later words of given names are 5% right, 1,227 of 1,434 tagged last_name. The other kinds are 62% to 89% right](figures/baseline_kinds.svg)
+
+Each bar is the share of one kind's entities that MiniLM tags exactly right, with the exact span and the right label. The bars are grouped under the label they belong to. The figure uses this share rather than F1 because a false positive has no gold entity, so it belongs to no kind. The misses are not spread evenly. Two kinds are almost never right, and the note on each says what MiniLM outputs instead. The bar outlined in green is the one kind the prediction expects the edit to fix.
+
+The table gives the counts and the most common errors on the main eval:
 
 | Kind | Entities | Right | Most common errors |
 |---|---|---|---|
