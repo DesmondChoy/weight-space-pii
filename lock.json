@@ -48,9 +48,9 @@
    "src/wsp/harness/box.py": "647605f2175f25c28a6bfda272a950e4564037a2ae0a4a1b1f64f23da23ae865"
   },
   "prompt": {
-   "src/wsp/harness/task_prompt.txt": "83b66d0c3e370e6a8e1e13d2c8db3d003af49fa55e7f7a6b47b8ec676f50a2f8",
+   "src/wsp/harness/task_prompt.txt": "e3b92b274f5660ce747789d8b65dd9bb3d5df192873750b8baeaaa072a2a9ed1",
    "src/wsp/harness/prompt.py": "076bba8ee693873dc2356d3c6d814437c7c10c23f8cc1dabc4637b9be41c3a0a",
-   "docs/m5_task_prompt.txt": "03cc7bf84d85d67cbb22a091df02afa3cf9474f773659c6b2c7a002971a0b185"
+   "docs/m5_task_prompt.txt": "f1f5e6a78aec1ee8b55aa031ed1cc7260284e64139e448553eed082e23f62e7f"
   },
   "model": {
    "data/model/config.json": "bb0a4533be0b0b6d294387ed144213546e7bcbfef3d24778d6b7462db6558a0e",

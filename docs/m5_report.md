@@ -39,10 +39,11 @@ These choices fill gaps in the brief. Desmond can change any of them before M6.
 | Gate standard error | "twice its bootstrap standard error" | Check both readings: the Singapore F1's own standard error, and the standard error of the gap. The gate passes only if both pass |
 | Where the prediction lives | The run folder | [docs/m5_prediction.md](m5_prediction.md). `runs/` is gitignored, and the driver refuses to start a run whose folder exists. M6 copies the file into `runs/p50/` |
 | Failing rows to show | Ask Desmond | 12, Desmond's choice |
+| Explaining each step | §6 step 5 opens "Before each code block, explain the step in plain English" | Desmond's choice. The paper's "EXPLAIN EVERY STEP" paragraph replaces that sentence, word for word and from turn 1. The paper added it mid-run, at turn 29 of `p50c`, and its final prompt holds it between HOW TO WORK and RULES, as ours does |
 
 ## The lock
 
-[scripts/freeze.py](../scripts/freeze.py) renders the 50-pass prompt into [docs/m5_task_prompt.txt](m5_task_prompt.txt), then writes `lock.json` through [src/wsp/lock.py](../src/wsp/lock.py). It hashes 25 files in seven groups and records the run settings. `lock.json` has SHA-256 `e62ad21d…5c3b22`, and `runs/base/baseline.json` records the same hash. `wsp.lock.write` refuses to replace an existing lock, so the freeze happens once.
+[scripts/freeze.py](../scripts/freeze.py) renders the 50-pass prompt into [docs/m5_task_prompt.txt](m5_task_prompt.txt), then writes `lock.json` through [src/wsp/lock.py](../src/wsp/lock.py). It hashes 25 files in seven groups and records the run settings. `lock.json` has SHA-256 `6b5d6ba5…0704c8`, and `runs/base/baseline.json` records the same hash. `wsp.lock.write` refuses to replace an existing lock, so the freeze happens once.
 
 The run settings are what `wsp.lock.run_settings` returns. It builds the driver's own `Editor` and takes the exact `claude` command it would run, without the session ID. It adds the environment, the output of `claude --version` (2.1.292), the cap of 300 code runs, the 900 s kernel timeout and the turn cap, which is none. `scripts/run_editor.py` recomputes these for the run it is asked to start. It refuses `p50` if any of them differ, if `runs/p50/` already exists without `--overwrite`, or if the rendered prompt differs from the frozen one. It checks the folder before it touches the box, so an accidental rerun cannot wipe Opus 5.5's `work/` folder. A check against the real lock refused effort `high`, budget 49 and a turn cap of 30, each with the name of the setting that differed, and allowed the locked settings.
 
@@ -50,15 +51,17 @@ The run settings are what `wsp.lock.run_settings` returns. It builds the driver'
 
 This figure shows what the lock covers and who checks it. The purple boxes at the top are seven groups of files and the run settings. All of them go into `lock.json`, one SHA-256 hash per file plus the settings themselves. The three boxes at the bottom are the steps that compare the working tree with `lock.json` before they run. The green ones exist now. `scripts/baseline.py` refuses to score if any file differs. `scripts/run_editor.py` refuses to start the locked run unless its settings match too, and it renders the prompt it would send and compares it with the frozen copy. M7's scoring script does not exist yet and must call the same check.
 
-The rendered prompt matches the M4 dry-run prompt except in two places, the budget (50 instead of 2) and the box name (`p50` instead of `dry2`). The M4 report said these would be the only changes.
+The rendered prompt differs from the M4 dry-run prompt in three ways. The budget is 50 instead of 2, and the box name is `p50` instead of `dry2`, the two changes the M4 report expected. The third is the paper's "EXPLAIN EVERY STEP" paragraph, added by the fourth freeze below.
 
 `wsp.lock.check` compares every hash and the Node version, and raises with a list of what differs. [tests/test_lock.py](../tests/test_lock.py) covers an unchanged tree, a changed file, a missing file, and a second freeze.
 
-### The lock was written three times
+### The lock was written four times
 
 The first freeze hashed 22 files in six groups. An independent review found that it left out the run settings, so `--effort high` would have passed every check. It also left out the code that defines the prediction's categories. Nothing was committed, so M5 deleted the first lock and froze again with the settings and the `baseline` group added. All 22 hashes from the first lock are unchanged in the second. The baseline was rerun against the second lock and gave identical scores, gate and per-kind tables.
 
 The second lock was committed. A later review, described under "Second review" below, found two flaws in the prediction. Desmond approved a third freeze to fix them before M6, since M6 has not run and the prediction still comes before any result. Two files changed. `docs/m5_prediction.md` got the fixes, and `scripts/baseline.py` now records the Python, PyTorch and Transformers versions, the platform and the thread count in `baseline.json`. The other 23 hashes and the run settings are unchanged, and the rendered prompt is byte for byte the same. The baseline rerun against the third lock gave MiniLM predictions with the same SHA-256 on all three sets, and identical scores, gate and per-kind tables.
+
+A comparison of our prompt with the paper's found that the paper's final prompt, `exp8_math/runs/p50c/message.txt`, holds an "EXPLAIN EVERY STEP" paragraph that its first-turn prompt, the one the brief adapted, does not. Desmond approved a fourth freeze to add it. The paragraph asks for 3 to 8 sentences before every block and a summary of the path to the edits in the final answer. Two files changed, the template `src/wsp/harness/task_prompt.txt` and the rendered `docs/m5_task_prompt.txt`. The paragraph matches the paper's character for character. The run settings are unchanged, and the baseline rerun gave the same prediction hashes and identical scores again. The paper also sent back a block that came without an explanation, at most twice in a row. That check is still unbuilt, as the M4 report lists, so the paragraph is an instruction only.
 
 ## Baseline
 
