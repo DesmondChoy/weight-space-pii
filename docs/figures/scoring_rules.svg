@@ -1,0 +1,194 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="1160" viewBox="0 0 960 1160" role="img">
+<title>Scoring rules the editor must be told about</title>
+<desc>Top: the editor reads the task prompt, the practice rows and the grades from the forward-pass server. The server calls wsp.score.grade, which applies three rules and also scores the hidden M5 and M7 sets. Middle: two practice rows. In the first, a two-word given name scores 3 of 4 words right with the name split and 0 of 2 read literally. In the second, a tax_id prediction on an NRIC counts as right and a national_id prediction on an ignored ID card number is dropped. Bottom: practice F1 is 0.682 with all three rules and 0.416 without them.</desc>
+<style>
+text { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+.h1 { font-size: 17px; font-weight: 600; fill: #2C2C2A; }
+.th { font-size: 14px; font-weight: 500; fill: #2C2C2A; }
+.ts { font-size: 12px; fill: #5F5E5A; }
+.tl { font-size: 11px; fill: #5F5E5A; }
+.tv { font-size: 12px; font-weight: 500; fill: #2C2C2A; }
+.tc { font-size: 12px; fill: #0F6E56; text-anchor: middle; }
+.tr { font-size: 12px; fill: #993C1D; text-anchor: start; }
+.big { font-size: 15px; font-weight: 600; }
+.ok { fill: #3B6D11; font-size: 13px; font-weight: 600; } .bad { fill: #A32D2D; font-size: 13px; font-weight: 600; }
+.big.ok, .big.bad { font-size: 15px; }
+.mono { font-family: Menlo, Consolas, "DejaVu Sans Mono", monospace; font-size: 13px; fill: #2C2C2A; }
+.bt { font-size: 11px; font-weight: 700; fill: #FFFFFF; }
+.badge { fill: #2C2C2A; }
+.box rect { fill: #F1EFE8; stroke: #888780; }
+.arr { stroke: #5F5E5A; stroke-width: 1.5; fill: none; }
+.c-teal rect { fill: #E1F5EE; stroke: #0F6E56; } .c-teal .th { fill: #085041; } .c-teal .ts { fill: #0F6E56; }
+.c-coral rect, rect.c-coral { fill: #FAECE7; stroke: #993C1D; } .c-coral .th { fill: #712B13; } .c-coral .ts { fill: #993C1D; }
+.c-purple rect, rect.c-purple { fill: #EEEDFE; stroke: #534AB7; } .c-purple .th { fill: #3C3489; } .c-purple .ts { fill: #534AB7; }
+rect.c-gray { fill: #D3D1C7; stroke: #888780; }
+rect.first { fill: #E6F1FB; stroke: #185FA5; } text.first { fill: #0C447C; }
+rect.last { fill: #FAEEDA; stroke: #854F0B; } text.last { fill: #633806; }
+rect.nric { fill: #FBEAF0; stroke: #993556; } text.nric { fill: #72243E; }
+rect.skip { fill: #F1EFE8; stroke: #888780; } text.skip { fill: #5F5E5A; }
+</style>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#5F5E5A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+<rect x="0" y="0" width="960" height="1160" fill="#FFFFFF"/>
+<text class="h1" x="20" y="24" text-anchor="start" dominant-baseline="central">How the editor's grades are scored, and what the M4 prompt must tell it</text>
+<text class="ts" x="20" y="48" text-anchor="start" dominant-baseline="central">M3 added three scoring rules. Every grade the editor gets applies them, so the task prompt has to state them.</text>
+<text class="th" x="20" y="84" text-anchor="start" dominant-baseline="central">Where the rules live</text>
+<text class="tc" x="400" y="84" text-anchor="start" dominant-baseline="central">Editor can see</text>
+<text class="tr" x="780" y="84" text-anchor="start" dominant-baseline="central">Hidden from editor</text>
+<g class="c-teal"><rect x="20" y="104" width="270" height="66" rx="8" stroke-width="0.5"/>
+<text class="th" x="155" y="122" text-anchor="middle" dominant-baseline="central">§6 task prompt, filled in at M4</text>
+<text class="ts" x="155" y="142" text-anchor="middle" dominant-baseline="central">Brief says: exact span and type</text>
+<text class="ts" x="155" y="158" text-anchor="middle" dominant-baseline="central">M4 adds: rules 1, 2 and 3</text>
+</g>
+<g class="c-teal"><rect x="20" y="190" width="270" height="66" rx="8" stroke-width="0.5"/>
+<text class="th" x="155" y="208" text-anchor="middle" dominant-baseline="central">Practice rows, sg_train.jsonl</text>
+<text class="ts" x="155" y="228" text-anchor="middle" dominant-baseline="central">id, text, spans</text>
+<text class="ts" x="155" y="244" text-anchor="middle" dominant-baseline="central">plus ignore spans, new in M3</text>
+</g>
+<g class="c-teal"><rect x="330" y="104" width="150" height="152" rx="8" stroke-width="0.5"/>
+<text class="th" x="405" y="122" text-anchor="middle" dominant-baseline="central">Editor</text>
+<text class="ts" x="405" y="142" text-anchor="middle" dominant-baseline="central">Opus 5.5</text>
+<text class="ts" x="405" y="158" text-anchor="middle" dominant-baseline="central"></text>
+<text class="ts" x="405" y="174" text-anchor="middle" dominant-baseline="central">reads the prompt,</text>
+<text class="ts" x="405" y="190" text-anchor="middle" dominant-baseline="central">the rows and</text>
+<text class="ts" x="405" y="206" text-anchor="middle" dominant-baseline="central">every grade</text>
+</g>
+<g class="box"><rect x="560" y="104" width="180" height="56" rx="8" stroke-width="0.5"/>
+<text class="th" x="650" y="122" text-anchor="middle" dominant-baseline="central">Forward-pass server</text>
+<text class="ts" x="650" y="142" text-anchor="middle" dominant-baseline="central">built in M4</text>
+</g>
+<g class="c-purple"><rect x="560" y="196" width="180" height="108" rx="8" stroke-width="0.5"/>
+<text class="th" x="650" y="214" text-anchor="middle" dominant-baseline="central">wsp.score.grade</text>
+<text class="ts" x="650" y="234" text-anchor="middle" dominant-baseline="central">1. Split names into words</text>
+<text class="ts" x="650" y="250" text-anchor="middle" dominant-baseline="central">2. tax_id on an NRIC counts</text>
+<text class="ts" x="650" y="266" text-anchor="middle" dominant-baseline="central">3. Drop guesses on ignore</text>
+<text class="ts" x="650" y="282" text-anchor="middle" dominant-baseline="central">then exact span and type</text>
+</g>
+<g class="c-coral"><rect x="790" y="196" width="150" height="48" rx="8" stroke-width="0.5"/>
+<text class="th" x="865" y="214" text-anchor="middle" dominant-baseline="central">M5 baseline</text>
+<text class="ts" x="865" y="234" text-anchor="middle" dominant-baseline="central">main eval, Nemotron</text>
+</g>
+<g class="c-coral"><rect x="790" y="256" width="150" height="48" rx="8" stroke-width="0.5"/>
+<text class="th" x="865" y="274" text-anchor="middle" dominant-baseline="central">M7 evaluation</text>
+<text class="ts" x="865" y="294" text-anchor="middle" dominant-baseline="central">edited against base</text>
+</g>
+<path d="M290 137 L328 137" class="arr" marker-end="url(#arrow)"/>
+<path d="M290 223 L328 223" class="arr" marker-end="url(#arrow)"/>
+<path d="M480 122 L558 122" class="arr" marker-end="url(#arrow)"/>
+<text class="tl" x="519" y="112" text-anchor="middle" dominant-baseline="central">request</text>
+<path d="M560 144 L482 144" class="arr" marker-end="url(#arrow)"/>
+<text class="tl" x="521" y="156" text-anchor="middle" dominant-baseline="central">grades</text>
+<path d="M650 160 L650 194" class="arr" marker-end="url(#arrow)"/>
+<text class="tl" x="658" y="177" text-anchor="start" dominant-baseline="central">calls</text>
+<path d="M790 220 L742 220" class="arr" marker-end="url(#arrow)"/>
+<path d="M790 280 L742 280" class="arr" marker-end="url(#arrow)"/>
+<line x1="765" y1="96" x2="765" y2="312" stroke="#888780" stroke-width="1" stroke-dasharray="4 4"/>
+<circle cx="290" cy="104" r="10" class="badge"/>
+<text class="bt" x="290" y="104" text-anchor="middle" dominant-baseline="central">A</text>
+<circle cx="290" cy="190" r="10" class="badge"/>
+<text class="bt" x="290" y="190" text-anchor="middle" dominant-baseline="central">B</text>
+<circle cx="632" cy="177" r="10" class="badge"/>
+<text class="bt" x="632" y="177" text-anchor="middle" dominant-baseline="central">C</text>
+<text class="ts" x="60" y="336" text-anchor="start" dominant-baseline="central">The prompt must state rules 1 to 3. Without them, the grades the editor gets contradict the rule it was given.</text>
+<text class="ts" x="60" y="360" text-anchor="start" dominant-baseline="central">The prompt must say that each practice row has an ignore list, and what a span in it means.</text>
+<text class="ts" x="60" y="384" text-anchor="start" dominant-baseline="central">The server must call wsp.score.grade, not its own copy, so practice grades follow the same rules as M5 and M7.</text>
+<circle cx="40" cy="336" r="10" class="badge"/>
+<text class="bt" x="40" y="336" text-anchor="middle" dominant-baseline="central">A</text>
+<circle cx="40" cy="360" r="10" class="badge"/>
+<text class="bt" x="40" y="360" text-anchor="middle" dominant-baseline="central">B</text>
+<circle cx="40" cy="384" r="10" class="badge"/>
+<text class="bt" x="40" y="384" text-anchor="middle" dominant-baseline="central">C</text>
+<rect x="20" y="420" width="920" height="250" rx="10" fill="#FAFAF7" stroke="#E5E3DA"/>
+<text class="th" x="36" y="442" text-anchor="start" dominant-baseline="central">Rule 1. Each name is scored one word at a time</text>
+<text class="ts" x="36" y="460" text-anchor="start" dominant-baseline="central">Practice row sg-24731778, which the editor can read</text>
+<text class="th" x="36" y="496" text-anchor="start" dominant-baseline="central">In the file</text>
+<text class="ts" x="36" y="513" text-anchor="start" dominant-baseline="central">openpii's spans</text>
+<rect class="first" x="273.8" y="491" width="152.2" height="22" rx="4" stroke-width="1"/>
+<text class="tl first" x="349.9" y="524" text-anchor="middle" dominant-baseline="central">first_name, one span</text>
+<rect class="last" x="429.8" y="491" width="121" height="22" rx="4" stroke-width="1"/>
+<text class="tl last" x="490.3" y="524" text-anchor="middle" dominant-baseline="central">last_name, one span</text>
+<text class="mono" x="190" y="502" dominant-baseline="central" textLength="452.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">full name (Dragos-Costin Keyfo Alhadeff Hachen), birthdate</text>
+<text class="th" x="36" y="556" text-anchor="start" dominant-baseline="central">Model output</text>
+<text class="ts" x="36" y="573" text-anchor="start" dominant-baseline="central">one entity per word</text>
+<rect class="first" x="273.8" y="551" width="105.4" height="22" rx="4" stroke-width="1"/>
+<text class="tl first" x="326.5" y="584" text-anchor="middle" dominant-baseline="central">first_name</text>
+<rect class="last" x="383" y="551" width="43" height="22" rx="4" stroke-width="1"/>
+<text class="tl last" x="404.5" y="584" text-anchor="middle" dominant-baseline="central">last_name</text>
+<rect class="last" x="429.8" y="551" width="66.4" height="22" rx="4" stroke-width="1"/>
+<text class="tl last" x="463" y="584" text-anchor="middle" dominant-baseline="central">last_name</text>
+<rect class="last" x="500" y="551" width="50.8" height="22" rx="4" stroke-width="1"/>
+<text class="tl last" x="525.4" y="584" text-anchor="middle" dominant-baseline="central">last_name</text>
+<text class="mono" x="190" y="562" dominant-baseline="central" textLength="452.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">full name (Dragos-Costin Keyfo Alhadeff Hachen), birthdate</text>
+<text class="th" x="36" y="616" text-anchor="start" dominant-baseline="central">Grader scores</text>
+<text class="ts" x="36" y="633" text-anchor="start" dominant-baseline="central">gold split into words</text>
+<rect class="first" x="273.8" y="611" width="105.4" height="22" rx="4" stroke-width="1"/>
+<text class="ok" x="326.5" y="644" text-anchor="middle" dominant-baseline="central">✓</text>
+<rect class="first" x="383" y="611" width="43" height="22" rx="4" stroke-width="1"/>
+<text class="bad" x="404.5" y="644" text-anchor="middle" dominant-baseline="central">✗</text>
+<rect class="last" x="429.8" y="611" width="66.4" height="22" rx="4" stroke-width="1"/>
+<text class="ok" x="463" y="644" text-anchor="middle" dominant-baseline="central">✓</text>
+<rect class="last" x="500" y="611" width="50.8" height="22" rx="4" stroke-width="1"/>
+<text class="ok" x="525.4" y="644" text-anchor="middle" dominant-baseline="central">✓</text>
+<text class="mono" x="190" y="622" dominant-baseline="central" textLength="452.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">full name (Dragos-Costin Keyfo Alhadeff Hachen), birthdate</text>
+<text class="big ok" x="680" y="494" text-anchor="start" dominant-baseline="central">3 of 4 right</text>
+<text class="ts" x="680" y="514" text-anchor="start" dominant-baseline="central">with rule 1, which the server reports</text>
+<text class="big bad" x="680" y="544" text-anchor="start" dominant-baseline="central">0 of 2 right</text>
+<text class="ts" x="680" y="564" text-anchor="start" dominant-baseline="central">read literally: no whole name matches</text>
+<text class="ts" x="680" y="596" text-anchor="start" dominant-baseline="central">The one real error is Keyfo, a given name</text>
+<text class="ts" x="680" y="612" text-anchor="start" dominant-baseline="central">typed as last_name. Without rule 1, the</text>
+<text class="ts" x="680" y="628" text-anchor="start" dominant-baseline="central">editor would chase openpii's B-I tags,</text>
+<text class="ts" x="680" y="644" text-anchor="start" dominant-baseline="central">which the score doesn't reward.</text>
+<rect x="20" y="690" width="920" height="300" rx="10" fill="#FAFAF7" stroke="#E5E3DA"/>
+<text class="th" x="36" y="712" text-anchor="start" dominant-baseline="central">Rules 2 and 3. Two ID numbers in one row</text>
+<text class="ts" x="36" y="730" text-anchor="start" dominant-baseline="central">Practice row sg-24844004. The row's ignore list holds the ID card number</text>
+<text class="th" x="36" y="766" text-anchor="start" dominant-baseline="central">In the file</text>
+<text class="ts" x="36" y="783" text-anchor="start" dominant-baseline="central">spans and ignore</text>
+<rect class="skip" x="344" y="761" width="82" height="22" rx="4" stroke-width="1" stroke-dasharray="4 3"/>
+<text class="tl skip" x="385" y="794" text-anchor="middle" dominant-baseline="central">ignore: IDCARDNUM</text>
+<rect class="nric" x="492.2" y="761" width="74.2" height="22" rx="4" stroke-width="1"/>
+<text class="tl nric" x="529.3" y="794" text-anchor="middle" dominant-baseline="central">national_id, an NRIC</text>
+<text class="mono" x="190" y="772" dominant-baseline="central" textLength="374.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">5. IDs: National ID XCN5487R2W, Tax ID T3215794T</text>
+<text class="th" x="36" y="826" text-anchor="start" dominant-baseline="central">Model output</text>
+<text class="ts" x="36" y="843" text-anchor="start" dominant-baseline="central">follows the words</text>
+<rect class="nric" x="344" y="821" width="82" height="22" rx="4" stroke-width="1"/>
+<text class="tl nric" x="385" y="854" text-anchor="middle" dominant-baseline="central">national_id</text>
+<rect class="nric" x="492.2" y="821" width="74.2" height="22" rx="4" stroke-width="1"/>
+<text class="tl nric" x="529.3" y="854" text-anchor="middle" dominant-baseline="central">tax_id</text>
+<text class="mono" x="190" y="832" dominant-baseline="central" textLength="374.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">5. IDs: National ID XCN5487R2W, Tax ID T3215794T</text>
+<text class="th" x="36" y="886" text-anchor="start" dominant-baseline="central">Grader scores</text>
+<text class="ts" x="36" y="903" text-anchor="start" dominant-baseline="central">after rules 2 and 3</text>
+<rect class="skip" x="344" y="881" width="82" height="22" rx="4" stroke-width="1" stroke-dasharray="4 3"/>
+<text class="tl skip" x="385" y="914" text-anchor="middle" dominant-baseline="central">not counted, rule 3</text>
+<rect class="nric" x="492.2" y="881" width="74.2" height="22" rx="4" stroke-width="1"/>
+<text class="tl nric" x="529.3" y="914" text-anchor="middle" dominant-baseline="central">✓ national_id, rule 2</text>
+<text class="mono" x="190" y="892" dominant-baseline="central" textLength="374.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">5. IDs: National ID XCN5487R2W, Tax ID T3215794T</text>
+<text class="big ok" x="680" y="764" text-anchor="start" dominant-baseline="central">1 right, 0 false positives</text>
+<text class="ts" x="680" y="784" text-anchor="start" dominant-baseline="central">with rules 2 and 3</text>
+<text class="big bad" x="680" y="814" text-anchor="start" dominant-baseline="central">0 right, 1 false positive</text>
+<text class="ts" x="680" y="834" text-anchor="start" dominant-baseline="central">read literally</text>
+<text class="ts" x="680" y="866" text-anchor="start" dominant-baseline="central">Rule 2. The text says Tax ID, and the model</text>
+<text class="ts" x="680" y="882" text-anchor="start" dominant-baseline="central">follows it. On practice, 134 of 159 NRICs</text>
+<text class="ts" x="680" y="898" text-anchor="start" dominant-baseline="central">after "tax" are right, and 0 of the other 61.</text>
+<text class="ts" x="680" y="922" text-anchor="start" dominant-baseline="central">Rule 3. M2 dropped ID card, passport and</text>
+<text class="ts" x="680" y="938" text-anchor="start" dominant-baseline="central">licence numbers. A guess on one counts neither</text>
+<text class="ts" x="680" y="954" text-anchor="start" dominant-baseline="central">way: national_id false positives, 65 to 5.</text>
+<text class="th" x="20" y="1020" text-anchor="start" dominant-baseline="central">What each rule changes on the whole practice set</text>
+<text class="ts" x="20" y="1038" text-anchor="start" dominant-baseline="central">Base model on all 1,000 practice rows. The predictions are the same in every bar. Only the scoring rules change.</text>
+<text class="ts" x="36" y="1064" text-anchor="start" dominant-baseline="central">All three rules (the server)</text>
+<rect class="c-purple" x="250" y="1058" width="354.64" height="12" rx="2" stroke-width="0.5"/>
+<text class="tv" x="610.64" y="1064" text-anchor="start" dominant-baseline="central">0.682</text>
+<text class="ts" x="36" y="1080" text-anchor="start" dominant-baseline="central">Without rule 1, name split</text>
+<rect class="c-gray" x="250" y="1074" width="243.88" height="12" rx="2" stroke-width="0.5"/>
+<text class="tv" x="499.88" y="1080" text-anchor="start" dominant-baseline="central">0.469</text>
+<text class="tl" x="650" y="1080" text-anchor="start" dominant-baseline="central">names: first 0.59 → 0.45, last 0.75 → 0.44</text>
+<text class="ts" x="36" y="1096" text-anchor="start" dominant-baseline="central">Without rule 2, tax_id</text>
+<rect class="c-gray" x="250" y="1090" width="335.92" height="12" rx="2" stroke-width="0.5"/>
+<text class="tv" x="591.92" y="1096" text-anchor="start" dominant-baseline="central">0.646</text>
+<text class="tl" x="650" y="1096" text-anchor="start" dominant-baseline="central">national_id 0.75 → 0.00</text>
+<text class="ts" x="36" y="1112" text-anchor="start" dominant-baseline="central">Without rule 3, ignore spans</text>
+<rect class="c-gray" x="250" y="1106" width="350.48" height="12" rx="2" stroke-width="0.5"/>
+<text class="tv" x="606.48" y="1112" text-anchor="start" dominant-baseline="central">0.674</text>
+<text class="tl" x="650" y="1112" text-anchor="start" dominant-baseline="central">national_id 0.75 → 0.64</text>
+<text class="ts" x="36" y="1128" text-anchor="start" dominant-baseline="central">None of them (brief's wording)</text>
+<rect class="c-coral" x="250" y="1122" width="216.32" height="12" rx="2" stroke-width="0.5"/>
+<text class="tv" x="472.32" y="1128" text-anchor="start" dominant-baseline="central">0.416</text>
+</svg>

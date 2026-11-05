@@ -11,7 +11,7 @@ from collections import Counter, defaultdict
 
 from wsp.data import ROOT, SETS, Doc, Span, read_jsonl
 from wsp.predict import load, predict
-from wsp.score import NAME_LABELS, SG_LABELS, accepts, split_names
+from wsp.score import NAME_LABELS, SG_LABELS, scored_label, split_names
 
 SEED = 20261104
 PER_SET = 6
@@ -47,6 +47,10 @@ def outcomes(d: Doc, pred: list[Span]) -> list[tuple[Span, Span, str]]:
     return out
 
 
+def correct(d: Doc, word: Span, got: str) -> bool:
+    return scored_label(d.text, Span(word.start, word.end, got), SG_LABELS) == word.label
+
+
 def pick(docs: list[Doc], rng: random.Random) -> list[Doc]:
     pool = [d for d in docs if len(d.text) <= MAX_CHARS and d.spans]
     rng.shuffle(pool)
@@ -66,7 +70,7 @@ def render(name: str, d: Doc, rows: list[tuple[Span, Span, str]], expected: dict
     for g, w, got in rows:
         exp = expected.get(position(d, g, w), "no prior")
         lines.append(f"| `{d.value(g)}` | `{g.label}` | `{d.value(w)}` | {exp} | {got} | "
-                     f"{'yes' if accepts(w.label, got, SG_LABELS) else 'no'} |")
+                     f"{'yes' if correct(d, w, got) else 'no'} |")
     return lines + [""]
 
 
@@ -89,7 +93,7 @@ def main() -> None:
     body, hits, total = [], 0, 0
     for i, ((name, d), pred) in enumerate(zip(picked, preds), 1):
         rows = outcomes(d, pred)
-        hits += sum(accepts(w.label, got, SG_LABELS) for _, w, got in rows)
+        hits += sum(correct(d, w, got) for _, w, got in rows)
         total += len(rows)
         body += render(f"{i}. {name}", d, rows, expected)
 

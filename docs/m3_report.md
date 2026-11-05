@@ -4,6 +4,29 @@ M3 builds the three sets the experiment uses, writes the scoring code, tests it 
 
 Status: complete, 2026-11-04. Desmond reviewed the gold labels and the label map and made the decisions below. Committed as `0a4019f` on `main`.
 
+## How the model, the data, and the grader fit together
+
+M3 grades the model by comparing its tags with openpii's answer key. Each step below depends on the one before it.
+
+1. **The model tags words.** `MiniLM-L6-finetuned-pii-detection` is a small BERT-style network. It reads a text and gives each word one tag. The tag is either "not personal information" or one of 55 types, such as `first_name`, `phone_number`, `national_id`, and `tax_id`. The model does not write a masked text. Masking is a separate step that replaces each tagged word with a placeholder, and this experiment never runs it.
+2. **The model learned from American data.** Its training data is Nemotron-PII, which uses made-up US personas. In that data, `national_id` and `tax_id` are different numbers. The word before the number, "national" or "tax", tells them apart. The training data holds 64 NRIC-shaped numbers, and almost all of them follow the word "national".
+3. **The Singapore data has its own answer key.** The Singapore rows come from openpii. Each row marks its personal information with openpii's own type names, such as `GIVENNAME`, `SURNAME`, and `TAXNUM`.
+4. **We translate the answer key, not the model.** To grade the model, we rewrite openpii's types in the model's names. `GIVENNAME` becomes `first_name`, `SURNAME` becomes `last_name`, and `TAXNUM` becomes `national_id`. The model's 55 tag types never change. The editor may change only the weights, and everything else stays fixed, so a change in score can come only from an edit.
+5. **openpii files NRICs as tax numbers.** Every `TAXNUM` value is an NRIC, such as `G6346291N`, and no other openpii type holds one. In Singapore, the NRIC is also the tax reference number. So openpii's sentences read like "review the tax details under G6346291N". In this experiment, `national_id` means NRIC.
+6. **The model often calls an NRIC `tax_id`.** The model sees the word "tax" and answers `tax_id`. That answer agrees with the sentence, but the answer key says `national_id`. The grader is strict. A tag counts only if its words and its type both match the answer key.
+7. **The grader accepts `tax_id` for NRICs, and only for NRICs.** Desmond decided to accept either type. The grader treats a `tax_id` tag on an NRIC-shaped value, a letter, seven digits, and a letter, as a `national_id` tag. That tag is correct where the answer key has an NRIC, and it is a mistake anywhere else. A `tax_id` tag on any other value gets no credit. So in the Nemotron check, a `tax_id` tag on an American ID number still counts as wrong.
+8. **No wrong answer is free.** In M4 to M6, an AI editor changes the weights to raise this score. If a wrong answer costs nothing, the editor can make the model guess more often. The score would keep the correct guesses and ignore the wrong ones. So step 7 gives a `tax_id` tag on an NRIC-shaped value the same cost as a `national_id` tag, and gives a `tax_id` tag on any other value no credit.
+
+![openpii's labels are renamed to the model's labels, the model's tags stay fixed, and the grader compares the two](figures/label_translation.svg)
+
+The first figure shows which way the translation in step 4 goes. openpii's labels move to the model's names, and the model's tags stay as they are.
+
+![Three tax_id tags: on a real NRIC it is correct, on an NRIC-shaped value the key does not mark it is a false positive, and on a US ID number it is the wrong type](figures/tax_id_cases.svg)
+
+The second figure shows the three cases of step 7. [docs/figures/report_figures.py](figures/report_figures.py) generates both figures.
+
+One question stays open. The model fails on NRICs that have no ID word before them. It may have learned the NRIC shape weakly, or only together with the word "national". The experiment tests that hypothesis. It is not a finding yet.
+
 ## Decisions
 
 Desmond made these decisions on 2026-11-04. They override the brief and the M2 report where the documents differ.
@@ -12,7 +35,7 @@ Desmond made these decisions on 2026-11-04. They override the brief and the M2 r
 |---|---|---|
 | Multi-word names | M2 said M3 would move no gold span boundary | Scoring splits every `first_name` and `last_name` entity into one entity per whitespace-separated word, on both the gold side and the predicted side, before strict matching. `national_id` is never split |
 | Review rows | The brief says to ask | 12 rows: 6 practice rows and 6 main-eval rows |
-| NRIC type | M2 accepted only `national_id` | A prediction of `tax_id` with an NRIC's exact span also counts as correct. The rule applies only when `tax_id` is not itself scored, so the all-label regression check on Nemotron stays strict |
+| NRIC type | M2 accepted only `national_id` | A predicted `tax_id` on an NRIC-shaped value is scored as `national_id`. It counts as correct on a gold NRIC and as a false positive anywhere else. A `tax_id` on any other value gets no credit. The rule is off when `tax_id` is itself scored, so the all-label regression check on Nemotron stays strict |
 | Other ID numbers | M2 dropped `IDCARDNUM`, `PASSPORTNUM`, `DRIVERLICENSENUM`, and `SOCIALNUM` | Their spans become ignore spans. A scored prediction that overlaps an ignore span and matches no gold entity counts neither as right nor as wrong |
 
 The set files keep openpii's span boundaries. The split happens only inside `wsp.score.grade`, so the rule lives in one place. The M4 forward-pass server and the M5 and M7 scoring all use that function.
@@ -91,7 +114,7 @@ The protocol lives in [src/wsp/score.py](../src/wsp/score.py) and [src/wsp/predi
 2. Take the argmax label of each token. A word takes the label of its first subtoken.
 3. Repair BIO tags. An `I-X` tag continues an entity only after `B-X` or `I-X`. Otherwise it starts a new entity. Each entity spans from the start of its first word to the end of its last word.
 4. Split every `first_name` and `last_name` entity into one entity per whitespace-separated word, on both the gold and the predicted side.
-5. Give a predicted `tax_id` the label `national_id` where it has the exact span of a gold `national_id`, unless `tax_id` is itself scored. `wsp.score.accepts` holds this rule.
+5. Score each predicted `tax_id` on an NRIC-shaped value as `national_id`, unless `tax_id` is itself scored. `wsp.score.scored_label` holds this rule.
 6. Drop each scored prediction that overlaps an ignore span and matches no gold entity.
 7. Count an entity as correct only if its span and its type both match a gold entity exactly. Report strict micro F1, precision, and recall, overall and per label.
 
@@ -112,7 +135,7 @@ To make `wsp` importable under `python -I`, `pyproject.toml` now has a `uv_build
 
 ### Metric tests
 
-[tests/test_score.py](../tests/test_score.py) holds 27 tests, and all of them pass:
+[tests/test_score.py](../tests/test_score.py) holds 29 tests, and all of them pass:
 
 ```bash
 uv run python -I -m unittest discover -s tests
@@ -144,6 +167,13 @@ The reviewer found three gaps, which M3 fixed:
 2. On Nemotron, a scored prediction over a gold span of an unscored label fell into no failure kind. It now counts as `false_positive`. The Singapore sets hold only scored gold labels, so their counts do not change.
 3. The bootstrap held every resample in memory at once, which peaked at 3.3 GB on Nemotron. It now draws resamples in blocks of 100.
 
+A second review, by Codex, found two problems in the first version of the `tax_id` rule. M3 fixed both, and the report now states the training-data explanation as a hypothesis:
+
+1. The rule credited a `tax_id` only where it matched a gold NRIC and discarded every other `tax_id`. One correct NRIC plus one false alarm therefore scored F1 1.0 as `tax_id` but 0.67 as `national_id`. The rule now scores every `tax_id` on an NRIC-shaped value as `national_id`, so false alarms count.
+2. The rule credited `tax_id` on any gold `national_id`, including Nemotron's non-NRIC values such as `123-45-6789`, which would have loosened the M5 gate. The rule now applies only to NRIC-shaped values.
+
+Both fixes leave the practice scores and the review rows unchanged, because the base model makes neither error on practice. Two new tests reproduce Codex's cases.
+
 ## Review rows
 
 [docs/m3_review.md](m3_review.md) renders the 12 review rows, generated by [scripts/review.py](../scripts/review.py). Rows 1 to 6 come from the practice set and rows 7 to 12 from the main eval. Each half covers one-word and multi-word given names, one-word and multi-word surnames, and NRICs.
@@ -172,11 +202,11 @@ On the practice set, the base model labels no NRIC as `national_id`. It gets 0 o
 
 The text explains the choice. openpii's generator fills `TAXNUM` slots with NRICs, so it writes the context around them as tax context. In the main eval, 711 of 1,034 NRICs (69%) have the word "tax" within the 60 characters before them, as in "your tax identifier M6750544C". Only 24 (2%) have "NRIC" or "IC" there. When the model answers `tax_id`, it follows the sentence. The M2 map calls these values `national_id` because of their shape.
 
-This matters for the brief's hypothesis. The brief reads the NRIC result as an obstacle: the model detects NRICs but types them wrongly. On this data, most of the "wrong" type agrees with the text. An edit that turns these predictions into `national_id` would teach the model to trust the NRIC shape over the words around it.
+This matters for the brief's hypothesis. The brief reads the NRIC result as an obstacle: the model detects NRICs but types them wrongly. On this data, most of the "wrong" type agrees with the text. Scoring only `national_id` as correct would reward an edit for overriding the words around the number with the NRIC shape.
 
-### The training data explains the `tax_id` answers
+### The training data is consistent with a context-word rule
 
-The model learned which ID label to use from the words before the number, and it never learned the NRIC shape. Nemotron's held-out rows come from the same data as the model's training rows, so they show what the model was taught:
+The training data suggests that the model picks an ID label from the words before the number. Nemotron's held-out rows come from the same data as the model's training rows:
 
 | Nemotron label | Spans | NRIC-shaped values | "national" in the 60 characters before | "tax" in the 60 characters before | Common value shapes |
 |---|---|---|---|---|---|
@@ -185,9 +215,11 @@ The model learned which ID label to use from the words before the number, and it
 | `biometric_identifier` | 1,972 | 0 | 9 | 1 | `BIO-7426598130`, `H73942561890` |
 | `health_plan_beneficiary_number` | 1,587 | 0 | 2 | 0 | `AET-7283-1594-37`, `G123456789A` |
 
-In training, a number after the word "national" is a `national_id`, and a number after "tax" is a `tax_id`. The value shapes overlap, so the context word decides. The model saw almost no NRIC-shaped values. The closest shapes it saw, a letter followed by digits, belong to `biometric_identifier` and `health_plan_beneficiary_number`. That matches the M1 probe, where `NRIC T0234567J` came out as `health_plan_beneficiary_number`.
+In this data, a number after the word "national" is a `national_id`, and a number after "tax" is a `tax_id`. The value shapes overlap, so only the context word separates the two labels. Other letter-and-digit shapes, such as `H73942561890` and `G123456789A`, belong to `biometric_identifier` and `health_plan_beneficiary_number`. In the M1 probe, `NRIC T0234567J` came out as `health_plan_beneficiary_number`.
 
-The NRIC case therefore has two parts. Where the text says "tax", the model follows its training, and `tax_id` is a fair answer. Where the text gives no ID word, the model falls back on shape, and it has never learned the NRIC shape. Only the second part is missing knowledge in the brief's sense.
+The model did see NRIC shapes in training. We rebuilt the model's 180,000 training rows with the split in `fetch.py`. They hold 64 NRIC-shaped spans in 59 rows, and 61 of the spans fall inside the 512-token limit. 55 are labelled `national_id` and 9 `tax_id`. 54 of the 64 follow the word "national". So the training data paired NRIC shapes with an explicit context word almost every time, and rarely showed one on its own.
+
+The NRIC case therefore has two parts. Where the text says "tax", the model's `tax_id` answer agrees with the text. Where the text gives no ID word, the model gets the type wrong. One explanation is that the model learned the NRIC shape weakly or only together with the word "national". That is a hypothesis. Seeing 61 examples does not prove the model learned the shape, and failing on no-context NRICs does not prove it lacks the shape. The editor's causal tests, or our own after M7, have to settle it.
 
 Desmond decided to accept `tax_id` as well as `national_id` for an NRIC. Under that rule, the practice NRICs split cleanly by context:
 
@@ -196,7 +228,7 @@ Desmond decided to accept `tax_id` as well as `national_id` for an NRIC. Under t
 | "tax" in the 60 characters before | 159 | 134 | 84% |
 | No "tax" there | 61 | 0 | 0% |
 
-Of the 86 NRICs the model still gets wrong, 42 come out as `biometric_identifier`, 22 are missed, and the rest scatter across 11 other ID types and boundary errors. The no-tax group is where an edit has to add knowledge of the NRIC shape. It is a candidate for the M7 mechanism metric.
+Of the 86 NRICs the model still gets wrong, 42 come out as `biometric_identifier`, 22 are missed, and the rest scatter across 11 other ID types and boundary errors. The no-tax group holds the failure an edit would most need to fix. It is a candidate for the M7 mechanism metric.
 
 ### The model's `national_id` predictions land on IDs that M2 dropped
 

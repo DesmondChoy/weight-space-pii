@@ -79,6 +79,19 @@ class Alias(unittest.TestCase):
     def test_tax_id_needs_the_exact_span(self):
         self.assertEqual(score([NRIC], [at("is S1234567D", "tax_id")]), (Tally(0, 0, 1), {"wrong_boundary": 1}))
 
+    def test_tax_id_false_alarm_on_an_nric_shape_is_a_false_positive(self):
+        text = "IDs S1234567D and T7654321A."
+        doc = Doc("t", text, (Span(4, 13, "national_id"),))
+        for label in ("national_id", "tax_id"):
+            gr = grade(doc, [Span(4, 13, label), Span(18, 27, label)], SG_LABELS)
+            self.assertEqual((gr.total, dict(gr.failures)), (Tally(1, 1, 0), {"false_positive": 1}), label)
+
+    def test_tax_id_gets_no_credit_on_a_non_nric_national_id(self):
+        text = "SSN 123-45-6789."
+        doc = Doc("t", text, (Span(4, 15, "national_id"),))
+        gr = grade(doc, [Span(4, 15, "tax_id")], SG_LABELS)
+        self.assertEqual((gr.total, dict(gr.failures)), (Tally(0, 0, 1), {"wrong_type": 1}))
+
     def test_tax_id_never_stands_in_for_a_name(self):
         self.assertEqual(score([SURNAME], [at("Tan", "tax_id")]), (Tally(0, 0, 1), {"wrong_type": 1}))
 

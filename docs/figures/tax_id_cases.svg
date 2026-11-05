@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="310" viewBox="0 0 960 310" role="img">
+<title>How the grader treats a tax_id tag</title>
+<desc>Three cases. A tax_id tag on a real NRIC is read as national_id and counts as correct. A tax_id tag on an NRIC-shaped value that the answer key does not mark is read as national_id and counts as a false positive. A tax_id tag on a US ID number is not NRIC-shaped, stays tax_id, and counts as the wrong type.</desc>
+<style>
+text { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+.th { font-size: 14px; font-weight: 500; fill: #2C2C2A; }
+.ts { font-size: 12px; fill: #5F5E5A; }
+.tl { font-size: 11px; fill: #5F5E5A; }
+.mono { font-family: Menlo, Consolas, "DejaVu Sans Mono", monospace; font-size: 13px; fill: #2C2C2A; }
+.box rect { fill: #F1EFE8; stroke: #888780; }
+.arr { stroke: #5F5E5A; stroke-width: 1.5; fill: none; }
+.c-teal rect, rect.c-teal { fill: #E1F5EE; stroke: #0F6E56; } .c-teal .th { fill: #085041; } .c-teal .ts { fill: #0F6E56; }
+.c-coral rect, rect.c-coral { fill: #FAECE7; stroke: #993C1D; } .c-coral .th { fill: #712B13; } .c-coral .ts { fill: #993C1D; }
+rect.sc { fill: #E1F5EE; stroke: #0F6E56; } text.sc { fill: #085041; font-weight: 500; }
+rect.dr { fill: none; stroke: #888780; stroke-dasharray: 4 3; }
+.c-purple rect { fill: #EEEDFE; stroke: #534AB7; } .c-purple .th { fill: #3C3489; } .c-purple .ts { fill: #534AB7; }
+.card { fill: #FAFAF7; stroke: #E5E3DA; }
+rect.tag { fill: #FBEAF0; stroke: #993556; }
+.tv { font-size: 12px; font-weight: 500; fill: #2C2C2A; }
+.ok { font-size: 12px; font-weight: 500; fill: #3B6D11; } .bad { font-size: 12px; font-weight: 500; fill: #A32D2D; }
+</style>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#5F5E5A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+<rect x="0" y="0" width="960" height="310" fill="#FFFFFF"/>
+<text class="th" x="40" y="22" text-anchor="start" dominant-baseline="central">How the grader treats a tax_id tag</text>
+<text class="ts" x="40" y="42" text-anchor="start" dominant-baseline="central">The grader reads a tax_id tag as national_id only when the tagged text is NRIC-shaped, a letter, seven digits, and a letter.</text>
+<rect class="card" x="40" y="64" width="280" height="226" rx="10" stroke-width="1"/>
+<text class="th" x="56" y="90" text-anchor="start" dominant-baseline="central">A real NRIC</text>
+<rect class="tag" x="225.6" y="115" width="74.2" height="22" rx="4" stroke-width="1"/>
+<text class="mono" x="56" y="126" dominant-baseline="central" textLength="241.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">the tax details under G6346291N</text>
+<line x1="56" y1="153" x2="304" y2="153" stroke="#E5E3DA" stroke-width="1"/>
+<text class="ts" x="56" y="168" text-anchor="start" dominant-baseline="central">Model's tag</text>
+<text class="tv" x="304" y="168" text-anchor="end" dominant-baseline="central">tax_id</text>
+<line x1="56" y1="183" x2="304" y2="183" stroke="#E5E3DA" stroke-width="1"/>
+<text class="ts" x="56" y="198" text-anchor="start" dominant-baseline="central">Answer key</text>
+<text class="tv" x="304" y="198" text-anchor="end" dominant-baseline="central">national_id</text>
+<line x1="56" y1="213" x2="304" y2="213" stroke="#E5E3DA" stroke-width="1"/>
+<text class="ts" x="56" y="228" text-anchor="start" dominant-baseline="central">Grader reads</text>
+<text class="tv" x="304" y="228" text-anchor="end" dominant-baseline="central">national_id</text>
+<line x1="56" y1="243" x2="304" y2="243" stroke="#E5E3DA" stroke-width="1"/>
+<text class="ts" x="56" y="258" text-anchor="start" dominant-baseline="central">Result</text>
+<text class="ok" x="304" y="258" text-anchor="end" dominant-baseline="central">correct</text>
+<rect class="card" x="340" y="64" width="280" height="226" rx="10" stroke-width="1"/>
+<text class="th" x="356" y="90" text-anchor="start" dominant-baseline="central">An NRIC the key doesn't mark</text>
+<rect class="tag" x="494.4" y="115" width="74.2" height="22" rx="4" stroke-width="1"/>
+<text class="mono" x="356" y="126" dominant-baseline="central" textLength="218.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">IDs S1234567D and T7654321A.</text>
+<line x1="356" y1="153" x2="604" y2="153" stroke="#E5E3DA" stroke-width="1"/>
+<text class="ts" x="356" y="168" text-anchor="start" dominant-baseline="central">Model's tag</text>
+<text class="tv" x="604" y="168" text-anchor="end" dominant-baseline="central">tax_id</text>
+<line x1="356" y1="183" x2="604" y2="183" stroke="#E5E3DA" stroke-width="1"/>
+<text class="ts" x="356" y="198" text-anchor="start" dominant-baseline="central">Answer key</text>
+<text class="tv" x="604" y="198" text-anchor="end" dominant-baseline="central">nothing here</text>
+<line x1="356" y1="213" x2="604" y2="213" stroke="#E5E3DA" stroke-width="1"/>
+<text class="ts" x="356" y="228" text-anchor="start" dominant-baseline="central">Grader reads</text>
+<text class="tv" x="604" y="228" text-anchor="end" dominant-baseline="central">national_id</text>
+<line x1="356" y1="243" x2="604" y2="243" stroke="#E5E3DA" stroke-width="1"/>
+<text class="ts" x="356" y="258" text-anchor="start" dominant-baseline="central">Result</text>
+<text class="bad" x="604" y="258" text-anchor="end" dominant-baseline="central">mistake, a false positive</text>
+<rect class="card" x="640" y="64" width="280" height="226" rx="10" stroke-width="1"/>
+<text class="th" x="656" y="90" text-anchor="start" dominant-baseline="central">A US ID number in Nemotron</text>
+<rect class="tag" x="685.2" y="115" width="89.8" height="22" rx="4" stroke-width="1"/>
+<text class="mono" x="656" y="126" dominant-baseline="central" textLength="124.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">SSN 123-45-6789.</text>
+<line x1="656" y1="153" x2="904" y2="153" stroke="#E5E3DA" stroke-width="1"/>
+<text class="ts" x="656" y="168" text-anchor="start" dominant-baseline="central">Model's tag</text>
+<text class="tv" x="904" y="168" text-anchor="end" dominant-baseline="central">tax_id</text>
+<line x1="656" y1="183" x2="904" y2="183" stroke="#E5E3DA" stroke-width="1"/>
+<text class="ts" x="656" y="198" text-anchor="start" dominant-baseline="central">Answer key</text>
+<text class="tv" x="904" y="198" text-anchor="end" dominant-baseline="central">national_id</text>
+<line x1="656" y1="213" x2="904" y2="213" stroke="#E5E3DA" stroke-width="1"/>
+<text class="ts" x="656" y="228" text-anchor="start" dominant-baseline="central">Grader reads</text>
+<text class="tv" x="904" y="228" text-anchor="end" dominant-baseline="central">tax_id, not NRIC-shaped</text>
+<line x1="656" y1="243" x2="904" y2="243" stroke="#E5E3DA" stroke-width="1"/>
+<text class="ts" x="656" y="258" text-anchor="start" dominant-baseline="central">Result</text>
+<text class="bad" x="904" y="258" text-anchor="end" dominant-baseline="central">mistake, wrong type</text>
+</svg>

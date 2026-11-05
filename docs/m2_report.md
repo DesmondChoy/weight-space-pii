@@ -4,6 +4,32 @@ M2 profiles the openpii Singapore rows in both splits and proposes the scope for
 
 Status: complete, 2026-11-04. Committed as `e96b30d` on `main`.
 
+## What the experiment scores, and on which data
+
+M2 decides which rows the experiment uses and which labels it scores. Each step below depends on the one before it.
+
+1. **The model learned from American data, and we test it on Singapore data.** The model's training data is Nemotron-PII, which uses made-up US personas. The Singapore data is the Singapore rows of openpii, `ai4privacy/pii-masking-openpii-1.5m`. openpii has two splits. `train` holds 20,225 Singapore rows, and `validation` holds 5,005.
+2. **A program wrote openpii, not a person.** A generator wrote each text, filled in made-up values, and marked where each value sits. Those marks are the gold spans, the answer key that scoring compares the model's tags against. Because the generator placed every value itself, it misses none. It does draw some boundaries that a person would not. For example, it marks `Singapore Jalan Kayu Estate Jalan Kayu Estate` as one city.
+3. **The experiment uses three sets, and each set has one job.** The editor sees only the first one.
+   - The practice set is 1,000 rows from openpii `train`. The editor reads these rows and their answer key, and grades its edits on them.
+   - The main eval is every usable `validation` row, 5,004 in all. At M7 it measures whether the edit helped on Singapore text.
+   - The regression check is 18,515 rows of the model's held-out Nemotron data. At M7 it scores all 55 of the model's types, to show that the edit did not break anything on American text.
+4. **The filter keeps the sets apart.** It drops rows longer than 512 tokens, which is the most the model reads at once. It drops duplicate texts. It also drops each `train` row whose text or template appears in `validation`, so the editor never practises on a copy of a test row.
+5. **Both test sets use every row, for statistical power.** The brief asked for 1,000 main-eval rows, which would hold about 207 NRICs. All 5,004 rows hold 1,034. A larger set gives a smaller standard error, so a real gain from the edit is easier to tell apart from noise. Scoring stays cheap, at about 10 s per model for the main eval.
+6. **Only three labels count toward the score.** They are `first_name`, `last_name`, and `national_id`. M2 first proposed 13 labels. Desmond narrowed them to three, to keep the experiment small and to match insurance, where some labels such as `DATE` are not treated as PII. The NRIC is the case this data can test, because the model finds NRICs but gives them the wrong type. The [left-out labels table](#score-names-and-nrics-only) gives the reason for each other label. For example, no openpii phone number has a real Singapore format.
+7. **`national_id` means NRIC.** Every openpii `TAXNUM` value is NRIC-shaped, a letter, seven digits, and a letter, such as `G6346291N`. No other openpii label holds an NRIC. `IDCARDNUM` values are random 10-character strings such as `598QI5X2NW`, so they stay out of `national_id`.
+8. **Names are the hard part to score.** About 30% of openpii's name spans have more than one word, as in `Enie Idilia`. The model learned from Nemotron, where almost every name is one word, and it tags each word of a multi-word name as a separate name. Strict scoring would then mark almost every multi-word name as wrong. M2 left this problem for M3.
+
+![Three sources pass the filter into three sets, and the editor sees only the practice set](figures/data_sets.svg)
+
+The first figure shows where each set comes from. The editor sees only the practice set, above the dashed line. The main eval and the regression check stay hidden until M5 and M7.
+
+![Two main-eval rows with every answer-key span marked as scored or not scored](figures/example_rows.svg)
+
+The second figure shows two main-eval rows as openpii marks them. The green spans hold the three scored labels, renamed to the model's names. The dashed spans keep openpii's label and are not scored. [docs/figures/report_figures.py](figures/report_figures.py) generates both figures.
+
+M3 later changed three of these decisions. It splits every name into words before scoring. It accepts a `tax_id` tag on an NRIC. It also stops counting tags on the other ID numbers, such as `IDCARDNUM`, as mistakes. The [M3 report](m3_report.md) records the rules.
+
 ## Decisions
 
 Desmond made these decisions on 2026-11-04. They override the brief's §3 where the two differ.

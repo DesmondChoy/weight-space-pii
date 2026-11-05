@@ -2,8 +2,8 @@
 
 Word tags come from the argmax label of each word's first subtoken. Decoding turns word tags into
 entities. Scoring splits every first_name and last_name entity into one entity per
-whitespace-separated word, on both the gold and the predicted side. A predicted tax_id on an NRIC's
-exact span counts as national_id, and scored predictions inside a document's ignore spans are dropped.
+whitespace-separated word, on both the gold and the predicted side. A predicted tax_id on an
+NRIC-shaped value counts as national_id, and scored predictions inside a document's ignore spans are dropped.
 An entity is then correct only if its span and its type both match exactly.
 """
 
@@ -18,8 +18,7 @@ from wsp.data import Doc, Span
 NAME_LABELS = frozenset({"first_name", "last_name"})
 SG_LABELS = ("first_name", "last_name", "national_id")
 FAILURES = ("missed", "wrong_type", "wrong_boundary", "false_positive")
-# NRICs sit in tax context in openpii, so a predicted tax_id is an accepted type for a gold national_id.
-ALIASES = {"tax_id": "national_id"}
+NRIC = re.compile(r"[STFGM]\d{7}[A-Z]")
 WORD = re.compile(r"\S+")
 
 
@@ -80,12 +79,16 @@ class Grade:
         return sum(self.by_label.values(), Tally())
 
 
-def accepts(gold: str, pred: str, labels: tuple[str, ...]) -> bool:
-    """Whether a prediction with label `pred` and a gold entity's exact span counts as that gold entity.
+def scored_label(text: str, pred: Span, labels: tuple[str, ...]) -> str:
+    """The label a prediction is scored as. A tax_id on an NRIC-shaped value is scored as national_id.
 
-    An alias counts only when it is not itself a scored label, so the all-label regression check stays strict.
+    openpii puts NRICs in tax context, so tax_id is a fair type for them. The rule is off when tax_id is
+    itself scored, so the all-label regression check stays strict.
     """
-    return pred == gold or (ALIASES.get(pred) == gold and pred not in labels)
+    if (pred.label == "tax_id" and "tax_id" not in labels and "national_id" in labels
+            and NRIC.fullmatch(text[pred.start:pred.end])):
+        return "national_id"
+    return pred.label
 
 
 def _overlaps(a: Span, b: Span) -> bool:
@@ -95,7 +98,7 @@ def _overlaps(a: Span, b: Span) -> bool:
 def grade(doc: Doc, pred: list[Span], labels: tuple[str, ...]) -> Grade:
     """Score one document over `labels`.
 
-    A prediction that `accepts` allows for a gold entity's exact span takes that entity's label.
+    Each prediction is first relabelled by `scored_label`.
     A scored prediction that overlaps one of the document's `ignore` spans and matches no gold entity
     is dropped before counting, so it is neither right nor wrong.
 
@@ -106,11 +109,7 @@ def grade(doc: Doc, pred: list[Span], labels: tuple[str, ...]) -> Grade:
     """
     gold_all = split_names(doc.text, doc.spans)
     g = {s for s in gold_all if s.label in labels}
-    gold_label = {(s.start, s.end): s.label for s in g}
-    pred_all = []
-    for s in split_names(doc.text, pred):
-        lab = gold_label.get((s.start, s.end))
-        pred_all.append(Span(s.start, s.end, lab) if lab and accepts(lab, s.label, labels) else s)
+    pred_all = [Span(s.start, s.end, scored_label(doc.text, s, labels)) for s in split_names(doc.text, pred)]
     p = {s for s in pred_all if s.label in labels and (s in g or not any(_overlaps(s, i) for i in doc.ignore))}
     pred_by_span = {(s.start, s.end) for s in pred_all}
     failures = Counter()
