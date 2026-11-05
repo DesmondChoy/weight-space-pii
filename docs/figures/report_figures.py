@@ -1,4 +1,5 @@
-"""Generate the figures in the M2 and M3 reports: data_sets, example_rows, label_translation, and tax_id_cases."""
+"""Generate the figures in the M2, M3 and M4 reports: data_sets, example_rows, label_translation, tax_id_cases,
+harness, and edit_checks."""
 
 from pathlib import Path
 
@@ -181,7 +182,77 @@ def tax_id_cases():
           "A tax_id tag on a US ID number is not NRIC-shaped, stays tax_id, and counts as the wrong type.", out)
 
 
+def harness():
+    out = []
+    box(out, 40, 165, 190, 80, "Opus 5.5", ["writes text only,", "has no tools"], "c-purple")
+    out.append('<path d="M232 192 L318 192" class="arr" marker-end="url(#arrow)"/>')
+    out.append('<path d="M318 222 L232 222" class="arr" marker-end="url(#arrow)"/>')
+    text(out, 275, 178, "reply", "tl")
+    text(out, 275, 238, "result", "tl")
+    box(out, 320, 150, 200, 110, "Driver", ["takes one block per reply,", "runs it, sends back", "the result, logs it all"])
+    out.append('<rect class="dr" x="600" y="20" width="330" height="210" rx="10" stroke-width="1.5"/>')
+    text(out, 616, 38, "srt sandbox", "th", "start")
+    text(out, 712, 38, "no network, no GPU, no other files", "tl", "start")
+    box(out, 620, 56, 290, 70, "Python kernel", ["runs ```python blocks", "save_edit checks the edit rules"])
+    for x, name, sub in ((620, "model/", "read only"), (720, "practice/", "read only"), (820, "work/", "read and write")):
+        box(out, x, 146, 90, 60, name, [sub], "c-teal")
+    box(out, 620, 262, 290, 90, "Forward-pass server", ["the only way MiniLM runs", "re-checks every edit in work/",
+                                                        "grades with wsp.score"], "c-purple")
+    out.append('<path d="M522 182 L618 96" class="arr" marker-end="url(#arrow)"/>')
+    out.append('<path d="M522 238 L618 300" class="arr" marker-end="url(#arrow)"/>')
+    text(out, 548, 122, "```python", "tl")
+    text(out, 548, 288, "```forward", "tl")
+    out.append('<path d="M865 260 L865 208" class="arr" marker-end="url(#arrow)" marker-start="url(#arrow)"/>')
+    text(out, 857, 244, "reads edits, writes results", "tl", "end")
+    box(out, 620, 376, 290, 56, "Main eval and regression check", ["hidden: nothing above can open them"], "c-coral")
+    ly = 412
+    for x, cls, label in ((40, "c-teal", "Opus 5.5's code can reach"), (240, "c-coral", "Hidden from Opus 5.5")):
+        out.append(f'<rect class="{cls}" x="{x}" y="{ly - 7}" width="14" height="14" rx="3" stroke-width="0.5"/>')
+        text(out, x + 22, ly, label, "ts", "start")
+    text(out, 40, 462, "Same workflow as the paper's Experiment 8, where Astra ran through the Codex CLI with its tools off.",
+         "th", "start")
+    text(out, 40, 482, "The paper did not publish its harness code, so this code is our rebuild of that workflow.",
+         "ts", "start")
+    write("harness.svg", 960, 504, "How a run works",
+          "This is the same workflow as the paper's Experiment 8, rebuilt because the paper did not publish its "
+          "harness code. "
+          "Opus 5.5 writes text only. The driver takes one block from each reply, runs it, and sends back the result. "
+          "A python block runs in the Python kernel inside the srt sandbox, which can read model/ and practice/ and "
+          "write work/, and nothing else. A forward block goes to the forward-pass server outside the sandbox, the "
+          "only way MiniLM runs. It re-checks the edits in work/, runs MiniLM, and grades with wsp.score. The main "
+          "eval and the regression check are hidden.", out)
+
+
+def edit_checks():
+    out = []
+    flow = [(40, 170, "Opus 5.5's code", ["in the kernel"], "box"),
+            (270, 190, "save_edit", ["check 1: refuses with", "a message"], "c-purple"),
+            (520, 150, "work/edited/", ["one file per tensor"], "c-teal"),
+            (730, 190, "Server re-check", ["check 2: before every forward", "pass and at the final answer"], "c-purple")]
+    for x, w, title, lines, cls in flow:
+        box(out, x, 40, w, 76, title, lines, cls)
+    for x0, x1 in ((212, 268), (462, 518), (672, 728)):
+        out.append(f'<path d="M{x0} 78 L{x1} 78" class="arr" marker-end="url(#arrow)"/>')
+    out.append('<path d="M125 118 L125 152 L595 152 L595 120" class="arr" stroke-dasharray="5 4" '
+               'marker-end="url(#arrow)"/>')
+    text(out, 360, 166, "code that writes a file directly skips check 1, so check 2 catches it", "tl")
+    text(out, 40, 204, "Both checks refuse the same three kinds of edit:", "th", "start")
+    rules = [("Embeddings", ["any tensor named *embeddings*"]),
+             ("Classification head", ["classifier.weight, classifier.bias"]),
+             ("Whole-tensor multiply", ["one scale factor explains 99%", "or more of the change"])]
+    for i, (title, lines) in enumerate(rules):
+        box(out, 40 + 300 * i, 222, 280, 76, title, lines, "c-coral")
+    write("edit_checks.svg", 960, 318, "Where the edit rules are checked",
+          "Opus 5.5's code saves an edit with save_edit, which is check 1. The edit goes to work/edited/. The "
+          "forward-pass server re-checks every file there before each forward pass and at the final answer, which is "
+          "check 2, so code that writes a file directly and skips save_edit is still caught. Both checks refuse edits "
+          "to the embeddings, edits to the classification head, and edits that one scale factor explains 99% or more "
+          "of.", out)
+
+
 data_sets()
 example_rows()
 label_translation()
 tax_id_cases()
+harness()
+edit_checks()

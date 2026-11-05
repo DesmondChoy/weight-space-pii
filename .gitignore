@@ -3,3 +3,4 @@ data/*
 !data/revisions.json
 !data/sets.json
 __pycache__/
+runs/

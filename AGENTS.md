@@ -25,6 +25,16 @@ The brief requires a stop at the end of every milestone. Show the user what the 
 
 Each milestone ends with its own report at `docs/m<N>_report.md`, in the style of [docs/m1_report.md](docs/m1_report.md).
 
+## Opening a milestone report
+
+A reader opens a report to understand one milestone without rereading the brief and every earlier report. So each report opens, right after its title, one-paragraph summary and status line, with a refresher section and at least one figure. [docs/m4_report.md](docs/m4_report.md) shows the pattern.
+
+- **Write a refresher section.** Title it for what the reader needs, such as "What you need to know first". Write it as a numbered list, where each step builds on the one before. Restate only what this milestone depends on: the experiment's question, decisions from earlier reports, and the terms the rest of the report uses. End with the milestone's own job. Bold each step's first sentence.
+- **Name the actors plainly.** Say "Opus 5.5" for the model that edits and "MiniLM" for the model being edited. Explain any role name from the brief, such as "the editor", the first time it appears.
+- **Add at least one figure.** Draw what the milestone builds or decides, such as how the parts connect, where a rule applies, or how data flows. Generate each figure as an SVG from a script in `docs/figures/`. Add new figures to [docs/figures/report_figures.py](docs/figures/report_figures.py), which holds the shared style. Never edit an SVG by hand.
+- **Explain each figure.** Give it alt text that states what it shows. Follow it with a short paragraph that says how to read it. Name the script that generates it.
+- **Check each figure.** Open the rendered SVG at full width and make sure no text overlaps or is cut off. Rerun the script and confirm the existing figures don't change.
+
 ## Environment
 
 - Python is managed with `uv`, and every dependency is pinned in `pyproject.toml` and `uv.lock`. Run scripts with `uv run python -I scripts/<name>.py`.
