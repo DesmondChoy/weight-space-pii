@@ -2,7 +2,7 @@
 
 M4 builds the harness that Opus 5.5 works through when it edits MiniLM, and tests it end to end. The harness has five parts: a sandboxed Python kernel, the `save_edit` refusals, a forward-pass server, the driver around the `claude` CLI, and per-run logging. It follows §2 and §7 of [weight-space-pii-handoff.md](weight-space-pii-handoff.md), with the decisions in the [M3 report](m3_report.md).
 
-Status: complete, 2026-11-05, pending Desmond's review of the items under "Show me". Not committed yet.
+Status: complete, 2026-11-05. Desmond reviewed the items under "Show me" and made the decisions below. Committed as `b0fde38` on `main`.
 
 ## What you need to know first
 
