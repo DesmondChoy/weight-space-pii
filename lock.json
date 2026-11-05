@@ -35,7 +35,7 @@
    "SHELL",
    "CLAUDE_CONFIG_DIR"
   ],
-  "cli_version": "2.1.292 (Claude Code)",
+  "cli_version": "2.1.318 (Claude Code)",
   "max_python_runs": 300,
   "kernel_timeout": 900
  },
