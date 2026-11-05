@@ -250,6 +250,16 @@ M4 built the run folder to the list in §2 of the brief, which summarises the pa
 
 Three tests in [tests/test_harness.py](../tests/test_harness.py) cover them: the per-pass edits rebuild to the hashes in their manifests, only small plain files are copied, and the session file is copied. The refusal was checked on the uncommitted tree.
 
+### Dry run 3
+
+A short run with Opus 5.5 tested the new records and the EXPLAIN EVERY STEP paragraph against the real CLI, from a clean tree at `a2c4ebf`. It used the locked prompt with a budget of 2 and a cap of 12 turns, under the name `dry3`, so the lock's run checks did not apply. It took 8 minutes and cost $1.43. Opus 5.5 spent the 12 turns diagnosing. It ran 10 code blocks and one forward pass, on the unedited MiniLM, then submitted no edit.
+
+- **Every record was written.** `run.json` holds the CLI version, 2.1.292, and the lock hash, which matches `lock.json`. `cli_session.jsonl` was copied, and it shows every reply came from `claude-opus-5-5` and ended with `end_turn`. `work_notes/` holds Opus 5.5's four files, and `notes.md` matches the sandbox copy byte for byte. The one forward pass records that it ran no edit. The git record says the tree was clean.
+- **Opus 5.5 followed EXPLAIN EVERY STEP.** Ten of its 11 replies with a block opened with 3 to 8 sentences, and one with 9. Each said what the last result showed, what it concluded, and what it would do next and why. About half also said what would confirm or refute a hypothesis. The others were setup steps, and one of them says "Nothing is tested here". The final answer summarises the path in sections, "What I did" and "What I would have done next". Nothing suggests the send-back check is needed.
+- **The forward request costs turns.** The ```forward block must hold its item ids as literal JSON. Opus 5.5 spent two turns printing 470 ids so it could paste them into the block. This matches the paper's format and costs no forward pass.
+
+The run folder is in `runs/dry3/`. The sandbox, 2.1 GB, was deleted.
+
 A turn cap was considered and dropped. The paper's runs had none: a run continued until every pass was used, with only the 300 code runs capped.
 
 ## Open items
