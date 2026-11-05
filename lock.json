@@ -1,0 +1,73 @@
+{
+ "run": {
+  "name": "p50",
+  "budget": 50,
+  "max_turns": null,
+  "cli_command": [
+   "claude",
+   "-p",
+   "--model",
+   "claude-opus-5-5",
+   "--effort",
+   "max",
+   "--tools",
+   "",
+   "--strict-mcp-config",
+   "--disable-slash-commands",
+   "--setting-sources",
+   "",
+   "--system-prompt",
+   "Answer the user's request.",
+   "--output-format",
+   "json"
+  ],
+  "cli_env": {
+   "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1"
+  },
+  "cli_version": "2.1.292 (Claude Code)",
+  "max_python_runs": 300,
+  "kernel_timeout": 900
+ },
+ "node": "v22.23.4",
+ "files": {
+  "sets": {
+   "data/sets/sg_train.jsonl": "cb5c044bfbe7187d40015a411c41c7649caf2e983fc809cbc8dd00cdb93c0c4e",
+   "data/sets/sg_eval.jsonl": "08afdc968c9bb7030137c4206fa3354eb0d55d8bb8294c6dce5f1a1fb5b029a3",
+   "data/sets/nemotron_eval.jsonl": "bcc4b167f9d18f1acba44eb7d8d166b64530e5323a315c74800187149354f8f3",
+   "data/sets.json": "97fac7e0a4ffe4292c153e7ea57de87aabfefd0c14b3a1efce12d019fa3975f3"
+  },
+  "scoring": {
+   "src/wsp/score.py": "6fed6e0c27935773dbe6f7e26580e15e83e8f8ff4a823e4a7716031c4277bfe5",
+   "src/wsp/predict.py": "ac09ea2fa89aff4319acc0f749636f4b8c9d7be30eaeab500a94f4475d7121dd",
+   "src/wsp/data.py": "0218e242207aad86853f389a29ae1c2e5e5cfabe4e32af08a595fa622c858fe2"
+  },
+  "forward_pass_server": {
+   "src/wsp/harness/server.py": "19a2e21c70cfb61a82135d06ad53a8a2f8753f309bc882331c74e668b3bf60d0",
+   "src/wsp/harness/edit.py": "a74158537c2cab7a87ffe746581ef0c6177e974fb6bec88327b5c6b61b9ce84b",
+   "src/wsp/harness/kernel.py": "3e126b8558ebff28d7dca4d0da8b4784b20dd242508150f68139730ddcc84956",
+   "src/wsp/harness/box.py": "647605f2175f25c28a6bfda272a950e4564037a2ae0a4a1b1f64f23da23ae865"
+  },
+  "prompt": {
+   "src/wsp/harness/task_prompt.txt": "83b66d0c3e370e6a8e1e13d2c8db3d003af49fa55e7f7a6b47b8ec676f50a2f8",
+   "src/wsp/harness/prompt.py": "076bba8ee693873dc2356d3c6d814437c7c10c23f8cc1dabc4637b9be41c3a0a",
+   "docs/m5_task_prompt.txt": "03cc7bf84d85d67cbb22a091df02afa3cf9474f773659c6b2c7a002971a0b185"
+  },
+  "model": {
+   "data/model/config.json": "bb0a4533be0b0b6d294387ed144213546e7bcbfef3d24778d6b7462db6558a0e",
+   "data/model/model.safetensors": "25cac79dc5b9f754b9228292d590440ddb8267252bd5cf13d6bd228b1b945cbd",
+   "data/model/tokenizer.json": "cb374d6bc042c22455946f4e09a89d29882a199fdaf8fb25be00dc8b8857a448",
+   "data/model/tokenizer_config.json": "e707880a74194c8f7b9619457d9b503a4a653b9bfe03ba152b73c580c7733194",
+   "data/model/special_tokens_map.json": "5d5b662e421ea9fac075174bb0688ee0d9431699900b90662acd44b2a350503a",
+   "data/model/vocab.txt": "07eced375cec144d27c900241f3e339478dec958f92fddbc551f295c992038a3"
+  },
+  "environment": {
+   "uv.lock": "d5ed9abd0ed3f8ae1f5b8550ecc1661415dffc5131a6a688bb9b3c03bf81ef94",
+   "src/wsp/harness/kernel_host.py": "f18875878c35d89e38d8f6534e4bce7b65437042b7a7e6662a531d86be316004"
+  },
+  "baseline": {
+   "scripts/baseline.py": "a849d3e8deb59bf0d68181861d58d1d8916345144c019a17ea80e4390b68303c",
+   "src/wsp/outcomes.py": "e0d8c05b706eb6118a1c861d61a9861ec56d28d0181e368349cb6e0ca82a8098",
+   "docs/m5_prediction.md": "b64e9b4e1bf2fe4ad7d258941df86f207a2d4c87d791a4141eca6f3ca632aaa4"
+  }
+ }
+}
