@@ -2,7 +2,7 @@
 
 M6 runs the 50-pass session once, with every setting M5 locked. Opus 5.5 spent 232 turns and all 50 forward passes on MiniLM. It submitted an edit that changes 12 tensors in the MLPs of layers 1, 2 and 4, with a final answer that describes two repairs, one for Singapore titles and one for NRICs. This report covers how the run went, what Opus 5.5 submitted, and the checks on the submitted edit. It does not score the edit on the hidden sets. M7 does that. It follows §2 and §7 of [weight-space-pii-handoff.md](weight-space-pii-handoff.md), with the decisions in the M2 to M5 reports.
 
-Status: the run finished on 2026-11-06 and this report is written. Waiting for Desmond to review the items under "Show me". Committed on `main`, where `git log` lists every M6 commit.
+Status: complete. The run finished on 2026-11-06, and Desmond approved M6 and started M7 the same day. Committed on `main`, where `git log` lists every M6 commit.
 
 ## What you need to know first
 
@@ -142,7 +142,7 @@ Run these commands from the repository root. The run itself cannot be repeated e
 
 ## Open items
 
-- **`runs/p50/` exists only on this disk.** Git does not track `runs/`, and M7, M8 and any later review depend on this folder. It should be backed up before anything else touches it.
+- **`runs/p50/` is backed up, but only on this Mac.** Git does not track `runs/`, and M7, M8 and any later review depend on this folder. At the start of M7, on 2026-11-06, it was copied to `~/Backups/weight-space-pii/p50-2026-11-06/`, and the SHA-256 of all 296 files matches the original. A copy off this machine is still to do.
 - **M7 should treat Opus 5.5's held-back numbers as tuned.** Only the main eval and the regression check measure the edit cleanly.
 - **The M7 checks from the M5 report are still open.** M7's scoring must call `wsp.lock.check`, compare `run.json` with the locked settings, pair Nemotron rows by position, and compare the harness code between the commit of the seventh freeze and `db4aaed`, the commit the run started from.
 - **M7 should still rebuild every forward pass's edit.** I compared only the manifests of passes 40, 47 and 50 with the submitted edit, not the `edit.npz` files of all 50 passes.
