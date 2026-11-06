@@ -381,30 +381,28 @@ def baseline_f1():
                           (400, "box", "Nemotron held-out test set, 18,515 rows")):
         swatch(out, x, 74, cls)
         text(out, x + 22, 74, label, "ts", "start")
-    labels = [("first_name", "6,244 Singapore entities", 0.5796, 0.9847),
-              ("last_name", "5,696 Singapore entities", 0.7431, 0.9835),
+    labels = [("name", "given names and surnames, 11,940 Singapore entities", 0.8739, 0.9889),
               ("national_id", "1,034 Singapore entities", 0.7374, 0.959)]
     for i, (name, sub, sg, nem) in enumerate(labels):
         y = 100 + 52 * i
         text(out, 40, y + 8, name, "mono", "start")
         text(out, 40, y + 26, sub, "tl", "start")
         f1_pair(y, sg, nem)
-    out.append('<path d="M40 258 L900 258" stroke="#E5E3DA" stroke-width="1"/>')
-    text(out, 40, 274, "All three labels counted together", "th", "start")
-    text(out, 40, 292, "used by the check that there", "tl", "start")
-    text(out, 40, 306, "is something to repair", "tl", "start")
-    f1_pair(270, 0.674, 0.9836)
-    text(out, 40, 332, "Counted together, every entity counts once, so first_name, with the most entities, pulls F1 below "
-         "the mean of the three, 0.687.", "ts", "start")
-    text(out, 40, 350, "Gap 0.310. The check that there is something to repair needs more than twice its standard error, "
-         "2 × 0.0044 = 0.0087. The check passes.",
-         "ts", "start")
-    write("baseline_f1.svg", 960, 372, "Baseline F1 of the unedited MiniLM by scored label",
+    out.append('<path d="M40 206 L900 206" stroke="#E5E3DA" stroke-width="1"/>')
+    text(out, 40, 222, "Both labels counted together", "th", "start")
+    text(out, 40, 240, "used by the check that there", "tl", "start")
+    text(out, 40, 254, "is something to repair", "tl", "start")
+    f1_pair(218, 0.8649, 0.9882)
+    text(out, 40, 280, "Counted together, every entity counts once. Names are 92% of the entities, so they pull F1 above "
+         "the mean of the two labels, 0.806.", "ts", "start")
+    text(out, 40, 298, "Gap 0.123. The check that there is something to repair needs more than twice its standard error, "
+         "2 × 0.0030 = 0.0060. The check passes.", "ts", "start")
+    write("baseline_f1.svg", 960, 320, "Baseline F1 of the unedited MiniLM by scored label",
           "F1 of the unedited MiniLM, measured in M5, on each scored label, Singapore test set against Nemotron "
-          "held-out test set. first_name 0.580 against 0.985, last_name 0.743 against 0.984, national_id 0.737 against "
-          "0.959. With all three labels counted together, which is what the check that there is something to repair "
-          "compares, Singapore scores 0.674 and Nemotron 0.984, a gap of 0.310, far above the check's threshold of "
-          "0.0087. The check passes.", out)
+          "held-out test set. On Singapore text given names and surnames are scored as one label, name: name 0.874 "
+          "against 0.989, national_id 0.737 against 0.959. With both labels counted together, which is what the check "
+          "that there is something to repair compares, Singapore scores 0.865 and Nemotron 0.988, a gap of 0.123, far "
+          "above the check's threshold of 0.0060. The check passes.", out)
 
 
 def baseline_kinds():
@@ -413,19 +411,18 @@ def baseline_kinds():
     text(out, 40, 22, "Baseline: which Singapore entities the unedited MiniLM gets right, by category", "th", "start")
     text(out, 40, 44, "Singapore test set (the main eval, 5,004 rows). Each bar is the share of one category's entities that "
          "MiniLM tags exactly right.", "ts", "start")
-    text(out, 40, 62, "The misses are not spread evenly: two categories are almost never right. The prediction says which "
-         "categories the edit will fix.", "ts", "start")
+    text(out, 40, 62, "Given names and surnames are scored as one label, name. One category is almost never right, and "
+         "the prediction says the edit will fix it.", "ts", "start")
     text(out, 40, 80, '"Just before" means within the 60 characters before the number, about ten words.', "ts", "start")
     groups = [("national_id", [('NRIC without "tax" just before it', 323, 0.0, True,
                                 "most tagged biometric_identifier (168) or missed (118)"),
                                ('NRIC with "tax" just before it', 711, 0.8748, False, "")]),
-              ("first_name", [("Given name of several words, later words", 1434, 0.0516, False,
-                               "1,227 of 1,434 tagged last_name"),
-                              ("Given name of one word", 3376, 0.6182, False, ""),
-                              ("Given name of several words, first word", 1434, 0.6667, False, "")]),
-              ("last_name", [("Surname of one word", 2688, 0.8943, False, ""),
-                             ("Surname of several words, first word", 1274, 0.8124, False, ""),
-                             ("Surname of several words, later words", 1734, 0.8287, False, "")])]
+              ("name, given names", [("Given name of one word", 3376, 0.8451, False, ""),
+                                     ("Given name of several words, first word", 1434, 0.8717, False, ""),
+                                     ("Given name of several words, later words", 1434, 0.9073, False, "")]),
+              ("name, surnames", [("Surname of one word", 2688, 0.923, False, ""),
+                                  ("Surname of several words, first word", 1274, 0.8689, False, ""),
+                                  ("Surname of several words, later words", 1734, 0.8316, False, "")])]
     y = 102
     for label, categories in groups:
         text(out, 40, y + 10, label, "mono", "start")
@@ -449,11 +446,10 @@ def baseline_kinds():
         text(out, x + 22, ly, label, "ts", "start")
     write("baseline_kinds.svg", 960, ly + 22, "Baseline share right by category of Singapore entity",
           "The share of entities the unedited MiniLM tags with the exact span and the right label on the Singapore test "
-          "set, the main eval, split by category and grouped by scored label. Just before means within the 60 "
-          'characters before the number. The category "NRIC without "tax" just before it" is 0% right, most tagged '
-          "biometric_identifier or missed, and is the one category predicted to be fixed. The category "
-          '"Given name of several words, later words" is 5% right, 1,227 of 1,434 tagged last_name. The other '
-          "categories are 62% to 89% right.", out)
+          "set, the main eval, split by category. Given names and surnames are scored as one label, name. Just before "
+          'means within the 60 characters before the number. The category "NRIC without "tax" just before it" is 0% '
+          "right, most tagged biometric_identifier or missed, and is the one category predicted to be fixed. The other "
+          "categories are 83% to 92% right.", out)
 
 
 data_sets()

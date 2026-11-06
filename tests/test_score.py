@@ -33,7 +33,7 @@ class Cases(unittest.TestCase):
                          (Tally(0, 0, 1), {"wrong_type": 1}))
 
     def test_wrong_type_inside_scored_labels(self):
-        self.assertEqual(score([SURNAME], [at("Tan", "first_name")]), (Tally(0, 1, 1), {"wrong_type": 1}))
+        self.assertEqual(score([SURNAME], [at("Tan", "national_id")]), (Tally(0, 1, 1), {"wrong_type": 1}))
 
     def test_boundary_off_by_one_word(self):
         self.assertEqual(score([NRIC], [at("is S1234567D", "national_id")]),
@@ -96,6 +96,20 @@ class Alias(unittest.TestCase):
         self.assertEqual(score([SURNAME], [at("Tan", "tax_id")]), (Tally(0, 0, 1), {"wrong_type": 1}))
 
 
+class NameMerge(unittest.TestCase):
+    def test_a_surname_tagged_as_a_given_name_is_right(self):
+        self.assertEqual(score([SURNAME], [at("Tan", "first_name")]), (Tally(1, 0, 0), {}))
+
+    def test_names_are_one_category(self):
+        gr = grade(Doc("t", TEXT, (SURNAME, GIVEN)), [at("Tan Wei Ming", "last_name")], SG_LABELS)
+        self.assertEqual((set(gr.by_label), gr.total), ({"name", "national_id"}, Tally(3, 0, 0)))
+
+    def test_names_stay_separate_when_both_are_scored(self):
+        labels = ("first_name", "last_name", "national_id")
+        gr = grade(Doc("t", TEXT, (SURNAME,)), [at("Tan", "first_name")], labels)
+        self.assertEqual((gr.total, dict(gr.failures)), (Tally(0, 1, 1), {"wrong_type": 1}))
+
+
 class NameSplit(unittest.TestCase):
     def test_multi_word_gold_counts_once_per_word(self):
         self.assertEqual(score([GIVEN], []), (Tally(0, 0, 2), {"missed": 2}))
@@ -107,7 +121,7 @@ class NameSplit(unittest.TestCase):
 
     def test_second_given_name_typed_as_surname(self):
         pred = [at("Wei", "first_name"), at("Ming", "last_name")]
-        self.assertEqual(score([GIVEN], pred), (Tally(1, 1, 1), {"wrong_type": 1}))
+        self.assertEqual(score([GIVEN], pred), (Tally(2, 0, 0), {}))
 
     def test_national_id_is_not_split(self):
         text = "ID S1234567D T7654321A"

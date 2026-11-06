@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="960" height="470" viewBox="0 0 960 470" role="img">
 <title>Baseline share right by category of Singapore entity</title>
-<desc>The share of entities the unedited MiniLM tags with the exact span and the right label on the Singapore test set, the main eval, split by category and grouped by scored label. Just before means within the 60 characters before the number. The category "NRIC without "tax" just before it" is 0% right, most tagged biometric_identifier or missed, and is the one category predicted to be fixed. The category "Given name of several words, later words" is 5% right, 1,227 of 1,434 tagged last_name. The other categories are 62% to 89% right.</desc>
+<desc>The share of entities the unedited MiniLM tags with the exact span and the right label on the Singapore test set, the main eval, split by category. Given names and surnames are scored as one label, name. Just before means within the 60 characters before the number. The category "NRIC without "tax" just before it" is 0% right, most tagged biometric_identifier or missed, and is the one category predicted to be fixed. The other categories are 83% to 92% right.</desc>
 <style>
 text { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
 .th { font-size: 14px; font-weight: 500; fill: #2C2C2A; }
@@ -23,7 +23,7 @@ rect.tag { fill: #FBEAF0; stroke: #993556; }
 <rect x="0" y="0" width="960" height="470" fill="#FFFFFF"/>
 <text class="th" x="40" y="22" text-anchor="start" dominant-baseline="central">Baseline: which Singapore entities the unedited MiniLM gets right, by category</text>
 <text class="ts" x="40" y="44" text-anchor="start" dominant-baseline="central">Singapore test set (the main eval, 5,004 rows). Each bar is the share of one category's entities that MiniLM tags exactly right.</text>
-<text class="ts" x="40" y="62" text-anchor="start" dominant-baseline="central">The misses are not spread evenly: two categories are almost never right. The prediction says which categories the edit will fix.</text>
+<text class="ts" x="40" y="62" text-anchor="start" dominant-baseline="central">Given names and surnames are scored as one label, name. One category is almost never right, and the prediction says the edit will fix it.</text>
 <text class="ts" x="40" y="80" text-anchor="start" dominant-baseline="central">"Just before" means within the 60 characters before the number, about ten words.</text>
 <text class="mono" x="40" y="112" text-anchor="start" dominant-baseline="central">national_id</text>
 <text class="ts" x="56" y="138" text-anchor="start" dominant-baseline="central">NRIC without "tax" just before it (323)</text>
@@ -34,32 +34,31 @@ rect.tag { fill: #FBEAF0; stroke: #993556; }
 <rect x="390" y="158" width="480" height="20" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
 <g class="box"><rect x="390" y="158" width="419.904" height="20" rx="3" stroke-width="0.5"/></g>
 <text class="tv" x="880" y="168" text-anchor="start" dominant-baseline="central">87%</text>
-<text class="mono" x="40" y="204" text-anchor="start" dominant-baseline="central">first_name</text>
-<text class="ts" x="56" y="230" text-anchor="start" dominant-baseline="central">Given name of several words, later words (1,434)</text>
+<text class="mono" x="40" y="204" text-anchor="start" dominant-baseline="central">name, given names</text>
+<text class="ts" x="56" y="230" text-anchor="start" dominant-baseline="central">Given name of one word (3,376)</text>
 <rect x="390" y="220" width="480" height="20" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
-<g class="box"><rect x="390" y="220" width="24.768" height="20" rx="3" stroke-width="0.5"/></g>
-<text class="tl" x="424.768" y="230" text-anchor="start" dominant-baseline="central">1,227 of 1,434 tagged last_name</text>
-<text class="tv" x="880" y="230" text-anchor="start" dominant-baseline="central">5%</text>
-<text class="ts" x="56" y="260" text-anchor="start" dominant-baseline="central">Given name of one word (3,376)</text>
+<g class="box"><rect x="390" y="220" width="405.648" height="20" rx="3" stroke-width="0.5"/></g>
+<text class="tv" x="880" y="230" text-anchor="start" dominant-baseline="central">85%</text>
+<text class="ts" x="56" y="260" text-anchor="start" dominant-baseline="central">Given name of several words, first word (1,434)</text>
 <rect x="390" y="250" width="480" height="20" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
-<g class="box"><rect x="390" y="250" width="296.736" height="20" rx="3" stroke-width="0.5"/></g>
-<text class="tv" x="880" y="260" text-anchor="start" dominant-baseline="central">62%</text>
-<text class="ts" x="56" y="290" text-anchor="start" dominant-baseline="central">Given name of several words, first word (1,434)</text>
+<g class="box"><rect x="390" y="250" width="418.416" height="20" rx="3" stroke-width="0.5"/></g>
+<text class="tv" x="880" y="260" text-anchor="start" dominant-baseline="central">87%</text>
+<text class="ts" x="56" y="290" text-anchor="start" dominant-baseline="central">Given name of several words, later words (1,434)</text>
 <rect x="390" y="280" width="480" height="20" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
-<g class="box"><rect x="390" y="280" width="320.016" height="20" rx="3" stroke-width="0.5"/></g>
-<text class="tv" x="880" y="290" text-anchor="start" dominant-baseline="central">67%</text>
-<text class="mono" x="40" y="326" text-anchor="start" dominant-baseline="central">last_name</text>
+<g class="box"><rect x="390" y="280" width="435.504" height="20" rx="3" stroke-width="0.5"/></g>
+<text class="tv" x="880" y="290" text-anchor="start" dominant-baseline="central">91%</text>
+<text class="mono" x="40" y="326" text-anchor="start" dominant-baseline="central">name, surnames</text>
 <text class="ts" x="56" y="352" text-anchor="start" dominant-baseline="central">Surname of one word (2,688)</text>
 <rect x="390" y="342" width="480" height="20" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
-<g class="box"><rect x="390" y="342" width="429.264" height="20" rx="3" stroke-width="0.5"/></g>
-<text class="tv" x="880" y="352" text-anchor="start" dominant-baseline="central">89%</text>
+<g class="box"><rect x="390" y="342" width="443.04" height="20" rx="3" stroke-width="0.5"/></g>
+<text class="tv" x="880" y="352" text-anchor="start" dominant-baseline="central">92%</text>
 <text class="ts" x="56" y="382" text-anchor="start" dominant-baseline="central">Surname of several words, first word (1,274)</text>
 <rect x="390" y="372" width="480" height="20" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
-<g class="box"><rect x="390" y="372" width="389.952" height="20" rx="3" stroke-width="0.5"/></g>
-<text class="tv" x="880" y="382" text-anchor="start" dominant-baseline="central">81%</text>
+<g class="box"><rect x="390" y="372" width="417.072" height="20" rx="3" stroke-width="0.5"/></g>
+<text class="tv" x="880" y="382" text-anchor="start" dominant-baseline="central">87%</text>
 <text class="ts" x="56" y="412" text-anchor="start" dominant-baseline="central">Surname of several words, later words (1,734)</text>
 <rect x="390" y="402" width="480" height="20" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
-<g class="box"><rect x="390" y="402" width="397.776" height="20" rx="3" stroke-width="0.5"/></g>
+<g class="box"><rect x="390" y="402" width="399.168" height="20" rx="3" stroke-width="0.5"/></g>
 <text class="tv" x="880" y="412" text-anchor="start" dominant-baseline="central">83%</text>
 <g class="c-teal"><rect x="40" y="441" width="14" height="14" rx="3" stroke-width="0.5"/></g>
 <text class="ts" x="62" y="448" text-anchor="start" dominant-baseline="central">Predicted fixed by the edit</text>

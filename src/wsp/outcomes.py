@@ -4,7 +4,7 @@ import re
 from dataclasses import dataclass
 
 from wsp.data import Doc, Span
-from wsp.score import NAME_LABELS, SG_LABELS, scored_label, split_names
+from wsp.score import NAME_LABELS, SG_LABELS, merged, scored_label, split_names
 
 TAX_BEFORE = re.compile("tax", re.IGNORECASE)
 CONTEXT_CHARS = 60
@@ -15,15 +15,17 @@ KINDS = ("first_name/one word", "first_name/multi-word, first word", "first_name
 
 @dataclass(frozen=True)
 class Outcome:
-    """One scored gold entity. `got` is the scored label on its exact span, `boundary: <label>`, or `missed`."""
+    """One scored gold entity. `want` is its scored label. `got` is the scored label on its exact span,
+    `boundary: <label>`, or `missed`."""
     gold: Span
     word: Span
     kind: str
+    want: str
     got: str
 
     @property
     def correct(self) -> bool:
-        return self.got == self.word.label
+        return self.got == self.want
 
 
 def kind(d: Doc, gold: Span, word: Span) -> str:
@@ -40,7 +42,8 @@ def outcomes(d: Doc, pred: list[Span], labels: tuple[str, ...] = SG_LABELS) -> l
     exact = {(p.start, p.end): p.label for p in words}
     out = []
     for g in d.spans:
-        if g.label not in labels:
+        want = merged(g.label, labels)
+        if want not in labels:
             continue
         for w in split_names(d.text, [g]):
             if (w.start, w.end) in exact:
@@ -48,5 +51,5 @@ def outcomes(d: Doc, pred: list[Span], labels: tuple[str, ...] = SG_LABELS) -> l
             else:
                 over = [p for p in words if p.start < w.end and w.start < p.end]
                 got = f"boundary: {over[0].label}" if over else "missed"
-            out.append(Outcome(g, w, kind(d, g, w), got))
+            out.append(Outcome(g, w, kind(d, g, w), want, got))
     return out

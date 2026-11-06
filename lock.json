@@ -48,7 +48,7 @@
    "data/sets.json": "97fac7e0a4ffe4292c153e7ea57de87aabfefd0c14b3a1efce12d019fa3975f3"
   },
   "scoring": {
-   "src/wsp/score.py": "6fed6e0c27935773dbe6f7e26580e15e83e8f8ff4a823e4a7716031c4277bfe5",
+   "src/wsp/score.py": "6bb145eb1262f07e874df352e4acb323c057dcfd2c1b8812cb4aca43023be6f1",
    "src/wsp/predict.py": "ac09ea2fa89aff4319acc0f749636f4b8c9d7be30eaeab500a94f4475d7121dd",
    "src/wsp/data.py": "0218e242207aad86853f389a29ae1c2e5e5cfabe4e32af08a595fa622c858fe2"
   },
@@ -59,9 +59,9 @@
    "src/wsp/harness/box.py": "647605f2175f25c28a6bfda272a950e4564037a2ae0a4a1b1f64f23da23ae865"
   },
   "prompt": {
-   "src/wsp/harness/task_prompt.txt": "e3b92b274f5660ce747789d8b65dd9bb3d5df192873750b8baeaaa072a2a9ed1",
+   "src/wsp/harness/task_prompt.txt": "46f265247f987ded3a4e4fcd545f0a908565e8cf3b0b4ad5ee2aea4db6cda55f",
    "src/wsp/harness/prompt.py": "076bba8ee693873dc2356d3c6d814437c7c10c23f8cc1dabc4637b9be41c3a0a",
-   "docs/m5_task_prompt.txt": "f1f5e6a78aec1ee8b55aa031ed1cc7260284e64139e448553eed082e23f62e7f"
+   "docs/m5_task_prompt.txt": "59beee3a0100ae6d5c90c62bbbcb674ef77ce7913a98cf7bdc2056479e694364"
   },
   "model": {
    "data/model/config.json": "bb0a4533be0b0b6d294387ed144213546e7bcbfef3d24778d6b7462db6558a0e",
@@ -77,8 +77,8 @@
   },
   "baseline": {
    "scripts/baseline.py": "41d682fd3a94e6fce0802054a45c8e745686cb55190ad253d82a78f5640aefa4",
-   "src/wsp/outcomes.py": "e0d8c05b706eb6118a1c861d61a9861ec56d28d0181e368349cb6e0ca82a8098",
-   "docs/m5_prediction.md": "e7749837c7104f642717e3de43594944eb9622518118c29a5e2888ddea34e1fe"
+   "src/wsp/outcomes.py": "c61f15dbe86ce5572741f8996df8990abb5095523429223ef37439d32dbf2320",
+   "docs/m5_prediction.md": "2a8d50bf4d3e4f7298d3af8d551dce77e93d2a39f2af241e482cabdc12dd4bc4"
   }
  }
 }

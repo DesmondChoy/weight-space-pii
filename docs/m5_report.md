@@ -2,7 +2,7 @@
 
 M5 freezes everything that decides a score, then scores the unedited MiniLM on every set. It writes `lock.json`, checks that the Singapore data leaves something to repair, records a prediction for each category, and estimates what the 50-pass run in M6 will cost. It follows §4, §5 and §7 of [weight-space-pii-handoff.md](weight-space-pii-handoff.md), with the decisions in the M2, M3 and M4 reports.
 
-Status: built and run on 2026-11-05 and committed on `main`, where `git log` lists every M5 commit. `lock.json` was re-frozen five times, all on 2026-11-05: four times after reviews, and once for a `claude` update. Waiting for Desmond to review the items under "Show me".
+Status: built and run on 2026-11-05 and committed on `main`, where `git log` lists every M5 commit. `lock.json` was re-frozen six times: four times after reviews and once for a `claude` update, all on 2026-11-05, and once on 2026-11-06 to score given names and surnames as one category. Waiting for Desmond to review the items under "Show me".
 
 ## What you need to know first
 
@@ -19,9 +19,9 @@ The brief and four earlier reports hold the background. This section restates wh
 
 The figure shows points 3 to 6. Read each row of the figure from left to right, from source dataset, through the filter, to the set. The top row is Nemotron-PII, MiniLM's own data. Its purple training split shaped MiniLM before this experiment (point 3), and its held-out split becomes the regression check (point 6). The lower two rows are openpii's Singapore data. The train split gives the green practice set (points 4 and 5), the only set Opus 5.5 can open, and the validation split gives the main eval (point 6). The two red sets are hidden from Opus 5.5.
 
-The dotted line marks M5's part. Everything outside it existed before M5: MiniLM's training, and the filters and samples from M2 and M3. M5 hashes the three sets inside it into `lock.json` and scores the unedited MiniLM on each. A hash is a file's fingerprint, which shows whether the file changed. The regression check's F1 of 0.952 covers all of MiniLM's labels, because an edit could break a label, such as `email`, that the Singapore sets do not score. The check that there is something to repair, further down, compares the same three labels on both datasets, so it shows Nemotron at 0.984. [docs/figures/report_figures.py](figures/report_figures.py) generates this figure and the others in this report.
+The dotted line marks M5's part. Everything outside it existed before M5: MiniLM's training, and the filters and samples from M2 and M3. M5 hashes the three sets inside it into `lock.json` and scores the unedited MiniLM on each. A hash is a file's fingerprint, which shows whether the file changed. The regression check's F1 of 0.952 covers all of MiniLM's labels, because an edit could break a label, such as `email`, that the Singapore sets do not score. The check that there is something to repair, further down, compares only the two Singapore labels on both datasets, so it shows Nemotron at 0.988. [docs/figures/report_figures.py](figures/report_figures.py) generates this figure and the others in this report.
 
-7. **Three labels count on Singapore text.** They are `first_name`, `last_name` and `national_id`, where `national_id` means an NRIC, Singapore's identity card number. M3 set two scoring rules. Names are scored one word at a time, and a `tax_id` tag on an NRIC counts as right.
+7. **Two labels count on Singapore text.** They are `name` and `national_id`, where `national_id` means an NRIC, Singapore's identity card number. Given names and surnames are scored as one category, `name`. A word MiniLM tags `first_name` or `last_name` counts as right on any name word, whichever of the two openpii marks it. Names are scored one word at a time, and a `tax_id` tag on an NRIC counts as right. On the Nemotron regression check every label is scored separately, so there `first_name` and `last_name` stay apart.
 8. **M3 found that the NRIC failure depends on the words before it.** When "tax" appears just before an NRIC, MiniLM tags it `tax_id`, which scores as right. In this report "just before" means within the 60 characters before the number, about ten words. Without "tax" there, MiniLM got none of the practice NRICs right. M3 named this the likely target of an edit.
 9. **M4 built the harness and dry-ran it.** The harness is the driver, which carries messages between Opus 5.5 and the other parts, plus a Python kernel, the forward-pass server, and the `save_edit` rules on which edits are allowed. The kernel runs Opus 5.5's code inside a walled-off area, set up by `srt`, where code can reach only the folders listed for it. The server does each forward pass, one run of MiniLM over some texts. Two dry runs, short test runs with Opus 5.5, showed the harness works end to end, and recorded the tokens and dollars each turn costs.
 10. **M5's job is to freeze the experiment and measure the starting point.** After M5, nothing that decides a score or what Opus 5.5 sees may change. M5 hashes the sets, the scoring code, the server, the prompt, MiniLM's files, the environment and the baseline code into `lock.json`, together with the run's settings: the CLI command, its version and environment, and the limits. It then scores the unedited MiniLM. That baseline is what M7 compares the edited MiniLM against.
@@ -39,11 +39,12 @@ These choices fill gaps in the brief. Desmond can change any of them before M6.
 | Standard error for the check that there is something to repair | "twice its bootstrap standard error" | Check both readings: the Singapore F1's own standard error, and the standard error of the gap. The check passes only if both pass |
 | Where the prediction lives | The run folder | [docs/m5_prediction.md](m5_prediction.md). Git does not track `runs/`, and the driver refuses to start a run whose folder exists. M6 copies the file into `runs/p50/` |
 | Failing rows to show | Ask Desmond | 12, Desmond's choice |
+| How names are scored on Singapore text | §3 maps openpii's `GIVENNAME` to `first_name` and `SURNAME` to `last_name`, and scores both | Desmond's choice, on 2026-11-06. Given names and surnames are scored as one category, `name`, on both the gold and the predicted side. Which word openpii calls the surname is a convention a reader often cannot check, and hiding a name does not depend on it. The Nemotron regression check scores every label separately. Put into the scoring by the seventh freeze |
 | Explaining each step | §6 step 5 opens "Before each code block, explain the step in plain English" | Desmond's choice. The paper's "EXPLAIN EVERY STEP" paragraph replaces that sentence, word for word and from turn 1. The paper added it mid-run, at turn 29 of `p50c`, and its final prompt holds it between HOW TO WORK and RULES, as ours does |
 
 ## `lock.json`
 
-[scripts/freeze.py](../scripts/freeze.py) renders the 50-pass prompt into [docs/m5_task_prompt.txt](m5_task_prompt.txt), then writes `lock.json` through [src/wsp/lock.py](../src/wsp/lock.py). It hashes 25 files in seven groups and records the run's settings. `lock.json` has SHA-256 `f9e07232…cd8f1a24`, and `runs/base/baseline.json` records the same hash. `wsp.lock.write` refuses to replace an existing `lock.json`, so every freeze is deliberate. The old file has to be deleted by hand first.
+[scripts/freeze.py](../scripts/freeze.py) renders the 50-pass prompt into [docs/m5_task_prompt.txt](m5_task_prompt.txt), then writes `lock.json` through [src/wsp/lock.py](../src/wsp/lock.py). It hashes 25 files in seven groups and records the run's settings. `lock.json` has SHA-256 `e26da9fd…1449bea1`, and `runs/base/baseline.json` records the same hash. `wsp.lock.write` refuses to replace an existing `lock.json`, so every freeze is deliberate. The old file has to be deleted by hand first.
 
 The run's settings are what `wsp.lock.run_settings` returns. It builds the driver's own `Editor` and takes the exact `claude` command it would run, without the session ID. It adds the CLI's environment, the output of `claude --version` (2.1.318), the limit of 300 code runs, the 900 s kernel timeout and the limit on turns, which is none. `scripts/run_editor.py` recomputes these for the run it is asked to start. It refuses `p50` if any of them differ, if `runs/p50/` already exists without `--overwrite`, or if the rendered prompt differs from the frozen one. It checks `runs/p50/` before it touches the folders of the walled-off area, so an accidental rerun cannot wipe Opus 5.5's `work/` folder. A check against the real `lock.json` refused effort `high`, budget 49 and a limit of 30 turns, each with the name of the setting that differed, and allowed the locked settings. It also refuses names such as `P50` or `p50 ` that match the locked name once case and spaces are ignored. This disk ignores case, so `P50` would otherwise skip every check and still write into `runs/p50/`.
 
@@ -53,11 +54,11 @@ The CLI's environment is built from scratch, not copied from the Claude desktop 
 
 This figure shows what `lock.json` covers and who checks it. The purple boxes at the top are seven groups of files and the run's settings. All of them go into `lock.json`, one SHA-256 hash per file plus the settings themselves. The three boxes at the bottom are the steps that compare the current files with `lock.json` before they run. The green ones exist now. `scripts/baseline.py` refuses to score if any file differs. `scripts/run_editor.py` refuses to start the locked run unless its settings match too, and it renders the prompt it would send and compares it with the frozen copy. M7's scoring script does not exist yet and must call the same check. [docs/figures/report_figures.py](figures/report_figures.py) generates it.
 
-The rendered prompt differs from the M4 dry-run prompt in three ways. The budget is 50 instead of 2, and the run name is `p50` instead of `dry2`, the two changes the M4 report expected. The third is the paper's "EXPLAIN EVERY STEP" paragraph, added by the fourth freeze below. Two clauses of the prompt appear in no report, though both were already in the M4 prompt. One says that on the standard PII texts all 55 categories are scored and the `tax_id` rule is off. The other says the forward-pass tool grades practice items per category under the same scoring rules.
+The rendered prompt differs from the M4 dry-run prompt in four ways. The budget is 50 instead of 2, and the run name is `p50` instead of `dry2`, the two changes the M4 report expected. The third is the paper's "EXPLAIN EVERY STEP" paragraph, added by the fourth freeze below. The fourth is scoring rule (1), which now says that on Singapore text `first_name` and `last_name` count as one category, `name`, and that on the standard PII texts the two are not merged. Two clauses of the prompt appear in no report, though both were already in the M4 prompt. One says that on the standard PII texts all 55 categories are scored and the `tax_id` rule is off. The other says the forward-pass tool grades practice items per category under the same scoring rules.
 
 `wsp.lock.check` compares every hash and the Node version, and stops with an error that lists what differs. [tests/test_lock.py](../tests/test_lock.py) covers unchanged files, a changed file, a missing file, and a second freeze.
 
-### `lock.json` was written six times
+### `lock.json` was frozen seven times
 
 The first freeze hashed 22 files in six groups. An independent review found that it left out the run's settings, so `--effort high` would have passed every check. It also left out the code that defines the prediction's categories. Nothing was committed, so M5 deleted the first `lock.json` and froze again with the settings and the `baseline` group added. All 22 hashes from the first freeze are unchanged in the second. The baseline was rerun after the second freeze and gave identical scores, per-category tables, and numbers for the check that there is something to repair.
 
@@ -69,6 +70,8 @@ A third review, by Fable 5.1, found that the CLI inherited the Claude desktop ap
 
 Before M6, another launch of `claude` updated the CLI from 2.1.292 to 2.1.318, so the locked run would refuse to start. On 2026-11-05 Desmond approved a sixth freeze after a new check of what reaches Opus 5.5, described under "The check of what reaches Opus 5.5 on 2.1.318" below. One line of `lock.json` changed, `cli_version`. No file hash changed, and the rendered prompt is byte for byte the same. The baseline rerun gave MiniLM predictions with the same SHA-256 on all three sets, and `baseline.json` differs from the fifth freeze's only in `lock_sha256`.
 
+On 2026-11-06 Desmond decided that on Singapore text given names and surnames are scored as one category, `name`, as the Decisions table records, and the seventh freeze put this into the scoring. `wsp.score.merged` counts `first_name` and `last_name` as `name` wherever `name` is scored, on both the gold and the predicted side, and `SG_LABELS` is now `name` and `national_id`. The all-label regression check scores every label, so the merge is off there. Five file hashes changed: `src/wsp/score.py`, `src/wsp/outcomes.py`, the template `src/wsp/harness/task_prompt.txt` and the rendered `docs/m5_task_prompt.txt`, whose rule (1) now says the two count as one category, and `docs/m5_prediction.md`, rewritten for the new numbers. The run's settings are unchanged. MiniLM's predictions are byte for byte the same, so only the scores changed. To get the numbers for the prediction, the baseline first ran against a `lock.json` that held the old prediction. `lock.json` was then written again with the new prediction and the baseline rerun, and the second run's `baseline.json` differed from the first only in `lock_sha256`. Under the old scoring Singapore F1 was 0.674, and 3,051 of MiniLM's errors there were the wrong type. 1,227 of those were the later words of a given name of several words, such as "Idilia" in "Enie Idilia", tagged `last_name`. Three new tests in [tests/test_score.py](../tests/test_score.py) cover the merge, and all 103 tests pass.
+
 ## Baseline
 
 [scripts/baseline.py](../scripts/baseline.py) checks `lock.json`, runs the unedited MiniLM on all three sets, and grades each with `wsp.score.grade`. It writes `runs/base/baseline.json` and MiniLM's predicted spans for every row, `runs/base/pred_<set>.jsonl`, where a span is a stretch of text with one label. M7 needs these for the paired comparison, which scores both models on the same rows. Its standard error comes from scoring both on the same random redraws of rows. The run takes 2 minutes on CPU.
@@ -79,76 +82,75 @@ This is the base row of the main table from §5 of the brief. The ± values are 
 
 | Model | Singapore F1 | Nemotron F1, all labels | Mechanism metric | Weights changed |
 |---|---|---|---|---|
-| Base | 0.674 ± 0.004 | 0.952 ± 0.001 | chosen at M7 | none |
+| Base | 0.865 ± 0.003 | 0.952 ± 0.001 | chosen at M7 | none |
 
-Per label, on the three scored labels:
+Per label, on the two scored labels. On Singapore text MiniLM gets 11,056 entities right, with 1,535 false positives and 1,918 entities not right.
 
 | Label | Singapore F1 | Precision | Recall | Nemotron F1 |
 |---|---|---|---|---|
-| `first_name` | 0.580 | 0.691 | 0.499 | 0.985 |
-| `last_name` | 0.743 | 0.657 | 0.856 | 0.984 |
+| `name` | 0.874 | 0.874 | 0.874 | 0.989 |
 | `national_id` | 0.737 | 0.953 | 0.602 | 0.959 |
-| All three | 0.674 | 0.684 | 0.664 | 0.984 |
+| Both | 0.865 | 0.878 | 0.852 | 0.988 ± 0.001 |
 
-![Baseline F1 of the unedited MiniLM on each scored label, Singapore against Nemotron: first_name 0.580 against 0.985, last_name 0.743 against 0.984, and national_id 0.737 against 0.959. With all three labels counted together it scores 0.674 against 0.984, the pair that the check that there is something to repair compares](figures/baseline_f1.svg)
+![Baseline F1 of the unedited MiniLM on each scored label, Singapore against Nemotron: name 0.874 against 0.989, and national_id 0.737 against 0.959. With both labels counted together it scores 0.865 against 0.988, a gap of 0.123, far above the threshold of 0.0060 that the check that there is something to repair uses](figures/baseline_f1.svg)
 
-This figure draws the per-label table. Each label has a pair of bars, Singapore in red above Nemotron in grey. MiniLM trails on all three labels, and most on `first_name`. The pair below the line has all three labels counted together, and it is the pair that the check that there is something to repair compares. Counted together, every entity counts once, rather than the three labels' scores being averaged. `first_name` has the most entities, so it pulls that score to 0.674, below the mean of the three, 0.687. [docs/figures/report_figures.py](figures/report_figures.py) generates it.
+This figure draws the per-label table. Each label has a pair of bars, Singapore in red above Nemotron in grey. MiniLM trails on both labels, and most on `national_id`. The pair below the line has both labels counted together, and it is the pair that the check that there is something to repair compares. Counted together, every entity counts once, rather than the two labels' scores being averaged. Names are 92% of the Singapore entities, so they pull that score to 0.865, above the mean of the two, 0.806. The note under the pair gives the gap, 0.123, and the check's threshold, twice the gap's standard error, 0.0060. [docs/figures/report_figures.py](figures/report_figures.py) generates it.
 
-On Singapore text, MiniLM makes 5,555 errors. 3,051 are the wrong type, 689 are missed entities, 619 are wrong boundaries, where the tag covers too many or too few words, and 1,196 are false positives.
+On Singapore text, MiniLM makes 3,114 errors. 610 are the wrong type, 689 are missed entities, 619 are wrong boundaries, where the tag covers too many or too few words, and 1,196 are false positives.
 
-On the practice set the baseline gives F1 0.682, the same value M3 reported. The frozen pipeline reproduces the earlier number.
+On the practice set the baseline gives F1 0.866 ± 0.006. With `first_name` and `last_name` scored separately, as in M3, the same predictions give 0.682, the value M3 reported, so the frozen pipeline reproduces the earlier number.
 
 ## The check that there is something to repair passes
 
-The check asks whether MiniLM does worse on Singapore text than on the text it was trained on, by more than noise. On the three scored labels, Singapore F1 is 0.674 and Nemotron F1 is 0.984. The gap is 0.310.
+The check asks whether MiniLM does worse on Singapore text than on the text it was trained on, by more than noise. On the two scored labels, Singapore F1 is 0.865 and Nemotron F1 is 0.988. The gap is 0.123.
 
 | Reading of "its standard error" | Standard error | Twice it | Passes |
 |---|---|---|---|
-| Singapore F1 | 0.0042 | 0.0083 | yes |
-| The gap, from both sets' standard errors | 0.0044 | 0.0087 | yes |
+| Singapore F1 | 0.0028 | 0.0056 | yes |
+| The gap, from both sets' standard errors | 0.0030 | 0.0060 | yes |
 
-The gap is 36 times the stricter threshold, so the reading does not matter.
+The gap is 21 times the stricter threshold, so the reading does not matter.
 
 ## Where MiniLM fails
 
-[src/wsp/outcomes.py](../src/wsp/outcomes.py) records what happened to each gold entity, one of the correct answers marked in the data, and sorts it into a category. On practice it reproduces M3's numbers exactly: 134 of 159 NRICs with "tax" just before them right, 0 of 61 without. Its count of right entities equals the true positives of the scoring code, 1,738 on practice.
+[src/wsp/outcomes.py](../src/wsp/outcomes.py) records what happened to each gold entity, one of the correct answers marked in the data, and sorts it into a category. On practice it reproduces M3's numbers exactly: 134 of 159 NRICs with "tax" just before them right, 0 of 61 without. Its count of right entities equals the true positives of the scoring code, 2,207 on practice.
 
 F1 says how far each label falls short. It does not say which entities MiniLM gets wrong, and the prediction and the edit work at that level. So this section splits each label's entities in the main eval, the Singapore test set, into categories. A category is a group of entities that MiniLM might handle differently, such as NRICs with and without "tax" just before them, or the first and later words of a name.
 
-![Baseline share of Singapore test entities the unedited MiniLM gets exactly right, by category. The category NRIC without "tax" just before it is 0% right, most tagged biometric_identifier or missed. The category Given name of several words, later words is 5% right, with 1,227 of 1,434 tagged last_name. The other categories are 62% to 89% right](figures/baseline_kinds.svg)
+![Baseline share of Singapore test entities the unedited MiniLM gets exactly right, by category. The category NRIC without "tax" just before it is 0% right, most tagged biometric_identifier or missed, and it is outlined as the one category predicted to be fixed. The other seven categories are 83% to 92% right](figures/baseline_kinds.svg)
 
-Each bar is the share of one category's entities that MiniLM tags exactly right, with the exact span and the right label. The bars are grouped under the label they belong to. The figure uses this share rather than F1 because a false positive has no gold entity, so it belongs to no category. The misses are not spread evenly. Two categories are almost never right, and the note on each says what MiniLM outputs instead. The bar outlined in green is the one category the prediction expects the edit to fix. [docs/figures/report_figures.py](figures/report_figures.py) generates it.
+Each bar is the share of one category's entities that MiniLM tags exactly right, with the exact span and the right label. The bars are grouped under the label they belong to, with the name categories split into given names and surnames. The figure uses this share rather than F1 because a false positive has no gold entity, so it belongs to no category. The misses are not spread evenly. One category is almost never right, and the note on it says what MiniLM outputs instead. Its bar, outlined in green, is the one category the prediction expects the edit to fix. [docs/figures/report_figures.py](figures/report_figures.py) generates it.
 
-The table gives the counts and the most common errors on the main eval:
+The table gives the counts and the most common errors on the main eval. A boundary error is listed with the label of the tag that covers too many or too few words.
 
 | Category | Entities | Right | Most common errors |
 |---|---|---|---|
 | NRIC without "tax" just before it | 323 | 0% | `biometric_identifier` 168, missed 118 |
-| NRIC with "tax" just before it | 711 | 87% | `biometric_identifier` 37, boundary 24 |
-| Given name of several words, later words | 1,434 | 5% | `last_name` 1,227 |
-| Given name of one word | 3,376 | 62% | `last_name` 766, missed 212 |
-| Given name of several words, first word | 1,434 | 67% | `last_name` 294, missed 69 |
-| Surname of one word | 2,688 | 89% | missed 78, `first_name` 77 |
-| Surname of several words, first word | 1,274 | 81% | `first_name` 72, `company_name` boundary 57 |
+| NRIC with "tax" just before it | 711 | 87% | `biometric_identifier` 37, `tax_id` boundary 24 |
+| Given name of one word | 3,376 | 84% | missed 212, `company_name` boundary 69, `name` boundary 68 |
+| Given name of several words, first word | 1,434 | 87% | missed 69 |
+| Given name of several words, later words | 1,434 | 91% | missed 41 |
+| Surname of one word | 2,688 | 92% | missed 78 |
+| Surname of several words, first word | 1,274 | 87% | `company_name` boundary 57, missed 48 |
 | Surname of several words, later words | 1,734 | 83% | missed 117, `company_name` boundary 90 |
 
 Two findings matter for M6 and M7.
 
-1. **The biggest single failure comes from how openpii marks names.** openpii marks names like "Enie Idilia" as one given name. MiniLM types the second word as `last_name` 1,227 times out of 1,434. Nemotron almost never has a given name of more than one word, so this gap comes from how the two datasets mark names, not from anything about Singapore.
-2. **The NRIC fix can raise overall F1 only a little.** If an edit got all 323 NRICs without "tax" just before them right and changed nothing else, Singapore F1 would rise by 0.017. That is about four times the Singapore standard error, so a full fix is detectable but small. The mechanism metric in M7, the share of the targeted failure that the edit fixed, has to carry most of the NRIC result.
+1. **The name errors left are mostly misses and boundary errors.** A word tagged `first_name` or `last_name` is right on any name word, so no name category is below 83%. What remains are names MiniLM does not tag at all, such as 212 given names of one word, and names it tags as part of a longer stretch, often a company name. No single cause stands out to target. The prediction expects these categories to stay unchanged, because finding a name MiniLM has never seen needs knowledge it lacks.
+2. **The NRIC fix can raise overall F1 only a little.** If an edit got all 323 NRICs without "tax" just before them right and changed nothing else, Singapore F1 would rise by 0.014. That is about five times the Singapore standard error, so a full fix is detectable but small. The mechanism metric in M7, the share of the targeted failure that the edit fixed, has to carry most of the NRIC result.
 
 ## Prediction
 
-[docs/m5_prediction.md](m5_prediction.md) records the prediction for each category before the run. It predicts that the edit fixes NRICs without "tax" just before them and leaves every name category unchanged. Overall Singapore F1 rises by 0.002 to 0.011, from 33 to 205 more NRICs right. The Nemotron scores stay within 0.005 of the base. It also says which results would contradict the paper's pattern. The prediction has its own commit on `main`, made before M6, so its timestamp shows it came before the run.
+[docs/m5_prediction.md](m5_prediction.md) records the prediction for each category before the run. It predicts that the edit fixes NRICs without "tax" just before them and leaves every name category unchanged. Overall Singapore F1 rises by 0.002 to 0.009, from 33 to 205 more NRICs right. The Nemotron scores stay within 0.005 of the base. It also says which results would contradict the paper's pattern. The prediction has its own commit on `main`, made before M6, so its timestamp shows it came before the run.
 
 ## Failing rows
 
-[docs/m5_failing_rows.md](m5_failing_rows.md) shows 12 main-eval rows, generated by [scripts/failing_rows.py](../scripts/failing_rows.py) with a fixed seed. Rows 1 to 8 each show one failure: an NRIC with and without "tax" just before it, a given name typed as a surname, misses, a boundary error, and a false positive. Rows 9 to 12 hold the most failures among the rest. MiniLM gets right 10 of the 47 name words and NRICs that are scored on these rows.
+[docs/m5_failing_rows.md](m5_failing_rows.md) shows 12 main-eval rows, generated by [scripts/failing_rows.py](../scripts/failing_rows.py) with a fixed seed. Rows 1 to 7 each show one type of mistake. The other five are the rows with the most mistakes. MiniLM gets 59 of the 90 scored name words and NRICs right on these rows.
 
 Two patterns show up that no table above isolates:
 
-- MiniLM tags titles such as `Mstr`, `Miss` and `Judge` as `first_name`. These count as false positives.
-- MiniLM breaks hyphenated names such as `Ionel-Florin` and `Marie-France` at the hyphen, so they score as boundary errors.
+- MiniLM tags titles such as `Judge` and `Madame` as names. These count as false positives.
+- MiniLM breaks hyphenated names such as `Sarah-Maria` and `Abdel-Kader` at the hyphen, so they score as boundary errors.
 
 ## Cost estimate
 
@@ -237,7 +239,7 @@ After the second `lock.json` was committed, Desmond asked for a review of M5. Op
 | Finding | Severity | Action |
 |---|---|---|
 | The prediction's regression rule, two paired standard errors, flags 10 wrong entities out of 146,951 as a change | Medium | Fixed in the third freeze. Unchanged now means within 0.005 |
-| The prediction's F1 range, 0.005 to 0.015, did not follow from its own claims | Medium | Fixed in the third freeze. It is now 0.002 to 0.011 |
+| The prediction's F1 range, 0.005 to 0.015, did not follow from its own claims | Medium | Fixed in the third freeze. It now follows from the number of NRICs that can be fixed, 0.002 to 0.009 |
 | 917 ids in `nemotron_eval.jsonl` appear on two rows. Nemotron wrote each template once with a US persona and once with an international one under the same id | Medium | Open for M7, below. The baseline pairs rows by position, so its scores are right |
 | `run_editor.py` checks the settings only when the run is named `p50` | Medium | Open for M7, below |
 | The run folder leaves out five records an audit would need | Medium | Fixed in the driver, outside `lock.json`. See "Records added to the run folder" below |
@@ -300,7 +302,7 @@ The check of what reaches Opus 5.5 turned up three problems with how the driver 
 - **A refused call left its traces in the conversation.** When Opus 5.5's safeguards stop a reply, the CLI adds two things to the session: a notice, and a note that a safety check stopped the reply, "Your response above was stopped by a safety classifier". It retries once, then fails with an API error that it also writes to the session. The driver resent on the same session, so Opus 5.5 read every failed attempt, the user message repeated once for each attempt. A probe that asked Opus 5.5 to quote its system prompt hit this with `reasoning_extraction`, and the reply it finally got said it had seen four such notices.
 - **The CLI answered with another model and reported success.** On the probe's fourth attempt the CLI logged `model_refusal_fallback`, "Opus 4.8 is answering instead", and the reply came from `claude-opus-4-8`. Its JSON said `success`, so the driver would have logged an Opus 4.8 reply as a turn of Opus 5.5.
 
-The driver now notes the size of the CLI's conversation log before each call and reads the rows the call added. `reply_blocks` in [src/wsp/harness/driver.py](../src/wsp/harness/driver.py) joins every text block of the reply. It rejects the call if any added row is a `model_refusal_*` notice, a note that a safety check stopped the reply, an API-error reply, or a reply from any model other than `claude-opus-5-5`. A rejected or failed call is cut from the log, or the log is removed if the call created it, and resent after the usual wait. The driver also checks that the last block matches the CLI's `result` and stops the run if they differ. The CLI command and environment are unchanged, so `lock.json` is unchanged. Cutting a failed call also cuts the CLI's running cost for it, so `run.json`'s `cost_usd` leaves out failed calls. Each one's usage and the CLI's running total at that point are still in `cli_retries`, so its cost is that total minus the total before it. The CLI has two variables that turn off its retry after a refusal and its switch to another model, `CLAUDE_CODE_DISABLE_REFUSAL_RETRY` and `CLAUDE_CODE_DISABLE_REFUSAL_FALLBACK`. Setting them would change `cli_env` and need a seventh freeze, and the driver check covers both cases.
+The driver now notes the size of the CLI's conversation log before each call and reads the rows the call added. `reply_blocks` in [src/wsp/harness/driver.py](../src/wsp/harness/driver.py) joins every text block of the reply. It rejects the call if any added row is a `model_refusal_*` notice, a note that a safety check stopped the reply, an API-error reply, or a reply from any model other than `claude-opus-5-5`. A rejected or failed call is cut from the log, or the log is removed if the call created it, and resent after the usual wait. The driver also checks that the last block matches the CLI's `result` and stops the run if they differ. The CLI command and environment are unchanged, so `lock.json` is unchanged. Cutting a failed call also cuts the CLI's running cost for it, so `run.json`'s `cost_usd` leaves out failed calls. Each one's usage and the CLI's running total at that point are still in `cli_retries`, so its cost is that total minus the total before it. The CLI has two variables that turn off its retry after a refusal and its switch to another model, `CLAUDE_CODE_DISABLE_REFUSAL_RETRY` and `CLAUDE_CODE_DISABLE_REFUSAL_FALLBACK`. Setting them would change `cli_env` and need another freeze, and the driver check covers both cases.
 
 Three checks show the fix works:
 
@@ -313,9 +315,11 @@ Three checks show the fix works:
 - **M7's scoring must call `wsp.lock.check` and compare the hash of `lock.json` with `baseline.json`.** The script does not exist yet.
 - **M7 must pair Nemotron rows by position, never by id.** Joining `pred_nemotron_eval.jsonl` by id drops the regression F1 from 0.952 to 0.905. M7 should check that both files have the same rows in the same order.
 - **M7 must compare `run.json` with the locked settings, whatever the run is named.** It should also refuse a run whose `run.json` says the code had uncommitted changes.
-- **M7 must check that the harness code did not change between the freeze and the run.** The driver, `lock.py` and `run_editor.py` are not hashed, so the restart can still be built. `run.json` names the run's git commit, and the locked run refuses code with uncommitted changes. M7 should compare those files between the sixth freeze's commit and the run's commit, and accept only the restart and the fix for reading the CLI's conversation log.
+- **M7 must check that the harness code did not change between the freeze and the run.** The driver, `lock.py` and `run_editor.py` are not hashed, so the restart can still be built. `run.json` names the run's git commit, and the locked run refuses code with uncommitted changes. M7 should compare those files between the seventh freeze's commit and the run's commit, and accept only the restart and the fix for reading the CLI's conversation log.
 - **M7 should check each forward pass's edit.** Rebuild `forward/<k>/edit.npz` with `apply_npz` and compare the hashes with `forward/<k>/edit_manifest.json`.
 - **A `claude` update still blocks M6.** This already happened once. Another launch of `claude` moved `~/.local/bin/claude` from 2.1.292 to 2.1.318 at 22:37 on 2026-11-05, and the sixth freeze followed. `lock.json` now records 2.1.318. The run's own CLI cannot update itself, since the driver sets `DISABLE_AUTOUPDATER=1`, but any other launch can. If the CLI updates again before M6, `run_editor.py` refuses to start, and the check under "The check of what reaches Opus 5.5 on 2.1.318" has to be repeated on the new version before `lock.json` is renewed.
 - **A refusal that repeats is retried for up to 6 hours.** Each resend now starts from a clean conversation, so a long run of refusals costs time but does not reach Opus 5.5. The live test above gave up after 5 refusals because its limit was 40 s. The run's limit is 6 hours.
 - **The restart is still unbuilt, and the paper's run needed it.** The paper restarted its conversation every 40 turns, and `p50c` used 4 conversations. At 158 turns this run's context would reach about 744,000 tokens, inside the 1,000,000-token window. Past about 205 turns the CLI compacts the conversation instead, and Opus 5.5 does not see `notes.md` again as the prompt promises. `run.json` records whether the CLI compacted the conversation. The restart is a driver change outside `lock.json`.
+- **`data/sets.json` still lists `first_name` and `last_name` as scored labels.** Its `scored_labels` holds the three labels from before the merge, because the sets were not rebuilt. The scoring code reads `SG_LABELS`, which is `name` and `national_id`.
+- **[docs/m3_review.md](m3_review.md) shows M3's scoring, with each name word typed exactly.** It was not regenerated for the merge.
 - **The M4 open items about usage limits and processes that keep running in the background are unchanged.**

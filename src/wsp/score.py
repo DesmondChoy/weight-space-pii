@@ -2,9 +2,10 @@
 
 Word tags come from the argmax label of each word's first subtoken. Decoding turns word tags into
 entities. Scoring splits every first_name and last_name entity into one entity per
-whitespace-separated word, on both the gold and the predicted side. A predicted tax_id on an
-NRIC-shaped value counts as national_id, and scored predictions inside a document's ignore spans are dropped.
-An entity is then correct only if its span and its type both match exactly.
+whitespace-separated word, on both the gold and the predicted side. Where `name` is scored, first_name and
+last_name both count as `name`. A predicted tax_id on an NRIC-shaped value counts as national_id, and scored
+predictions inside a document's ignore spans are dropped. An entity is then correct only if its span and its
+type both match exactly.
 """
 
 import re
@@ -15,8 +16,9 @@ import numpy as np
 
 from wsp.data import Doc, Span
 
+NAME = "name"
 NAME_LABELS = frozenset({"first_name", "last_name"})
-SG_LABELS = ("first_name", "last_name", "national_id")
+SG_LABELS = (NAME, "national_id")
 FAILURES = ("missed", "wrong_type", "wrong_boundary", "false_positive")
 NRIC = re.compile(r"[STFGM]\d{7}[A-Z]")
 WORD = re.compile(r"\S+")
@@ -79,6 +81,15 @@ class Grade:
         return sum(self.by_label.values(), Tally())
 
 
+def merged(label: str, labels: tuple[str, ...]) -> str:
+    """first_name and last_name count as one label, `name`, wherever `name` is scored.
+
+    Which word of a name openpii calls the surname is a convention a reader often cannot check, and hiding a
+    name does not depend on it. The all-label regression check scores both labels, so there it stays strict.
+    """
+    return NAME if label in NAME_LABELS and NAME in labels else label
+
+
 def scored_label(text: str, pred: Span, labels: tuple[str, ...]) -> str:
     """The label a prediction is scored as. A tax_id on an NRIC-shaped value is scored as national_id.
 
@@ -88,7 +99,7 @@ def scored_label(text: str, pred: Span, labels: tuple[str, ...]) -> str:
     if (pred.label == "tax_id" and "tax_id" not in labels and "national_id" in labels
             and NRIC.fullmatch(text[pred.start:pred.end])):
         return "national_id"
-    return pred.label
+    return merged(pred.label, labels)
 
 
 def _overlaps(a: Span, b: Span) -> bool:
@@ -107,7 +118,7 @@ def grade(doc: Doc, pred: list[Span], labels: tuple[str, ...]) -> Grade:
     that overlaps no gold entity with a scored label is a false_positive. Predictions with other labels
     never count as false positives, but they can make a gold entity wrong_type or wrong_boundary.
     """
-    gold_all = split_names(doc.text, doc.spans)
+    gold_all = [Span(s.start, s.end, merged(s.label, labels)) for s in split_names(doc.text, doc.spans)]
     g = {s for s in gold_all if s.label in labels}
     pred_all = [Span(s.start, s.end, scored_label(doc.text, s, labels)) for s in split_names(doc.text, pred)]
     p = {s for s in pred_all if s.label in labels and (s in g or not any(_overlaps(s, i) for i in doc.ignore))}
