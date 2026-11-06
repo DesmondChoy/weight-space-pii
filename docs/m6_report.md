@@ -2,7 +2,7 @@
 
 M6 runs the 50-pass session once, with every setting M5 locked. Opus 5.5 spent 232 turns and all 50 forward passes on MiniLM. It submitted an edit that changes 12 tensors in the MLPs of layers 1, 2 and 4, with a final answer that describes two repairs, one for Singapore titles and one for NRICs. This report covers how the run went, what Opus 5.5 submitted, and the checks on the submitted edit. It does not score the edit on the hidden sets. M7 does that. It follows §2 and §7 of [weight-space-pii-handoff.md](weight-space-pii-handoff.md), with the decisions in the M2 to M5 reports.
 
-Status: the run finished on 2026-11-06 and this report is written. Waiting for Desmond to review the items under "Show me". Not committed.
+Status: the run finished on 2026-11-06 and this report is written. Waiting for Desmond to review the items under "Show me". Committed on `main`, where `git log` lists every M6 commit.
 
 ## What you need to know first
 
