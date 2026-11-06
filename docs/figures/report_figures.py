@@ -1,5 +1,9 @@
-"""Generate the figures in the M2 to M5 reports: data_sets, example_rows, label_translation, tax_id_cases,
-harness, edit_checks, lock_checks, set_roles, baseline_f1, and baseline_kinds."""
+"""Generate the figures in the M2 to M6 reports: data_sets, example_rows, label_translation, tax_id_cases,
+harness, edit_checks, lock_checks, set_roles, baseline_f1, baseline_kinds, run_timeline, and edit_map.
+
+The M6 numbers come from runs/p50/, which git does not track: each forward pass's turn and items from
+transcript.jsonl, forward/<k>/request.json and work_notes/split.json, the context from cli_session.jsonl, and
+the edited neurons from edit/edit.npz."""
 
 from pathlib import Path
 
@@ -452,6 +456,129 @@ def baseline_kinds():
           "categories are 83% to 92% right.", out)
 
 
+def run_timeline():
+    out = []
+    x0, x1, last = 130, 890, 232
+
+    def tx(turn):
+        return x0 + (x1 - x0) * turn / last
+
+    passes = {"dev": [6, 29, 43, 55, 65, 73, 79, 90, 96, 102, 108, 117, 141, 147, 164, 178, 181, 214],
+              "hold": [121, 153, 156, 158, 160, 166, 168, 208, 223, 231],
+              "texts": [19, 49, 130, 132, 134, 138, 169, 176, 184, 188, 192, 196, 198, 201, 206, 209, 212, 215, 217,
+                        221, 225, 228]}
+    lanes = [("dev", "dev half", "c-teal", 18), ("hold", "held-back half", "c-purple", 10),
+             ("texts", "own texts", "box", 22)]
+    text(out, 40, 22, "Run p50: when Opus 5.5 spent its 50 forward passes, and how its context grew", "th", "start")
+    text(out, 40, 42, "Each mark is one forward pass, placed at the turn that asked for it, in the lane for what MiniLM "
+         "ran on.", "ts", "start")
+    for i, (key, label, cls, n) in enumerate(lanes):
+        y = 70 + 24 * i
+        text(out, 40, y + 8, label, "ts", "start")
+        text(out, x1 + 12, y + 8, f"{n} passes", "tl", "start")
+        out.append(f'<line x1="{x0}" y1="{y + 8}" x2="{x1}" y2="{y + 8}" stroke="#E5E3DA" stroke-width="1"/>')
+        for t in passes[key]:
+            out.append(f'<g class="{cls}"><rect x="{tx(t) - 2:g}" y="{y}" width="4" height="16" rx="1" '
+                       f'stroke-width="0.5"/></g>')
+
+    top, bot, ymax = 190, 350, 1_000_000
+
+    def ty(tokens):
+        return bot - (bot - top) * tokens / ymax
+
+    events = [(43, "turn 43: first edit tested", 150), (208, "turn 208: final edit first tested", 150),
+              (232, "turn 232: final answer", 166)]
+    for t, label, ly in events:
+        x = tx(t)
+        for ya, yb in ((64, 140), (176, bot)):
+            out.append(f'<line x1="{x:g}" y1="{ya}" x2="{x:g}" y2="{yb}" stroke="#888780" stroke-width="1" '
+                       f'stroke-dasharray="2 3"/>')
+        text(out, x - 4, ly, label, "tl", "end")
+    for tokens, label in ((0, "0"), (500_000, "500k"), (1_000_000, "1M")):
+        y = ty(tokens)
+        out.append(f'<line x1="{x0}" y1="{y:g}" x2="{x1}" y2="{y:g}" stroke="#E5E3DA" stroke-width="1"/>')
+        text(out, x0 - 8, y, label, "tl", "end")
+    text(out, 40, (top + bot) / 2 - 8, "context,", "ts", "start")
+    text(out, 40, (top + bot) / 2 + 8, "tokens", "ts", "start")
+    yc = ty(967_000)
+    out.append(f'<line x1="{x0}" y1="{yc:g}" x2="{x1}" y2="{yc:g}" stroke="#A32D2D" stroke-width="1" '
+               f'stroke-dasharray="5 4"/>')
+    text(out, x0 + 4, yc + 12, "the CLI compacts the conversation above 967,000 tokens", "bad", "start")
+    ctx = [(1, 4), (20, 57), (40, 136), (60, 219), (80, 281), (100, 349), (120, 418), (140, 489), (160, 554),
+           (180, 629), (200, 681), (220, 751), (232, 780)]
+    pts = " ".join(f"{tx(t):g},{ty(k * 1000):g}" for t, k in ctx)
+    out.append(f'<polyline points="{pts}" fill="none" stroke="#534AB7" stroke-width="2"/>')
+    text(out, tx(232) + 8, ty(780_000), "780,000", "tv", "start")
+    for t in (0, 50, 100, 150, 200):
+        text(out, tx(t), bot + 16, str(t), "tl")
+    text(out, (x0 + x1) / 2, bot + 34, "turn", "ts")
+    notes = ["dev half: the 500 practice rows Opus 5.5 used to build and tune its edits.",
+             "held-back half: the other 500 practice rows, which Opus 5.5 set aside to test its edits.",
+             "own texts: sentences Opus 5.5 wrote, such as US-style checks and unseen NRIC contexts."]
+    for i, s in enumerate(notes):
+        text(out, 40, bot + 64 + 18 * i, s, "ts", "start")
+    write("run_timeline.svg", 960, bot + 112, "When run p50 spent its forward passes, and how its context grew",
+          "Run p50 lasted 232 turns. Its 50 forward passes ran MiniLM on three kinds of input: 18 on the dev half of "
+          "the practice set, 10 on the held-back half, and 22 on texts Opus 5.5 wrote. The first edit was tested at "
+          "turn 43, the final edit was first tested at turn 208, and the final answer came at turn 232. The context "
+          "grew steadily to 780,000 tokens and never reached 967,000, where the CLI compacts the conversation.", out)
+
+
+def edit_map():
+    out = []
+    text(out, 40, 22, "Where the submitted edit changes MiniLM", "th", "start")
+    text(out, 40, 42, "MiniLM's six layers, bottom to top in the order a text passes through them. Each layer has an "
+         "attention block and an MLP of 1,536 neurons.", "ts", "start")
+    xa, xm, xn = 130, 320, 570
+    head_y, row_h = 64, 56
+    box(out, xa, head_y, 420, 44, "Classification head", ["edits refused by save_edit"], "c-coral")
+    mlps = {5: ("MLP", "tried, not submitted", "dashed",
+                ["Hyphenated names, neurons 161, 423, 541, 665.",
+                 "Dropped: gain on the held-back half +0.014 ± 0.015."]),
+            4: ("MLP", "2 neurons edited", "c-teal",
+                ["NRIC repair, neurons 806 and 1407.",
+                 "They detect the NRIC shape and write the national-ID state."]),
+            2: ("MLP", "4 neurons edited", "c-teal",
+                ["Title repair, neurons 792 and 1209, plus 244 and 1258",
+                 "for Mayoress. They write the signal Mr and Mrs carry."]),
+            1: ("MLP", "2 neurons edited", "c-teal",
+                ["Title repair, neurons 54 and 485.",
+                 "They detect Singapore titles such as Mstr and Madame."])}
+    for i, layer in enumerate(range(5, -1, -1)):
+        y = head_y + 60 + row_h * i
+        text(out, 40, y + 20, f"Layer {layer}", "ts", "start")
+        box(out, xa, y, 170, 40, "Attention", ["unchanged"])
+        title, sub, cls, note = mlps.get(layer, ("MLP", "unchanged", "box", []))
+        if cls == "dashed":
+            out.append(f'<rect class="dr" x="{xm}" y="{y}" width="230" height="40" rx="8" stroke-width="1"/>')
+            text(out, xm + 115, y + 12, title, "th")
+            text(out, xm + 115, y + 30, sub, "ts")
+        else:
+            box(out, xm, y, 230, 40, title, [sub], cls)
+        for j, s in enumerate(note):
+            text(out, xn, y + 12 + 16 * j, s, "tl" if cls == "dashed" else "ts", "start")
+    emb_y = head_y + 60 + row_h * 6
+    box(out, xa, emb_y, 420, 44, "Embeddings", ["edits refused by save_edit"], "c-coral")
+    out.append(f'<path d="M110 {emb_y + 40} L110 {head_y + 6}" class="arr" marker-end="url(#arrow)"/>')
+    text(out, 40, emb_y + 72, "In each edited MLP the edit rewrites those neurons' input weights, input biases and output weights, and "
+         "shifts the layer's output bias", "ts", "start")
+    text(out, 40, emb_y + 90, "to cancel the neurons' old average output. 12 tensors and 7,304 numbers change. Every "
+         "other number in MiniLM is unchanged.", "ts", "start")
+    ly = emb_y + 122
+    for x, cls, label in ((40, "c-teal", "Edited in the submitted answer"), (300, "box", "Unchanged"),
+                          (460, "c-coral", "Edits not allowed")):
+        swatch(out, x, ly, cls)
+        text(out, x + 22, ly, label, "ts", "start")
+    out.append(f'<rect class="dr" x="640" y="{ly - 7}" width="14" height="14" rx="3" stroke-width="1"/>')
+    text(out, 662, ly, "Tried during the run, not submitted", "ts", "start")
+    write("edit_map.svg", 960, ly + 24, "Where the submitted edit changes MiniLM",
+          "MiniLM's six layers, each with an attention block and an MLP. The submitted edit changes only the MLPs of "
+          "layers 1, 2 and 4. Layers 1 and 2 hold the title repair: neurons 54 and 485 in layer 1, and 792, 1209, 244 "
+          "and 1258 in layer 2. Layer 4 holds the NRIC repair, neurons 806 and 1407. A repair for hyphenated names in "
+          "layer 5 was tried and dropped. Every attention block is unchanged, and edits to the embeddings and the "
+          "classification head are not allowed. In all, 12 tensors and 7,304 numbers change.", out)
+
+
 data_sets()
 example_rows()
 label_translation()
@@ -462,3 +589,5 @@ lock_checks()
 set_roles()
 baseline_f1()
 baseline_kinds()
+run_timeline()
+edit_map()
