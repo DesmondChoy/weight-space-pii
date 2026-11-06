@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="960" height="372" viewBox="0 0 960 372" role="img">
 <title>Baseline F1 of the unedited MiniLM by scored label</title>
-<desc>F1 of the unedited MiniLM, measured in M5, on each scored label, Singapore test set against Nemotron held-out test set. first_name 0.580 against 0.985, last_name 0.743 against 0.984, national_id 0.737 against 0.959. Pooled over the three labels, which is what the gate compares, Singapore scores 0.674 and Nemotron 0.984, a gap of 0.310, far above the gate's threshold of 0.0087.</desc>
+<desc>F1 of the unedited MiniLM, measured in M5, on each scored label, Singapore test set against Nemotron held-out test set. first_name 0.580 against 0.985, last_name 0.743 against 0.984, national_id 0.737 against 0.959. With all three labels counted together, which is what the check that there is something to repair compares, Singapore scores 0.674 and Nemotron 0.984, a gap of 0.310, far above the check's threshold of 0.0087. The check passes.</desc>
 <style>
 text { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
 .th { font-size: 14px; font-weight: 500; fill: #2C2C2A; }
@@ -46,12 +46,13 @@ rect.tag { fill: #FBEAF0; stroke: #993556; }
 <g class="box"><rect x="330" y="224" width="498.68" height="16" rx="3" stroke-width="0.5"/></g>
 <text class="tv" x="836.68" y="232" text-anchor="start" dominant-baseline="central">0.959</text>
 <path d="M40 258 L900 258" stroke="#E5E3DA" stroke-width="1"/>
-<text class="th" x="40" y="278" text-anchor="start" dominant-baseline="central">All three, pooled</text>
-<text class="tl" x="40" y="296" text-anchor="start" dominant-baseline="central">the gate compares these two</text>
+<text class="th" x="40" y="274" text-anchor="start" dominant-baseline="central">All three labels counted together</text>
+<text class="tl" x="40" y="292" text-anchor="start" dominant-baseline="central">used by the check that there</text>
+<text class="tl" x="40" y="306" text-anchor="start" dominant-baseline="central">is something to repair</text>
 <g class="c-coral"><rect x="330" y="270" width="350.48" height="16" rx="3" stroke-width="0.5"/></g>
 <text class="tv" x="688.48" y="278" text-anchor="start" dominant-baseline="central">0.674</text>
 <g class="box"><rect x="330" y="290" width="511.472" height="16" rx="3" stroke-width="0.5"/></g>
 <text class="tv" x="849.472" y="298" text-anchor="start" dominant-baseline="central">0.984</text>
-<text class="ts" x="40" y="332" text-anchor="start" dominant-baseline="central">Pooled F1 counts every entity together, so first_name, with the most entities, pulls it below the mean of the three, 0.687.</text>
-<text class="ts" x="40" y="350" text-anchor="start" dominant-baseline="central">Gap 0.310. The gate needs more than twice its standard error, 2 × 0.0044 = 0.0087. It passes.</text>
+<text class="ts" x="40" y="332" text-anchor="start" dominant-baseline="central">Counted together, every entity counts once, so first_name, with the most entities, pulls F1 below the mean of the three, 0.687.</text>
+<text class="ts" x="40" y="350" text-anchor="start" dominant-baseline="central">Gap 0.310. The check that there is something to repair needs more than twice its standard error, 2 × 0.0044 = 0.0087. The check passes.</text>
 </svg>

@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="960" height="384" viewBox="0 0 960 384" role="img">
-<title>Two main-eval rows and their answer keys</title>
-<desc>Two openpii rows with every answer-key span marked. Given names, surnames, and the NRIC are scored, renamed to first_name, last_name, and national_id. Titles, dates, cities, addresses, and the passport and ID card numbers are not scored.</desc>
+<title>Two main-eval rows and their gold spans</title>
+<desc>Two openpii rows with every gold span marked. Given names, surnames, and the NRIC are scored, renamed to MiniLM's labels first_name, last_name, and national_id. Titles, dates, cities, addresses, and the passport and ID card numbers are not scored.</desc>
 <style>
 text { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
 .th { font-size: 14px; font-weight: 500; fill: #2C2C2A; }
@@ -52,7 +52,7 @@ rect.tag { fill: #FBEAF0; stroke: #993556; }
 <text class="tl sc" x="184.7" y="322" text-anchor="start" dominant-baseline="central">TAXNUM → national_id</text>
 <text class="mono" x="40" y="298" dominant-baseline="central" textLength="460.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">the tax details under G6346291N during the quarterly audit.</text>
 <rect class="sc" x="40" y="355" width="14" height="14" rx="3" stroke-width="1"/>
-<text class="ts" x="62" y="362" text-anchor="start" dominant-baseline="central">Scored. openpii's label → the model's label</text>
+<text class="ts" x="62" y="362" text-anchor="start" dominant-baseline="central">Scored. openpii's label → MiniLM's label</text>
 <rect class="dr" x="370" y="355" width="14" height="14" rx="3" stroke-width="1"/>
 <text class="ts" x="392" y="362" text-anchor="start" dominant-baseline="central">Not scored. openpii's label</text>
 </svg>

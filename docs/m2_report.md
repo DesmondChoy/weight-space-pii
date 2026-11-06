@@ -1,6 +1,6 @@
 # M2 report: profile and scope the data
 
-M2 profiles the openpii Singapore rows in both splits and proposes the scope for M3: the filter, the sample sizes, and the labels to score. It follows §3 and §7 of [weight-space-pii-handoff.md](weight-space-pii-handoff.md). M2 also profiles Nemotron's held-out split, because the M3 label map compares the annotation conventions of the two datasets.
+M2 profiles the openpii Singapore rows in both splits and proposes the scope for M3: the filter, the sample sizes, and the labels to score. It follows §3 and §7 of [weight-space-pii-handoff.md](weight-space-pii-handoff.md). M2 also profiles Nemotron's held-out split, because the M3 label map compares how the two datasets mark their spans.
 
 Status: complete, 2026-11-04. Committed as `e96b30d` on `main`.
 
@@ -8,25 +8,25 @@ Status: complete, 2026-11-04. Committed as `e96b30d` on `main`.
 
 M2 decides which rows the experiment uses and which labels it scores. Each step below depends on the one before it.
 
-1. **The model learned from American data, and we test it on Singapore data.** The model's training data is Nemotron-PII, which uses made-up US personas. The Singapore data is the Singapore rows of openpii, `ai4privacy/pii-masking-openpii-1.5m`. openpii has two splits. `train` holds 20,225 Singapore rows, and `validation` holds 5,005.
-2. **A program wrote openpii, not a person.** A generator wrote each text, filled in made-up values, and marked where each value sits. Those marks are the gold spans, the answer key that scoring compares the model's tags against. Because the generator placed every value itself, it misses none. It does draw some boundaries that a person would not. For example, it marks `Singapore Jalan Kayu Estate Jalan Kayu Estate` as one city.
-3. **The experiment uses three sets, and each set has one job.** The editor sees only the first one.
-   - The practice set is 1,000 rows from openpii `train`. The editor reads these rows and their answer key, and grades its edits on them.
+1. **MiniLM learned from American data, and we test it on Singapore data.** MiniLM is the PII detector whose weights the experiment edits. Its training data is Nemotron-PII, which uses made-up US personas. The Singapore data is the Singapore rows of openpii, `ai4privacy/pii-masking-openpii-1.5m`. openpii has two splits. `train` holds 20,225 Singapore rows, and `validation` holds 5,005.
+2. **A program wrote openpii, not a person.** The program wrote each text, filled in made-up values, and marked where each value sits. Those marks are the gold spans, the correct answers marked in the data. The score, F1, compares MiniLM's tags against them. F1 combines precision, the share of MiniLM's tags that are right, and recall, the share of real entities it finds. Because the program placed every value itself, it misses none. It does draw some boundaries that a person would not. For example, it marks `Singapore Jalan Kayu Estate Jalan Kayu Estate` as one city.
+3. **The experiment uses three sets, and each set has one job.** Opus 5.5, the model that edits MiniLM and that the brief calls the editor, sees only the first one.
+   - The practice set is 1,000 rows from openpii `train`. Opus 5.5 reads these rows and their gold spans, and grades its edits on them.
    - The main eval is every usable `validation` row, 5,004 in all. At M7 it measures whether the edit helped on Singapore text.
-   - The regression check is 18,515 rows of the model's held-out Nemotron data. At M7 it scores all 55 of the model's types, to show that the edit did not break anything on American text.
-4. **The filter keeps the sets apart.** It drops rows longer than 512 tokens, which is the most the model reads at once. It drops duplicate texts. It also drops each `train` row whose text or template appears in `validation`, so the editor never practises on a copy of a test row.
-5. **Both test sets use every row, for statistical power.** The brief asked for 1,000 main-eval rows, which would hold about 207 NRICs. All 5,004 rows hold 1,034. A larger set gives a smaller standard error, so a real gain from the edit is easier to tell apart from noise. Scoring stays cheap, at about 10 s per model for the main eval.
-6. **Only three labels count toward the score.** They are `first_name`, `last_name`, and `national_id`. M2 first proposed 13 labels. Desmond narrowed them to three, to keep the experiment small and to match insurance, where some labels such as `DATE` are not treated as PII. The NRIC is the case this data can test, because the model finds NRICs but gives them the wrong type. The [left-out labels table](#score-names-and-nrics-only) gives the reason for each other label. For example, no openpii phone number has a real Singapore format.
+   - The regression check is 18,515 rows of MiniLM's held-out Nemotron data. At M7 it scores all 55 of MiniLM's types, to show that the edit did not break anything on American text.
+4. **The filter keeps the sets apart.** It drops rows longer than 512 tokens, which is the most MiniLM reads at once. Tokens are the word pieces MiniLM splits text into. The filter drops duplicate texts. It also drops each `train` row whose text or template appears in `validation`, so Opus 5.5 never practises on a copy of a test row. A template is the text with each value replaced by its label.
+5. **Both test sets use every row, so a real gain is easier to see.** The brief asked for 1,000 main-eval rows, which would hold about 207 NRICs. All 5,004 rows hold 1,034. A larger set gives a smaller bootstrap standard error, which is how much the score would move on a fresh draw of rows. A real gain from the edit is then easier to tell apart from noise. Scoring stays cheap, at about 10 s per model for the main eval.
+6. **Only three labels count toward the score.** They are `first_name`, `last_name`, and `national_id`. M2 first proposed 13 labels. Desmond narrowed them to three, to keep the experiment small and to match insurance, where some labels such as `DATE` are not treated as PII. The NRIC, Singapore's identity card number, is the case this data can test, because MiniLM finds NRICs but gives them the wrong type. The brief reads that as an obstacle, not a missing ability. An edit can remove something that hides an ability MiniLM has, but cannot add one it lacks. The [left-out labels table](#score-names-and-nrics-only) gives the reason for each other label. For example, no openpii phone number has a real Singapore format.
 7. **`national_id` means NRIC.** Every openpii `TAXNUM` value is NRIC-shaped, a letter, seven digits, and a letter, such as `G6346291N`. No other openpii label holds an NRIC. `IDCARDNUM` values are random 10-character strings such as `598QI5X2NW`, so they stay out of `national_id`.
-8. **Names are the hard part to score.** About 30% of openpii's name spans have more than one word, as in `Enie Idilia`. The model learned from Nemotron, where almost every name is one word, and it tags each word of a multi-word name as a separate name. Strict scoring would then mark almost every multi-word name as wrong. M2 left this problem for M3.
+8. **Names are the hard part to score.** About 30% of openpii's name spans have more than one word, as in `Enie Idilia`. MiniLM learned from Nemotron, where almost every name is one word, and it tags each word of a multi-word name as a separate name. Strict scoring, where a tag counts only if its words and its type both match, would then mark almost every multi-word name as wrong. M2 left this problem for M3.
 
-![Three sources pass the filter into three sets, and the editor sees only the practice set](figures/data_sets.svg)
+![Three sources pass the filter into three sets, and Opus 5.5 sees only the practice set](figures/data_sets.svg)
 
-The first figure shows where each set comes from. The editor sees only the practice set, above the dashed line. The main eval and the regression check stay hidden until M5 and M7.
+The first figure shows where each set comes from. Opus 5.5 sees only the practice set, above the dashed line. The main eval and the regression check stay hidden until M5 and M7.
 
-![Two main-eval rows with every answer-key span marked as scored or not scored](figures/example_rows.svg)
+![Two main-eval rows with every gold span marked as scored or not scored](figures/example_rows.svg)
 
-The second figure shows two main-eval rows as openpii marks them. The green spans hold the three scored labels, renamed to the model's names. The dashed spans keep openpii's label and are not scored. [docs/figures/report_figures.py](figures/report_figures.py) generates both figures.
+The second figure shows two main-eval rows as openpii marks them. The green spans hold the three scored labels, renamed to MiniLM's label names. The dashed spans keep openpii's label and are not scored. [docs/figures/report_figures.py](figures/report_figures.py) generates both figures.
 
 M3 later changed three of these decisions. It splits every name into words before scoring. It accepts a `tax_id` tag on an NRIC. It also stops counting tags on the other ID numbers, such as `IDCARDNUM`, as mistakes. The [M3 report](m3_report.md) records the rules.
 
@@ -39,10 +39,10 @@ Desmond made these decisions on 2026-11-04. They override the brief's §3 where 
 | Practice set | 1,000 rows from `train` | 1,000 rows from `train`, unchanged |
 | Main eval | 1,000 rows from `validation` | All `validation` rows that pass the filter, which is 5,004 of 5,005 |
 | Regression check | 2,000 Nemotron held-out rows | All 18,515 Nemotron held-out rows of 512 tokens or fewer |
-| Scored labels | 15 model labels | `first_name`, `last_name`, and `national_id` |
+| Scored labels | 15 MiniLM labels | `first_name`, `last_name`, and `national_id` |
 | Source of `national_id` | `IDCARDNUM` and NRIC-shaped `TAXNUM` | `TAXNUM` only, so `national_id` means NRIC |
-| Labels for the M5 gate | The scored labels | The three scored labels, on both Singapore and Nemotron |
-| Labels for the M7 regression check | The model's labels | All labels the model has, so the check catches damage outside the three scored labels |
+| Labels for the M5 check that there is something to repair | The scored labels | The three scored labels, on both Singapore and Nemotron |
+| Labels for the M7 regression check | MiniLM's labels | All labels MiniLM has, so the check catches damage outside the three scored labels |
 
 The filter keeps rows of 512 tokens or fewer, drops duplicate texts within each split, and drops the `train` rows that share a text or `masked_text` with `validation`. The [filter section](#filter-on-length-duplicates-and-split-overlap) gives the steps.
 
@@ -53,19 +53,19 @@ The gold entity counts follow from these decisions:
 | Main eval, 5,004 rows | 4,810 | 3,962 | 1,034 | 9,806 |
 | Regression check, 18,515 rows | 13,512 | 9,699 | 550 | 23,761 |
 
-The filter drops one duplicate text from `validation`. The dropped copy has none of the three scored labels, so the main eval keeps all 9,806 gold entities. Nemotron has no duplicate texts among its 18,515 filtered rows. The regression check holds 146,769 spans across all 55 entity types the model has. M3 recomputes these counts when it draws the sets.
+The filter drops one duplicate text from `validation`. The dropped copy has none of the three scored labels, so the main eval keeps all 9,806 gold entities. Nemotron has no duplicate texts among its 18,515 filtered rows. The regression check holds 146,769 spans across all 55 entity types MiniLM has. M3 recomputes these counts when it draws the sets.
 
 The rest of this report gives the evidence. The [profile](#profile) section lists what the data contains. The [proposed scope](#proposed-scope) section gives the reasons behind each decision.
 
 ## Profile
 
-[scripts/profile.py](../scripts/profile.py) reads the three files from M1 and writes `data/m2_profile.json`. It counts tokens with the model's own `tokenizer.json`, including special tokens, with truncation and padding turned off. The tokenizer file pads every encoding to 512 by default. An early run that left padding on reported every row as exactly 512 tokens.
+[scripts/profile.py](../scripts/profile.py) reads the three files from M1 and writes `data/m2_profile.json`. It counts tokens with MiniLM's own `tokenizer.json`, including the special tokens MiniLM adds at the start and end of each text. It turns off truncation, which cuts long texts short, and padding, which fills each text out to a fixed length. The tokenizer file pads every encoding to 512 by default. An early run that left padding on reported every row as exactly 512 tokens.
 
 ### Spans and gold spans
 
 Each row is a text plus a list of spans. A span marks one piece of PII by its start and end character positions in the text, and gives it a label. openpii stores a row's spans in its `privacy_mask` field. Nemotron stores them in its `spans` field, as a string that `ast.literal_eval` parses.
 
-The dataset's spans are the gold spans. Gold spans are the reference answer, and scoring compares the model's predicted spans against them. We do not draw gold spans ourselves.
+The dataset's spans are the gold spans. Gold spans are the reference answer, and scoring compares MiniLM's predicted spans against them. We do not draw gold spans ourselves.
 
 The first `validation` row begins with this text, shortened here:
 
@@ -85,18 +85,18 @@ Its first nine spans are:
 | 369 | 378 | `PASSPORTNUM` | `OH1409941` |
 | 382 | 392 | `IDCARDNUM` | `598QI5X2NW` |
 
-A generator, not a human annotator, produced openpii's text and spans. We infer this from the data, not from openpii's documentation. ID values are random strings, phone numbers put a `+65` prefix on random digits, and some `CITY` spans repeat a place name. Because the generator inserted every value itself, it misses no entity. It does draw some span boundaries that a human annotator would not, and the [three annotation patterns](#three-annotation-patterns-distort-strict-f1) below follow from that.
+A program, not a human annotator, produced openpii's text and spans. We infer this from the data, not from openpii's documentation. ID values are random strings, phone numbers put a `+65` prefix on random digits, and some `CITY` spans repeat a place name. Because the program that wrote openpii's texts inserted every value itself, it misses no entity. It does draw some span boundaries that a human annotator would not, and the [three annotation patterns](#three-annotation-patterns-distort-strict-f1) below follow from that.
 
 M3 changes the gold spans in two ways, and moves no span boundary:
 
-1. It renames each scored label to the model's label name. `GIVENNAME` becomes `first_name`, `SURNAME` becomes `last_name`, and `TAXNUM` becomes `national_id`.
+1. It renames each scored label to MiniLM's label name. `GIVENNAME` becomes `first_name`, `SURNAME` becomes `last_name`, and `TAXNUM` becomes `national_id`.
 2. It drops the spans of every other label, such as `TITLE`, `PASSPORTNUM`, and `CITY`.
 
 "Gold" therefore means what the dataset marks as correct, not what is correct by an outside standard.
 
 ### Every Singapore row fits in 512 tokens
 
-| Set | Rows | Mean tokens | p50 | p90 | p99 | Max | Rows of 512 tokens or fewer |
+| Set | Rows | Mean tokens | Median | 90th percentile | 99th percentile | Max | Rows of 512 tokens or fewer |
 |---|---|---|---|---|---|---|---|
 | openpii SG `train` | 20,225 | 96.5 | 78 | 187 | 298 | 574 | 20,223 (99.99%) |
 | openpii SG `validation` | 5,005 | 96.2 | 78 | 185 | 301 | 478 | 5,005 (100%) |
@@ -159,67 +159,67 @@ The script uses two shape tests:
 
 The ID counts match the brief exactly. Every `TAXNUM` value is an NRIC, and no other ID label holds one. `IDCARDNUM` values are random 10-character strings such as `598QI5X2NW`.
 
-The phone generator puts a Singapore prefix on about 41% of numbers. The digits after the prefix are random, as in `+65 95 118.2657`.
+The program that wrote openpii's texts puts a Singapore prefix on about 41% of phone numbers. The digits after the prefix are random, as in `+65 95 118.2657`.
 
 ### Three annotation patterns distort strict F1
 
-Strict F1 counts a predicted entity as correct only if its span matches the gold span exactly. In three places, openpii draws spans differently from Nemotron, the data the model learned from.
+Strict F1 counts a predicted entity as correct only if its span matches the gold span exactly. In three places, openpii draws spans differently from Nemotron, the data MiniLM learned from.
 
-**Multi-word names.** In `validation`, 29.8% of `GIVENNAME` spans and 32.2% of `SURNAME` spans have more than one word, as in `Enie Idilia` and `Tham Teo Chew`. In Nemotron, 0.3% of `first_name` spans and 1.1% of `last_name` spans have more than one word. The M1 probe found that the model labels each word of a multi-word name as a separate entity. Multi-word given names are normal in Singapore, as in "Wei Ming" in "Tan Wei Ming". Most of openpii's multi-word names are not local.
+**Multi-word names.** In `validation`, 29.8% of `GIVENNAME` spans and 32.2% of `SURNAME` spans have more than one word, as in `Enie Idilia` and `Tham Teo Chew`. In Nemotron, 0.3% of `first_name` spans and 1.1% of `last_name` spans have more than one word. The M1 probe found that MiniLM labels each word of a multi-word name as a separate entity. Multi-word given names are normal in Singapore, as in "Wei Ming" in "Tan Wei Ming". Most of openpii's multi-word names are not local.
 
 **City names.** In `validation`, 25.7% of `CITY` spans are the plain word `Singapore`. Another 49.7% join `Singapore` to a neighbourhood or place, as in `Singapore Tanjong Pagar Conservation Area`. The remaining 24.6% join `Singapore` to a place and then repeat the place, as in `Singapore Jalan Kayu Estate Jalan Kayu Estate`. In Nemotron, 81% of `city` spans are one word.
 
 **Street addresses.** In `validation`, 61.6% of `BUILDINGNUM` spans come directly before a `STREET` span. Another 25.2% come directly after one, as in `Mangis Road # 350`. The other 13.3% are not next to a `STREET` span. Between adjacent spans, the text is a space, `#`, a comma, or a non-breaking space. The brief merges `BUILDINGNUM` and `STREET` when they are adjacent, so a merge rule would have to handle both orders and the `#` separator. The final scope does not score street addresses, so M3 needs no merge rule.
 
-These patterns also reach the editor. The editor sees the gold spans of its 1,000 practice rows, and its forward passes grade edits against those spans. An edit can therefore raise the practice score by matching openpii's span boundaries instead of by finding more PII. The M3 review rows let Desmond check the gold spans by eye before the run.
+These patterns also reach Opus 5.5. Opus 5.5 sees the gold spans of its 1,000 practice rows, and its forward passes grade edits against those spans. A forward pass is one run of MiniLM over some texts. An edit can therefore raise the practice score by matching openpii's span boundaries instead of by finding more PII. The M3 review rows let Desmond check the gold spans by eye before the run.
 
 ## Proposed scope
 
 ### Filter on length, duplicates, and split overlap
 
-1. Keep the rows that have 512 tokens or fewer under the model tokenizer, including special tokens.
+1. Keep the rows that have 512 tokens or fewer under MiniLM's tokenizer, including special tokens.
 2. Drop duplicate texts within each split.
 3. Drop the `train` rows whose text or `masked_text` also appears in `validation`. After this step, the practice set and the main eval share no text and no template.
 4. Apply the 512-token filter and the duplicate filter to Nemotron.
 
 ### Use every filtered row for both evaluation sets
 
-We recommend changing the size of both evaluation sets, and keeping the practice set at 1,000 rows. The [decisions table](#decisions) gives the final sizes. Cost is not a constraint. The base model scored 1,000 `train` rows in 1.9 s on CPU in each of two runs, measured with a one-off script that is not in the repo. At that rate, the full `validation` split takes about 10 s per model.
+We recommend changing the size of both evaluation sets, and keeping the practice set at 1,000 rows. The [decisions table](#decisions) gives the final sizes. Cost is not a constraint. The base model, MiniLM before any edit, scored 1,000 `train` rows in 1.9 s on CPU in each of two runs, measured with a one-off script that is not in the repo. At that rate, the full `validation` split takes about 10 s per model.
 
-The gain is statistical power. The main eval would hold 1,034 NRICs instead of about 207. If the bootstrap standard error scales with one over the square root of the row count, it shrinks by about 2.2 times. That scaling is an assumption, and M5 measures the real standard error. Power matters most for the M5 gate and for the per-label results in M7. The editor never sees the main eval, so a larger main eval does not change what the editor can learn.
+The gain is a smaller standard error. The main eval would hold 1,034 NRICs instead of about 207. If the bootstrap standard error scales with one over the square root of the row count, it shrinks by about 2.2 times. That scaling is an assumption, and M5 measures the real standard error. A smaller standard error matters most for the M5 check that there is something to repair and for the per-label results in M7. Opus 5.5 never sees the main eval, so a larger main eval does not change what Opus 5.5 can learn.
 
-The same reasoning applies to the regression check. A 2,000-row Nemotron sample would hold about 60 `national_id` spans, too few to show whether an edit damaged them. All 18,515 filtered rows hold 550. They hold 3,909,853 tokens, so scoring them takes about 80 s per model at the throughput measured on `train` rows, about 49,000 tokens per second. That figure is an estimate, because Nemotron rows are longer and attention cost grows faster than token count. Using every filtered row in both evaluation sets also means that neither set depends on a sampling seed.
+The same reasoning applies to the regression check. A 2,000-row Nemotron sample would hold about 60 `national_id` spans, too few to show whether an edit damaged them. All 18,515 filtered rows hold 550. They hold 3,909,853 tokens, so scoring them takes about 80 s per model at the speed measured on `train` rows, about 49,000 tokens per second. That figure is an estimate, because Nemotron rows are longer and MiniLM's work per row grows faster than the row's token count. Using every filtered row in both evaluation sets also means that neither set depends on a sampling seed, the number that makes a random draw repeatable.
 
-The regression check scores all of the model's labels, not only the three scored labels. Its job is to show that an edit did not make the model worse anywhere, and an edit could damage a label such as `email` that the Singapore eval does not score. The M5 gate is different. It compares Singapore F1 with Nemotron F1, so it uses the same three labels on both sets.
+The regression check scores all of MiniLM's labels, not only the three scored labels. Its job is to show that an edit did not make MiniLM worse anywhere, and an edit could damage a label such as `email` that the Singapore eval does not score. The M5 check that there is something to repair is different. It compares Singapore F1 with Nemotron F1, so it uses the same three labels on both sets.
 
-We recommend keeping the practice set at 1,000 rows. The editor can cover all of it in two forward requests of 512 items, and it holds about 210 NRICs.
+We recommend keeping the practice set at 1,000 rows. Opus 5.5 can cover all of it in two forward requests of 512 items, and it holds about 210 NRICs.
 
 ### Score names and NRICs only
 
 M2 first proposed 13 scored labels, without `CITY`. Desmond narrowed the set to three, to keep the experiment small and to match Desmond's domain, insurance, where some labels such as `DATE` are not treated as PII.
 
-| openpii label | Model label | `validation` gold entities |
+| openpii label | MiniLM label | `validation` gold entities |
 |---|---|---|
 | `GIVENNAME` | `first_name` | 4,810 |
 | `SURNAME` | `last_name` | 3,962 |
 | `TAXNUM` | `national_id` | 1,034 |
 | Total | | 9,806 |
 
-`national_id` takes only `TAXNUM`, so in this experiment `national_id` means NRIC. Every `TAXNUM` value is NRIC-shaped, and no other label holds an NRIC. The NRIC case is the one the brief says this data can test, because the model detects NRICs but gives them varying wrong types. The two name labels are core PII in insurance. Their result mostly measures how the model splits multi-word names, as the [annotation patterns](#three-annotation-patterns-distort-strict-f1) section describes.
+`national_id` takes only `TAXNUM`, so in this experiment `national_id` means NRIC. Every `TAXNUM` value is NRIC-shaped, and no other label holds an NRIC. The NRIC case is the one the brief says this data can test, because MiniLM detects NRICs but gives them varying wrong types. The two name labels are core PII in insurance. Their result mostly measures how MiniLM splits multi-word names, as the [annotation patterns](#three-annotation-patterns-distort-strict-f1) section describes.
 
 No other label is scored. These labels were considered and left out:
 
 | openpii label | Reason |
 |---|---|
 | `IDCARDNUM` | Its values are random 10-character strings, not NRICs. Adding them would make `national_id` mean two things |
-| `TELEPHONENUM` | No value is Singapore-shaped, and the model already labels real Singapore numbers correctly |
-| `CREDITCARDNUMBER` | Only 142 of 1,265 `validation` values pass the Luhn checksum, so the digits are random. Card numbers carry no Singapore-specific signal |
-| `PASSPORTNUM` | The model has no passport label, and the editor cannot add one, because edits to the classifier head are out of scope |
+| `TELEPHONENUM` | No value is Singapore-shaped, and MiniLM already labels real Singapore numbers correctly |
+| `CREDITCARDNUMBER` | Only 142 of 1,265 `validation` values have a valid check digit, the last digit that a real card number computes from the others, so the digits are random. Card numbers carry no Singapore-specific signal |
+| `PASSPORTNUM` | MiniLM has no passport label, and Opus 5.5 cannot add one, because edits to the classification head, the last layer that picks each label, are out of scope |
 | `CITY` | Three quarters of the spans join `Singapore` to a place name, which strict F1 would mark wrong |
 | `DATE`, `TIME`, `AGE`, `GENDER`, `SEX`, `EMAIL`, `ZIPCODE`, `BUILDINGNUM`, `STREET`, `DRIVERLICENSENUM` | Left out to keep the scope small |
 | `TITLE`, `SOCIALNUM`, and the rare labels | The brief excludes them |
 
-More labels would not add power where the experiment needs it. The main eval already uses every `validation` row, so it already holds all 1,034 NRICs in the split. Another label would add entities to the overall F1, but not to the NRIC result.
+More labels would not shrink the standard error where the experiment needs it. The main eval already uses every `validation` row, so it already holds all 1,034 NRICs in the split. Another label would add entities to the overall F1, but not to the NRIC result.
 
 ## Reproduce the profile
 
@@ -233,5 +233,5 @@ The script runs in about 4 s and writes `data/m2_profile.json`. That file is git
 
 The [decisions](#decisions) section at the top records the final scope. These items remain open for M3:
 
-- M3 fixes how to score multi-word names. About 30% of name spans have more than one word, and the model splits them.
+- M3 fixes how to score multi-word names. About 30% of name spans have more than one word, and MiniLM splits them.
 - The pipeline figure, [docs/figures/e2e_pipeline.svg](figures/e2e_pipeline.svg), still shows a 1,000-row main eval and a 2,000-row regression set. M3 regenerates it from `e2e_pipeline.py`.

@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="960" height="504" viewBox="0 0 960 504" role="img">
 <title>How a run works</title>
-<desc>This is the same workflow as the paper's Experiment 8, rebuilt because the paper did not publish its harness code. Opus 5.5 writes text only. The driver takes one block from each reply, runs it, and sends back the result. A python block runs in the Python kernel inside the srt sandbox, which can read model/ and practice/ and write work/, and nothing else. A forward block goes to the forward-pass server outside the sandbox, the only way MiniLM runs. It re-checks the edits in work/, runs MiniLM, and grades with wsp.score. The main eval and the regression check are hidden.</desc>
+<desc>This is the same workflow as the paper's Experiment 8, rebuilt because the paper did not publish its harness code. Opus 5.5 writes text only. The driver takes one block from each reply, runs it, and sends back the result. A python block runs in the Python kernel inside a walled-off area, set up by srt, where code can reach only the folders listed for it. It can read model/ and practice/ and write work/, and nothing else. A forward block goes to the forward-pass server outside the walled-off area, the only way MiniLM runs. It re-checks the edits in work/, runs MiniLM, and scores with wsp.score. The main eval and the regression check are hidden.</desc>
 <style>
 text { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
 .th { font-size: 14px; font-weight: 500; fill: #2C2C2A; }
@@ -36,9 +36,9 @@ rect.tag { fill: #FBEAF0; stroke: #993556; }
 <text class="ts" x="420" y="215" text-anchor="middle" dominant-baseline="central">runs it, sends back</text>
 <text class="ts" x="420" y="231" text-anchor="middle" dominant-baseline="central">the result, logs it all</text>
 </g>
-<rect class="dr" x="600" y="20" width="330" height="210" rx="10" stroke-width="1.5"/>
-<text class="th" x="616" y="38" text-anchor="start" dominant-baseline="central">srt sandbox</text>
-<text class="tl" x="712" y="38" text-anchor="start" dominant-baseline="central">no network, no GPU, no other files</text>
+<rect class="dr" x="600" y="10" width="330" height="220" rx="10" stroke-width="1.5"/>
+<text class="th" x="616" y="28" text-anchor="start" dominant-baseline="central">Walled-off area, set up by srt</text>
+<text class="tl" x="616" y="45" text-anchor="start" dominant-baseline="central">no network, no GPU, only the folders listed below</text>
 <g class="box"><rect x="620" y="56" width="290" height="70" rx="8" stroke-width="0.5"/>
 <text class="th" x="765" y="75" text-anchor="middle" dominant-baseline="central">Python kernel</text>
 <text class="ts" x="765" y="93" text-anchor="middle" dominant-baseline="central">runs ```python blocks</text>
@@ -60,7 +60,7 @@ rect.tag { fill: #FBEAF0; stroke: #993556; }
 <text class="th" x="765" y="283" text-anchor="middle" dominant-baseline="central">Forward-pass server</text>
 <text class="ts" x="765" y="301" text-anchor="middle" dominant-baseline="central">the only way MiniLM runs</text>
 <text class="ts" x="765" y="317" text-anchor="middle" dominant-baseline="central">re-checks every edit in work/</text>
-<text class="ts" x="765" y="333" text-anchor="middle" dominant-baseline="central">grades with wsp.score</text>
+<text class="ts" x="765" y="333" text-anchor="middle" dominant-baseline="central">scores with wsp.score</text>
 </g>
 <path d="M522 182 L618 96" class="arr" marker-end="url(#arrow)"/>
 <path d="M522 238 L618 300" class="arr" marker-end="url(#arrow)"/>

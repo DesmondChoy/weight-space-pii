@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="960" height="360" viewBox="0 0 960 360" role="img">
-<title>The answer key is translated, not the model</title>
-<desc>openpii's labels GIVENNAME, SURNAME, and TAXNUM are renamed to the model's labels first_name, last_name, and national_id. The model's 55 tag types never change. The grader compares the model's tags with the renamed answer key.</desc>
+<title>The gold spans are translated, not MiniLM</title>
+<desc>The gold spans are the correct answers marked in the data. openpii's labels GIVENNAME, SURNAME, and TAXNUM are renamed to MiniLM's labels first_name, last_name, and national_id. MiniLM's 55 tag types never change. The scoring code compares MiniLM's tags with the renamed gold spans.</desc>
 <style>
 text { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
 .th { font-size: 14px; font-weight: 500; fill: #2C2C2A; }
@@ -21,9 +21,9 @@ rect.tag { fill: #FBEAF0; stroke: #993556; }
 </style>
 <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#5F5E5A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
 <rect x="0" y="0" width="960" height="360" fill="#FFFFFF"/>
-<text class="ts" x="140" y="24" text-anchor="middle" dominant-baseline="central">openpii answer key</text>
-<text class="ts" x="440" y="24" text-anchor="middle" dominant-baseline="central">Answer key in the model's names</text>
-<text class="ts" x="780" y="24" text-anchor="middle" dominant-baseline="central">Model output</text>
+<text class="ts" x="140" y="24" text-anchor="middle" dominant-baseline="central">openpii gold spans</text>
+<text class="ts" x="440" y="24" text-anchor="middle" dominant-baseline="central">Gold spans in MiniLM's label names</text>
+<text class="ts" x="780" y="24" text-anchor="middle" dominant-baseline="central">MiniLM's output</text>
 <g class="box"><rect x="40" y="44" width="200" height="56" rx="8" stroke-width="0.5"/>
 <text class="th" x="140" y="64" text-anchor="middle" dominant-baseline="central">GIVENNAME</text>
 <text class="ts" x="140" y="82" text-anchor="middle" dominant-baseline="central">given names</text>
@@ -49,7 +49,7 @@ rect.tag { fill: #FBEAF0; stroke: #993556; }
 <text class="th" x="440" y="216" text-anchor="middle" dominant-baseline="central">national_id</text>
 </g>
 <g class="box"><rect x="640" y="44" width="280" height="200" rx="8" stroke-width="0.5"/>
-<text class="th" x="780" y="104" text-anchor="middle" dominant-baseline="central">Model's tags</text>
+<text class="th" x="780" y="104" text-anchor="middle" dominant-baseline="central">MiniLM's tags</text>
 <text class="ts" x="780" y="122" text-anchor="middle" dominant-baseline="central">55 types, such as first_name,</text>
 <text class="ts" x="780" y="138" text-anchor="middle" dominant-baseline="central">national_id, and tax_id</text>
 <text class="ts" x="780" y="154" text-anchor="middle" dominant-baseline="central"></text>
@@ -59,7 +59,7 @@ rect.tag { fill: #FBEAF0; stroke: #993556; }
 <path d="M440 246 L440 280" class="arr" marker-end="url(#arrow)"/>
 <path d="M780 246 L780 280" class="arr" marker-end="url(#arrow)"/>
 <g class="c-purple"><rect x="340" y="282" width="580" height="56" rx="8" stroke-width="0.5"/>
-<text class="th" x="630" y="302" text-anchor="middle" dominant-baseline="central">Grader</text>
-<text class="ts" x="630" y="320" text-anchor="middle" dominant-baseline="central">A tag counts only if its words and its type match the answer key.</text>
+<text class="th" x="630" y="302" text-anchor="middle" dominant-baseline="central">Scoring code</text>
+<text class="ts" x="630" y="320" text-anchor="middle" dominant-baseline="central">A tag counts only if its words and its type match the gold spans.</text>
 </g>
 </svg>

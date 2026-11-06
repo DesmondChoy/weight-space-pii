@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="960" height="620" viewBox="0 0 960 620" role="img">
 <title>Where the three sets come from and what M5 does with them</title>
-<desc>Two datasets feed the experiment. Nemotron-PII has 200,000 rows of made-up US personas. MiniLM was fine-tuned on 180,000 of them before this experiment. The other 20,000 were held out, and the 18,515 that fit in 512 tokens are the regression check, a hidden test set for US text. openpii's Singapore rows were never seen by MiniLM. From the train split's 20,211 usable rows, a random 1,000 form the practice set, which Opus 5.5 reads with answers and uses to grade its edits, like a development set. The other 19,211 are not used. The validation split's 5,004 usable rows are the main eval, the hidden Singapore test set. A dotted line surrounds the three sets, the part M5 works on: M5 hashes them into lock.json and scores the unedited MiniLM on each, F1 0.952 on the regression check over all labels, 0.682 on the practice set and 0.674 on the main eval. Nothing is trained in the experiment.</desc>
+<desc>Two datasets feed the experiment. Nemotron-PII has 200,000 rows of made-up US personas. MiniLM was fine-tuned on 180,000 of them before this experiment. The other 20,000 were held out, and the 18,515 that fit in 512 tokens are the regression check, a hidden test set for US text. openpii's Singapore rows were never seen by MiniLM. From the train split's 20,211 usable rows, a random 1,000 form the practice set, which Opus 5.5 reads with answers and uses to score its edits. Nothing trains on it. The other 19,211 are not used. The validation split's 5,004 usable rows are the main eval, the hidden Singapore test set. A dotted line surrounds the three sets, the part M5 works on: M5 hashes them into lock.json and scores the unedited MiniLM on each, F1 0.952 on the regression check over all labels, 0.682 on the practice set and 0.674 on the main eval. Nothing is trained in the experiment.</desc>
 <style>
 text { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
 .th { font-size: 14px; font-weight: 500; fill: #2C2C2A; }
@@ -59,8 +59,8 @@ rect.tag { fill: #FBEAF0; stroke: #993556; }
 <g class="c-teal"><rect x="650" y="230" width="280" height="108" rx="8" stroke-width="0.5"/>
 <text class="th" x="790" y="252" text-anchor="middle" dominant-baseline="central">Practice set</text>
 <text class="ts" x="790" y="270" text-anchor="middle" dominant-baseline="central">1,000 rows, a random sample</text>
-<text class="ts" x="790" y="286" text-anchor="middle" dominant-baseline="central">development set: Opus 5.5 reads</text>
-<text class="ts" x="790" y="302" text-anchor="middle" dominant-baseline="central">the answers and grades its edits</text>
+<text class="ts" x="790" y="286" text-anchor="middle" dominant-baseline="central">Opus 5.5 reads the rows and</text>
+<text class="ts" x="790" y="302" text-anchor="middle" dominant-baseline="central">answers and scores its edits</text>
 <text class="tv" x="790" y="318" text-anchor="middle" dominant-baseline="central">M5 baseline F1 0.682</text>
 </g>
 <path d="M582 282 L648 282" class="arr" marker-end="url(#arrow)"/>
@@ -84,7 +84,7 @@ rect.tag { fill: #FBEAF0; stroke: #993556; }
 <text class="tv" x="790" y="458" text-anchor="middle" dominant-baseline="central">M5 baseline F1 0.674</text>
 </g>
 <path d="M582 432 L648 432" class="arr" marker-end="url(#arrow)"/>
-<text class="ts" x="40" y="518" text-anchor="start" dominant-baseline="central">Nothing is trained in this experiment. Opus 5.5 edits MiniLM's weights by hand, so the practice set is its development set, not training data.</text>
+<text class="ts" x="40" y="518" text-anchor="start" dominant-baseline="central">Nothing in this experiment trains on the practice set, or on anything else. Opus 5.5 edits MiniLM's weights by hand.</text>
 <text class="ts" x="40" y="538" text-anchor="start" dominant-baseline="central">The filter also drops every train row whose text or template appears in validation, so no practice row copies a main-eval row.</text>
 <g class="c-purple"><rect x="40" y="565" width="14" height="14" rx="3" stroke-width="0.5"/></g>
 <text class="ts" x="62" y="572" text-anchor="start" dominant-baseline="central">Trained MiniLM, before this experiment</text>

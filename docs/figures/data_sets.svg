@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="960" height="352" viewBox="0 0 960 352" role="img">
 <title>Where each set comes from</title>
-<desc>Three sources pass a filter into three sets. openpii train becomes the 1,000-row practice set, the only set the editor sees. openpii validation becomes the 5,004-row main eval, and Nemotron's held-out split becomes the 18,515-row regression check. Both are hidden from the editor.</desc>
+<desc>Three sources pass a filter into three sets. openpii train becomes the 1,000-row practice set, the only set Opus 5.5 sees. openpii validation becomes the 5,004-row main eval, and Nemotron's held-out split becomes the 18,515-row regression check. Both are hidden from Opus 5.5.</desc>
 <style>
 text { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
 .th { font-size: 14px; font-weight: 500; fill: #2C2C2A; }
@@ -34,7 +34,7 @@ rect.tag { fill: #FBEAF0; stroke: #993556; }
 <g class="c-teal"><rect x="680" y="44" width="240" height="66" rx="8" stroke-width="0.5"/>
 <text class="th" x="800" y="61" text-anchor="middle" dominant-baseline="central">Practice set</text>
 <text class="ts" x="800" y="79" text-anchor="middle" dominant-baseline="central">1,000 rows</text>
-<text class="ts" x="800" y="95" text-anchor="middle" dominant-baseline="central">editor sees rows and answers</text>
+<text class="ts" x="800" y="95" text-anchor="middle" dominant-baseline="central">Opus 5.5 sees rows and answers</text>
 </g>
 <g class="box"><rect x="40" y="134" width="240" height="66" rx="8" stroke-width="0.5"/>
 <text class="th" x="160" y="159" text-anchor="middle" dominant-baseline="central">openpii validation</text>
@@ -62,7 +62,7 @@ rect.tag { fill: #FBEAF0; stroke: #993556; }
 </g>
 <line x1="660" y1="122" x2="940" y2="122" stroke="#888780" stroke-width="1" stroke-dasharray="4 4"/>
 <rect class="c-teal" x="40" y="323" width="14" height="14" rx="3" stroke-width="0.5"/>
-<text class="ts" x="62" y="330" text-anchor="start" dominant-baseline="central">Editor can see</text>
+<text class="ts" x="62" y="330" text-anchor="start" dominant-baseline="central">Opus 5.5 can see</text>
 <rect class="c-coral" x="200" y="323" width="14" height="14" rx="3" stroke-width="0.5"/>
-<text class="ts" x="222" y="330" text-anchor="start" dominant-baseline="central">Hidden from editor</text>
+<text class="ts" x="222" y="330" text-anchor="start" dominant-baseline="central">Hidden from Opus 5.5</text>
 </svg>

@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="960" height="318" viewBox="0 0 960 318" role="img">
 <title>Where the edit rules are checked</title>
-<desc>Opus 5.5's code saves an edit with save_edit, which is check 1. The edit goes to work/edited/. The forward-pass server re-checks every file there before each forward pass and at the final answer, which is check 2, so code that writes a file directly and skips save_edit is still caught. Both checks refuse edits to the embeddings, edits to the classification head, and edits that one scale factor explains 99% or more of.</desc>
+<desc>Opus 5.5's code saves an edit with save_edit, which checks it first. The edit goes to work/edited/. The forward-pass server checks every file there again before each forward pass and at the final answer, so code that writes a file directly and skips save_edit is still caught. Both checks refuse edits to the embeddings, edits to the classification head, and edits that one scale factor explains 99% or more of.</desc>
 <style>
 text { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
 .th { font-size: 14px; font-weight: 500; fill: #2C2C2A; }
@@ -27,23 +27,23 @@ rect.tag { fill: #FBEAF0; stroke: #993556; }
 </g>
 <g class="c-purple"><rect x="270" y="40" width="190" height="76" rx="8" stroke-width="0.5"/>
 <text class="th" x="365" y="62" text-anchor="middle" dominant-baseline="central">save_edit</text>
-<text class="ts" x="365" y="80" text-anchor="middle" dominant-baseline="central">check 1: refuses with</text>
-<text class="ts" x="365" y="96" text-anchor="middle" dominant-baseline="central">a message</text>
+<text class="ts" x="365" y="80" text-anchor="middle" dominant-baseline="central">checks the edit first,</text>
+<text class="ts" x="365" y="96" text-anchor="middle" dominant-baseline="central">refuses with a message</text>
 </g>
 <g class="c-teal"><rect x="520" y="40" width="150" height="76" rx="8" stroke-width="0.5"/>
 <text class="th" x="595" y="70" text-anchor="middle" dominant-baseline="central">work/edited/</text>
 <text class="ts" x="595" y="88" text-anchor="middle" dominant-baseline="central">one file per tensor</text>
 </g>
 <g class="c-purple"><rect x="730" y="40" width="190" height="76" rx="8" stroke-width="0.5"/>
-<text class="th" x="825" y="62" text-anchor="middle" dominant-baseline="central">Server re-check</text>
-<text class="ts" x="825" y="80" text-anchor="middle" dominant-baseline="central">check 2: before every forward</text>
-<text class="ts" x="825" y="96" text-anchor="middle" dominant-baseline="central">pass and at the final answer</text>
+<text class="th" x="825" y="62" text-anchor="middle" dominant-baseline="central">Server checks again</text>
+<text class="ts" x="825" y="80" text-anchor="middle" dominant-baseline="central">before every forward pass</text>
+<text class="ts" x="825" y="96" text-anchor="middle" dominant-baseline="central">and at the final answer</text>
 </g>
 <path d="M212 78 L268 78" class="arr" marker-end="url(#arrow)"/>
 <path d="M462 78 L518 78" class="arr" marker-end="url(#arrow)"/>
 <path d="M672 78 L728 78" class="arr" marker-end="url(#arrow)"/>
 <path d="M125 118 L125 152 L595 152 L595 120" class="arr" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
-<text class="tl" x="360" y="166" text-anchor="middle" dominant-baseline="central">code that writes a file directly skips check 1, so check 2 catches it</text>
+<text class="tl" x="360" y="166" text-anchor="middle" dominant-baseline="central">code that writes a file directly skips save_edit, so the server catches it</text>
 <text class="th" x="40" y="204" text-anchor="start" dominant-baseline="central">Both checks refuse the same three kinds of edit:</text>
 <g class="c-coral"><rect x="40" y="222" width="280" height="76" rx="8" stroke-width="0.5"/>
 <text class="th" x="180" y="252" text-anchor="middle" dominant-baseline="central">Embeddings</text>

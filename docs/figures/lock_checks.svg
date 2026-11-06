@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="960" height="550" viewBox="0 0 960 550" role="img">
 <title>What lock.json freezes and where it is checked</title>
-<desc>Seven groups of files, the sets, the scoring code, the forward-pass server, the prompt, MiniLM's files, the environment and the baseline code with the prediction, are hashed once into lock.json, together with the run settings: the exact CLI command, the CLI version and the limits. The M5 baseline, the M6 editor run and the M7 evaluation each compare the tree with lock.json and stop if any file changed. The M6 run also checks its settings and re-renders its prompt.</desc>
+<desc>Seven groups of files, the sets, the scoring code, the forward-pass server, the prompt, MiniLM's files, the environment and the baseline code with the prediction, are hashed once into lock.json, together with the run's settings: the exact CLI command, its version and environment, and the limits. The M5 baseline, the M6 editor run and the M7 evaluation each compare the files with lock.json and stop if any file changed. The M6 run also checks its settings and re-renders its prompt.</desc>
 <style>
 text { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
 .th { font-size: 14px; font-weight: 500; fill: #2C2C2A; }
@@ -57,16 +57,17 @@ rect.tag { fill: #FBEAF0; stroke: #993556; }
 <text class="ts" x="595" y="188" text-anchor="middle" dominant-baseline="central">the prediction</text>
 </g>
 <g class="c-purple"><rect x="715" y="132" width="210" height="76" rx="8" stroke-width="0.5"/>
-<text class="th" x="820" y="154" text-anchor="middle" dominant-baseline="central">run settings</text>
-<text class="ts" x="820" y="172" text-anchor="middle" dominant-baseline="central">CLI command and version,</text>
-<text class="ts" x="820" y="188" text-anchor="middle" dominant-baseline="central">limits, no turn cap</text>
+<text class="th" x="820" y="146" text-anchor="middle" dominant-baseline="central">the run's settings</text>
+<text class="ts" x="820" y="164" text-anchor="middle" dominant-baseline="central">CLI command and version,</text>
+<text class="ts" x="820" y="180" text-anchor="middle" dominant-baseline="central">CLI environment, limits,</text>
+<text class="ts" x="820" y="196" text-anchor="middle" dominant-baseline="central">no limit on turns</text>
 </g>
 <path d="M480 210 L480 240" class="arr" marker-end="url(#arrow)"/>
 <g class="box"><rect x="330" y="242" width="300" height="56" rx="8" stroke-width="0.5"/>
 <text class="th" x="480" y="262" text-anchor="middle" dominant-baseline="central">lock.json</text>
-<text class="ts" x="480" y="280" text-anchor="middle" dominant-baseline="central">one SHA-256 per file, plus the run settings</text>
+<text class="ts" x="480" y="280" text-anchor="middle" dominant-baseline="central">one hash per file, plus the run's settings</text>
 </g>
-<text class="th" x="40" y="336" text-anchor="start" dominant-baseline="central">Where the tree is checked against it</text>
+<text class="th" x="40" y="336" text-anchor="start" dominant-baseline="central">Where the files are checked against it</text>
 <g class="c-teal"><rect x="40" y="390" width="260" height="76" rx="8" stroke-width="0.5"/>
 <text class="th" x="170" y="412" text-anchor="middle" dominant-baseline="central">M5 baseline</text>
 <text class="ts" x="170" y="430" text-anchor="middle" dominant-baseline="central">scripts/baseline.py</text>
@@ -76,7 +77,7 @@ rect.tag { fill: #FBEAF0; stroke: #993556; }
 <g class="c-teal"><rect x="350" y="390" width="260" height="76" rx="8" stroke-width="0.5"/>
 <text class="th" x="480" y="412" text-anchor="middle" dominant-baseline="central">M6 editor run</text>
 <text class="ts" x="480" y="430" text-anchor="middle" dominant-baseline="central">scripts/run_editor.py also checks</text>
-<text class="ts" x="480" y="446" text-anchor="middle" dominant-baseline="central">the settings and the prompt</text>
+<text class="ts" x="480" y="446" text-anchor="middle" dominant-baseline="central">the run's settings and the prompt</text>
 </g>
 <path d="M480 300 L480 388" class="arr" marker-end="url(#arrow)"/>
 <g class="box"><rect x="660" y="390" width="260" height="76" rx="8" stroke-width="0.5"/>

@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="960" height="1564" viewBox="0 0 960 1564" role="img">
 <title>End-to-end weight-space PII experiment</title>
-<desc>Swimlane diagram. Rows are milestones M1 to M8. Columns are the practice set the editor sees, the hidden Singapore main eval, the hidden Nemotron regression set, and a lane for scoring and comparisons. Data is downloaded and split at M1, sampled and relabelled at M3 where the scoring protocol is fixed, checked at M4, frozen and scored for the base model at M5 with the C1 gate, edited at M6, scored for the edited model at M7 with comparisons C2 to C4, and written up at M8 with comparison C5.</desc>
+<desc>Diagram with one row per milestone, M1 to M8. Columns are the practice set Opus 5.5 sees, the hidden Singapore main eval, the hidden Nemotron regression check, and a column for scoring and comparisons. Data is downloaded and split at M1, filtered, sampled and relabelled at M3 where the scoring protocol is fixed, checked at M4, frozen and scored for the base model at M5 with the check that there is something to repair, edited at M6, and scored for the edited model at M7, which measures the change on Singapore, the change on Nemotron and the mechanism metric. M8 writes it up and compares the result with the M5 prediction.</desc>
 <style>
 text { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
 .th { font-size: 14px; font-weight: 500; fill: #2C2C2A; }
@@ -18,11 +18,11 @@ text { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
 <rect x="0" y="0" width="960" height="1564" fill="#FFFFFF"/>
 <text class="th" x="24" y="26" text-anchor="start" dominant-baseline="central">Milestones. Each one ends with a stop for review before the next starts.</text>
 <text class="th" x="24" y="56" text-anchor="start" dominant-baseline="central">M1 Environment</text>
-<text class="ts" x="24" y="74" text-anchor="start" dominant-baseline="central">Pin the Python env, download model and data, sign in the editor</text>
+<text class="ts" x="24" y="74" text-anchor="start" dominant-baseline="central">Pin the Python env, download MiniLM and data, sign in the CLI</text>
 <text class="th" x="24" y="98" text-anchor="start" dominant-baseline="central">M2 Profile</text>
 <text class="ts" x="24" y="116" text-anchor="start" dominant-baseline="central">Profile the Singapore rows, propose sample sizes and scored labels</text>
 <text class="th" x="24" y="140" text-anchor="start" dominant-baseline="central">M3 Sample and metric</text>
-<text class="ts" x="24" y="158" text-anchor="start" dominant-baseline="central">Draw the seeded practice sample, relabel, write and test the scorer</text>
+<text class="ts" x="24" y="158" text-anchor="start" dominant-baseline="central">Draw the seeded practice sample, relabel, write and test the scoring code</text>
 <text class="th" x="24" y="182" text-anchor="start" dominant-baseline="central">M4 Harness</text>
 <text class="ts" x="24" y="200" text-anchor="start" dominant-baseline="central">Build the driver, kernel and forward-pass server; 2-pass dry run</text>
 <text class="th" x="490" y="56" text-anchor="start" dominant-baseline="central">M5 Freeze and baseline</text>
@@ -32,12 +32,12 @@ text { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
 <text class="th" x="490" y="140" text-anchor="start" dominant-baseline="central">M7 Evaluate</text>
 <text class="ts" x="490" y="158" text-anchor="start" dominant-baseline="central">Rebuild the edited weights, score them on the locked sets</text>
 <text class="th" x="490" y="182" text-anchor="start" dominant-baseline="central">M8 Write-up</text>
-<text class="ts" x="490" y="200" text-anchor="start" dominant-baseline="central">Main table, prediction check, side-by-side demo</text>
+<text class="ts" x="490" y="200" text-anchor="start" dominant-baseline="central">Main table, result vs prediction, side-by-side demo</text>
 <g transform="translate(0,214)">
 <g class="c-teal">
 <rect x="125" y="16" width="190" height="52" rx="8" stroke-width="0.5"/>
 <text class="th" x="220" y="34" text-anchor="middle" dominant-baseline="central">Practice</text>
-<text class="ts" x="220" y="54" text-anchor="middle" dominant-baseline="central">editor sees</text>
+<text class="ts" x="220" y="54" text-anchor="middle" dominant-baseline="central">Opus 5.5 sees</text>
 </g>
 <g class="c-coral">
 <rect x="330" y="16" width="190" height="52" rx="8" stroke-width="0.5"/>
@@ -46,7 +46,7 @@ text { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
 </g>
 <g class="c-coral">
 <rect x="535" y="16" width="190" height="52" rx="8" stroke-width="0.5"/>
-<text class="th" x="630" y="34" text-anchor="middle" dominant-baseline="central">Regression</text>
+<text class="th" x="630" y="34" text-anchor="middle" dominant-baseline="central">Regression check</text>
 <text class="ts" x="630" y="54" text-anchor="middle" dominant-baseline="central">Nemotron, hidden</text>
 </g>
 <g class="c-purple">
@@ -110,7 +110,7 @@ text { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
 <path d="M425 248 L425 274" class="arr" marker-end="url(#arrow)"/>
 <path d="M630 248 L630 274" class="arr" marker-end="url(#arrow)"/>
 <rect x="125" y="276" width="600" height="36" rx="4" fill="none" stroke="#888780" stroke-width="1" stroke-dasharray="5 4"/>
-<text class="th" x="425" y="294" text-anchor="middle" dominant-baseline="central">Split point: filter, dedupe, seeded practice sample, relabel</text>
+<text class="th" x="425" y="294" text-anchor="middle" dominant-baseline="central">Filter, sample, relabel</text>
 <path d="M220 312 L220 336" class="arr" marker-end="url(#arrow)"/>
 <path d="M425 312 L425 336" class="arr" marker-end="url(#arrow)"/>
 <path d="M630 312 L630 336" class="arr" marker-end="url(#arrow)"/>
@@ -126,14 +126,14 @@ text { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
 </g>
 <g class="c-coral">
 <rect x="535" y="338" width="190" height="52" rx="8" stroke-width="0.5"/>
-<text class="th" x="630" y="356" text-anchor="middle" dominant-baseline="central">Regression</text>
+<text class="th" x="630" y="356" text-anchor="middle" dominant-baseline="central">Regression check</text>
 <text class="ts" x="630" y="376" text-anchor="middle" dominant-baseline="central">18,515 rows, all filtered</text>
 </g>
 <g class="c-purple">
 <rect x="745" y="276" width="195" height="168" rx="8" stroke-width="0.5"/>
 <text class="th" x="842.5" y="294" text-anchor="middle" dominant-baseline="central">Scoring protocol</text>
 <text class="ts" x="842.5" y="314" text-anchor="middle" dominant-baseline="central">1. Tokenize, max 512</text>
-<text class="ts" x="842.5" y="330" text-anchor="middle" dominant-baseline="central">2. Argmax, first subtoken</text>
+<text class="ts" x="842.5" y="330" text-anchor="middle" dominant-baseline="central">2. Argmax, first word piece</text>
 <text class="ts" x="842.5" y="346" text-anchor="middle" dominant-baseline="central">3. BIO repair, word spans</text>
 <text class="ts" x="842.5" y="362" text-anchor="middle" dominant-baseline="central">4. Split names into words</text>
 <text class="ts" x="842.5" y="378" text-anchor="middle" dominant-baseline="central">5. Match gold: exact span + type</text>
@@ -148,14 +148,15 @@ text { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
 <text class="ts" x="220" y="532" text-anchor="middle" dominant-baseline="central">2 passes, 10 turns max</text>
 </g>
 <g class="c-purple">
-<rect x="745" y="494" width="195" height="56" rx="8" stroke-width="0.5"/>
-<text class="th" x="842.5" y="512" text-anchor="middle" dominant-baseline="central">Check: server = scorer</text>
-<text class="ts" x="842.5" y="532" text-anchor="middle" dominant-baseline="central">same scores, 50 practice rows</text>
+<rect x="745" y="494" width="195" height="64" rx="8" stroke-width="0.5"/>
+<text class="th" x="842.5" y="512" text-anchor="middle" dominant-baseline="central">Server check</text>
+<text class="ts" x="842.5" y="532" text-anchor="middle" dominant-baseline="central">same scores as the scoring</text>
+<text class="ts" x="842.5" y="548" text-anchor="middle" dominant-baseline="central">code on 50 practice rows</text>
 </g>
 <path d="M425 390 L425 582" class="arr" marker-end="url(#arrow)"/>
 <path d="M630 390 L630 582" class="arr" marker-end="url(#arrow)"/>
 <rect x="330" y="584" width="395" height="32" rx="4" fill="none" stroke="#888780" stroke-width="1" stroke-dasharray="5 4"/>
-<text class="ts" x="527.5" y="600" text-anchor="middle" dominant-baseline="central">lock.json: sets, scorer, server, prompt frozen</text>
+<text class="ts" x="527.5" y="600" text-anchor="middle" dominant-baseline="central">lock.json: sets, scoring code, server, prompt frozen</text>
 <path d="M425 616 L425 630" class="arr" marker-end="url(#arrow)"/>
 <path d="M630 616 L630 630" class="arr" marker-end="url(#arrow)"/>
 <g class="c-purple">
@@ -170,9 +171,9 @@ text { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
 </g>
 <g class="c-purple">
 <rect x="745" y="626" width="195" height="64" rx="8" stroke-width="0.5"/>
-<text class="th" x="842.5" y="644" text-anchor="middle" dominant-baseline="central">C1 gate</text>
-<text class="ts" x="842.5" y="664" text-anchor="middle" dominant-baseline="central">Nemotron F1 − SG F1 > 2 SE,</text>
-<text class="ts" x="842.5" y="680" text-anchor="middle" dominant-baseline="central">else stop</text>
+<text class="th" x="842.5" y="644" text-anchor="middle" dominant-baseline="central">Something to repair?</text>
+<text class="ts" x="842.5" y="664" text-anchor="middle" dominant-baseline="central">Nemotron F1 − Singapore F1</text>
+<text class="ts" x="842.5" y="680" text-anchor="middle" dominant-baseline="central">> 2 SE, else stop</text>
 </g>
 <path d="M725 658 L743 658" class="arr" marker-end="url(#arrow)"/>
 <path d="M425 684 L425 702 L842.5 702 L842.5 692" class="arr" marker-end="url(#arrow)"/>
@@ -190,7 +191,7 @@ text { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
 <path d="M220 860 L220 882" class="arr" marker-end="url(#arrow)"/>
 <g>
 <rect class="box" x="125" y="884" width="190" height="52" rx="8" stroke-width="0.5"/>
-<text class="th" x="220" y="902" text-anchor="middle" dominant-baseline="central">Edit artifact</text>
+<text class="th" x="220" y="902" text-anchor="middle" dominant-baseline="central">Edited weights</text>
 <text class="ts" x="220" y="922" text-anchor="middle" dominant-baseline="central">edit.npz + manifest</text>
 </g>
 <path d="M220 936 L220 948 L425 948 L425 974" class="arr" marker-end="url(#arrow)"/>
@@ -207,21 +208,21 @@ text { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
 </g>
 <g class="c-purple">
 <rect x="745" y="970" width="195" height="64" rx="8" stroke-width="0.5"/>
-<text class="th" x="842.5" y="988" text-anchor="middle" dominant-baseline="central">C3 regression</text>
+<text class="th" x="842.5" y="988" text-anchor="middle" dominant-baseline="central">Change on Nemotron</text>
 <text class="ts" x="842.5" y="1008" text-anchor="middle" dominant-baseline="central">edited − base on Nemotron,</text>
 <text class="ts" x="842.5" y="1024" text-anchor="middle" dominant-baseline="central">paired ± SE, near zero</text>
 </g>
 <path d="M725 1002 L743 1002" class="arr" marker-end="url(#arrow)"/>
 <g class="c-purple">
 <rect x="745" y="1048" width="195" height="64" rx="8" stroke-width="0.5"/>
-<text class="th" x="842.5" y="1066" text-anchor="middle" dominant-baseline="central">C2 Singapore gain</text>
+<text class="th" x="842.5" y="1066" text-anchor="middle" dominant-baseline="central">Change on Singapore</text>
 <text class="ts" x="842.5" y="1086" text-anchor="middle" dominant-baseline="central">edited − base on main eval,</text>
 <text class="ts" x="842.5" y="1102" text-anchor="middle" dominant-baseline="central">paired ± SE</text>
 </g>
 <path d="M445 1028 L445 1080 L743 1080" class="arr" marker-end="url(#arrow)"/>
 <g class="c-purple">
 <rect x="745" y="1126" width="195" height="64" rx="8" stroke-width="0.5"/>
-<text class="th" x="842.5" y="1144" text-anchor="middle" dominant-baseline="central">C4 mechanism metric</text>
+<text class="th" x="842.5" y="1144" text-anchor="middle" dominant-baseline="central">Mechanism metric</text>
 <text class="ts" x="842.5" y="1164" text-anchor="middle" dominant-baseline="central">targeted failure share,</text>
 <text class="ts" x="842.5" y="1180" text-anchor="middle" dominant-baseline="central">base vs edited</text>
 </g>
@@ -229,23 +230,23 @@ text { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
 <g>
 <rect class="box" x="125" y="1214" width="600" height="56" rx="8" stroke-width="0.5"/>
 <text class="th" x="425" y="1232" text-anchor="middle" dominant-baseline="central">Write-up and demo</text>
-<text class="ts" x="425" y="1252" text-anchor="middle" dominant-baseline="central">Main table with C1 to C5, side-by-side claims letter</text>
+<text class="ts" x="425" y="1252" text-anchor="middle" dominant-baseline="central">Main table, result vs prediction, side-by-side claims letter</text>
 </g>
 <g class="c-purple">
 <rect x="745" y="1210" width="195" height="64" rx="8" stroke-width="0.5"/>
-<text class="th" x="842.5" y="1228" text-anchor="middle" dominant-baseline="central">C5 prediction check</text>
+<text class="th" x="842.5" y="1228" text-anchor="middle" dominant-baseline="central">Result vs prediction</text>
 <text class="ts" x="842.5" y="1248" text-anchor="middle" dominant-baseline="central">per-category change</text>
 <text class="ts" x="842.5" y="1264" text-anchor="middle" dominant-baseline="central">vs the M5 prediction</text>
 </g>
 <path d="M745 1242 L727 1242" class="arr" marker-end="url(#arrow)"/>
 <line x1="322.5" y1="320" x2="322.5" y2="1196" stroke="#888780" stroke-width="1" stroke-dasharray="4 4"/>
 <rect class="c-teal" x="125" y="1311" width="14" height="14" rx="3" stroke-width="0.5"/>
-<text class="ts" x="147" y="1318" text-anchor="start" dominant-baseline="central">Editor can see</text>
-<rect class="c-coral" x="325" y="1311" width="14" height="14" rx="3" stroke-width="0.5"/>
-<text class="ts" x="347" y="1318" text-anchor="start" dominant-baseline="central">Hidden from editor</text>
-<rect class="c-purple" x="525" y="1311" width="14" height="14" rx="3" stroke-width="0.5"/>
-<text class="ts" x="547" y="1318" text-anchor="start" dominant-baseline="central">Scoring and comparisons</text>
-<line x1="725" y1="1318" x2="755" y2="1318" stroke="#888780" stroke-width="1" stroke-dasharray="4 4"/>
-<text class="ts" x="765" y="1318" text-anchor="start" dominant-baseline="central">Visibility boundary</text>
+<text class="ts" x="147" y="1318" text-anchor="start" dominant-baseline="central">Opus 5.5 can see</text>
+<rect class="c-coral" x="285" y="1311" width="14" height="14" rx="3" stroke-width="0.5"/>
+<text class="ts" x="307" y="1318" text-anchor="start" dominant-baseline="central">Hidden from Opus 5.5</text>
+<rect class="c-purple" x="465" y="1311" width="14" height="14" rx="3" stroke-width="0.5"/>
+<text class="ts" x="487" y="1318" text-anchor="start" dominant-baseline="central">Scoring and comparisons</text>
+<line x1="665" y1="1318" x2="695" y2="1318" stroke="#888780" stroke-width="1" stroke-dasharray="4 4"/>
+<text class="ts" x="705" y="1318" text-anchor="start" dominant-baseline="central">Opus 5.5 sees what is left of this line</text>
 </g>
 </svg>

@@ -54,7 +54,7 @@ def data_sets():
         text(out, x, 24, s, "ts")
     rows = [
         ("openpii train", "20,225 Singapore rows", "filter to 20,211, then sample 1,000",
-         "drops long, duplicate, and shared texts", "Practice set", ["1,000 rows", "editor sees rows and answers"], "c-teal"),
+         "drops long, duplicate, and shared texts", "Practice set", ["1,000 rows", "Opus 5.5 sees rows and answers"], "c-teal"),
         ("openpii validation", "5,005 Singapore rows", "filter to 5,004", "drops 1 duplicate text",
          "Main eval", ["5,004 rows", "hidden, Singapore score"], "c-coral"),
         ("Nemotron held-out", "20,000 rows, never trained on", "filter to 18,515", "drops 1,485 rows over 512 tokens",
@@ -69,13 +69,13 @@ def data_sets():
         box(out, 680, y, 240, 66, dst, dst_sub, cls)
     out.append('<line x1="660" y1="122" x2="940" y2="122" stroke="#888780" stroke-width="1" stroke-dasharray="4 4"/>')
     ly = 330
-    for x, cls, label in ((40, "c-teal", "Editor can see"), (200, "c-coral", "Hidden from editor")):
+    for x, cls, label in ((40, "c-teal", "Opus 5.5 can see"), (200, "c-coral", "Hidden from Opus 5.5")):
         out.append(f'<rect class="{cls}" x="{x}" y="{ly - 7}" width="14" height="14" rx="3" stroke-width="0.5"/>')
         text(out, x + 22, ly, label, "ts", "start")
     write("data_sets.svg", 960, 352, "Where each set comes from",
           "Three sources pass a filter into three sets. openpii train becomes the 1,000-row practice set, the only set "
-          "the editor sees. openpii validation becomes the 5,004-row main eval, and Nemotron's held-out split becomes "
-          "the 18,515-row regression check. Both are hidden from the editor.", out)
+          "Opus 5.5 sees. openpii validation becomes the 5,004-row main eval, and Nemotron's held-out split becomes "
+          "the 18,515-row regression check. Both are hidden from Opus 5.5.", out)
 
 
 def example_rows():
@@ -116,18 +116,18 @@ def example_rows():
          [sc("G6346291N", "TAXNUM", "national_id")])
     ly = 362
     out.append(f'<rect class="sc" x="{x0}" y="{ly - 7}" width="14" height="14" rx="3" stroke-width="1"/>')
-    text(out, x0 + 22, ly, "Scored. openpii's label → the model's label", "ts", "start")
+    text(out, x0 + 22, ly, "Scored. openpii's label → MiniLM's label", "ts", "start")
     out.append(f'<rect class="dr" x="{x0 + 330}" y="{ly - 7}" width="14" height="14" rx="3" stroke-width="1"/>')
     text(out, x0 + 352, ly, "Not scored. openpii's label", "ts", "start")
-    write("example_rows.svg", 960, 384, "Two main-eval rows and their answer keys",
-          "Two openpii rows with every answer-key span marked. Given names, surnames, and the NRIC are scored, "
-          "renamed to first_name, last_name, and national_id. Titles, dates, cities, addresses, and the passport "
+    write("example_rows.svg", 960, 384, "Two main-eval rows and their gold spans",
+          "Two openpii rows with every gold span marked. Given names, surnames, and the NRIC are scored, "
+          "renamed to MiniLM's labels first_name, last_name, and national_id. Titles, dates, cities, addresses, and the passport "
           "and ID card numbers are not scored.", out)
 
 
 def label_translation():
     out = []
-    for x, s in ((140, "openpii answer key"), (440, "Answer key in the model's names"), (780, "Model output")):
+    for x, s in ((140, "openpii gold spans"), (440, "Gold spans in MiniLM's label names"), (780, "MiniLM's output")):
         text(out, x, 24, s, "ts")
     for i, (src, sub, dst) in enumerate([("GIVENNAME", "given names", "first_name"), ("SURNAME", "surnames", "last_name"),
                                          ("TAXNUM", "every value an NRIC", "national_id")]):
@@ -135,32 +135,32 @@ def label_translation():
         box(out, 40, y, 200, 56, src, [sub])
         out.append(f'<path d="M242 {y + 28} L336 {y + 28}" class="arr" marker-end="url(#arrow)"/>')
         box(out, 340, y, 200, 56, dst, cls="c-purple")
-    box(out, 640, 44, 280, 200, "Model's tags",
+    box(out, 640, 44, 280, 200, "MiniLM's tags",
         ["55 types, such as first_name,", "national_id, and tax_id", "", "The types never change.",
          "Only the weights are edited."])
     out.append('<path d="M440 246 L440 280" class="arr" marker-end="url(#arrow)"/>')
     out.append('<path d="M780 246 L780 280" class="arr" marker-end="url(#arrow)"/>')
-    box(out, 340, 282, 580, 56, "Grader", ["A tag counts only if its words and its type match the answer key."], "c-purple")
-    write("label_translation.svg", 960, 360, "The answer key is translated, not the model",
-          "openpii's labels GIVENNAME, SURNAME, and TAXNUM are renamed to the model's labels first_name, last_name, "
-          "and national_id. The model's 55 tag types never change. The grader compares the model's tags with the "
-          "renamed answer key.", out)
+    box(out, 340, 282, 580, 56, "Scoring code", ["A tag counts only if its words and its type match the gold spans."], "c-purple")
+    write("label_translation.svg", 960, 360, "The gold spans are translated, not MiniLM",
+          "The gold spans are the correct answers marked in the data. openpii's labels GIVENNAME, SURNAME, and "
+          "TAXNUM are renamed to MiniLM's labels first_name, last_name, and national_id. MiniLM's 55 tag types never "
+          "change. The scoring code compares MiniLM's tags with the renamed gold spans.", out)
 
 
 def tax_id_cases():
     out = []
-    text(out, 40, 22, "How the grader treats a tax_id tag", "th", "start")
-    text(out, 40, 42, "The grader reads a tax_id tag as national_id only when the tagged text is NRIC-shaped, "
+    text(out, 40, 22, "How the scoring code treats a tax_id tag", "th", "start")
+    text(out, 40, 42, "The scoring code reads a tax_id tag as national_id only when the tagged text is NRIC-shaped, "
          "a letter, seven digits, and a letter.", "ts", "start")
     cases = [
         ("A real NRIC", "the tax details under G6346291N", "G6346291N",
-         [("Model's tag", "tax_id"), ("Answer key", "national_id"), ("Grader reads", "national_id")],
+         [("MiniLM's tag", "tax_id"), ("Gold span", "national_id"), ("Scored as", "national_id")],
          "correct", "ok"),
-        ("An NRIC the key doesn't mark", "IDs S1234567D and T7654321A.", "T7654321A",
-         [("Model's tag", "tax_id"), ("Answer key", "nothing here"), ("Grader reads", "national_id")],
+        ("An NRIC with no gold span", "IDs S1234567D and T7654321A.", "T7654321A",
+         [("MiniLM's tag", "tax_id"), ("Gold span", "nothing here"), ("Scored as", "national_id")],
          "mistake, a false positive", "bad"),
         ("A US ID number in Nemotron", "SSN 123-45-6789.", "123-45-6789",
-         [("Model's tag", "tax_id"), ("Answer key", "national_id"), ("Grader reads", "tax_id, not NRIC-shaped")],
+         [("MiniLM's tag", "tax_id"), ("Gold span", "national_id"), ("Scored as", "tax_id, not NRIC-shaped")],
          "mistake, wrong type", "bad"),
     ]
     for i, (title, snippet, tagged, rows, result, cls) in enumerate(cases):
@@ -177,9 +177,9 @@ def tax_id_cases():
             out.append(f'<line x1="{x + 16}" y1="{ry - 15}" x2="{x + 264}" y2="{ry - 15}" stroke="#E5E3DA" stroke-width="1"/>')
             text(out, x + 16, ry, label, "ts", "start")
             text(out, x + 264, ry, value, cls if label == "Result" else "tv", "end")
-    write("tax_id_cases.svg", 960, 310, "How the grader treats a tax_id tag",
+    write("tax_id_cases.svg", 960, 310, "How the scoring code treats a tax_id tag",
           "Three cases. A tax_id tag on a real NRIC is read as national_id and counts as correct. A tax_id tag on an "
-          "NRIC-shaped value that the answer key does not mark is read as national_id and counts as a false positive. "
+          "NRIC-shaped value that has no gold span is read as national_id and counts as a false positive. "
           "A tax_id tag on a US ID number is not NRIC-shaped, stays tax_id, and counts as the wrong type.", out)
 
 
@@ -191,14 +191,14 @@ def harness():
     text(out, 275, 178, "reply", "tl")
     text(out, 275, 238, "result", "tl")
     box(out, 320, 150, 200, 110, "Driver", ["takes one block per reply,", "runs it, sends back", "the result, logs it all"])
-    out.append('<rect class="dr" x="600" y="20" width="330" height="210" rx="10" stroke-width="1.5"/>')
-    text(out, 616, 38, "srt sandbox", "th", "start")
-    text(out, 712, 38, "no network, no GPU, no other files", "tl", "start")
+    out.append('<rect class="dr" x="600" y="10" width="330" height="220" rx="10" stroke-width="1.5"/>')
+    text(out, 616, 28, "Walled-off area, set up by srt", "th", "start")
+    text(out, 616, 45, "no network, no GPU, only the folders listed below", "tl", "start")
     box(out, 620, 56, 290, 70, "Python kernel", ["runs ```python blocks", "save_edit checks the edit rules"])
     for x, name, sub in ((620, "model/", "read only"), (720, "practice/", "read only"), (820, "work/", "read and write")):
         box(out, x, 146, 90, 60, name, [sub], "c-teal")
     box(out, 620, 262, 290, 90, "Forward-pass server", ["the only way MiniLM runs", "re-checks every edit in work/",
-                                                        "grades with wsp.score"], "c-purple")
+                                                        "scores with wsp.score"], "c-purple")
     out.append('<path d="M522 182 L618 96" class="arr" marker-end="url(#arrow)"/>')
     out.append('<path d="M522 238 L618 300" class="arr" marker-end="url(#arrow)"/>')
     text(out, 548, 122, "```python", "tl")
@@ -218,25 +218,26 @@ def harness():
           "This is the same workflow as the paper's Experiment 8, rebuilt because the paper did not publish its "
           "harness code. "
           "Opus 5.5 writes text only. The driver takes one block from each reply, runs it, and sends back the result. "
-          "A python block runs in the Python kernel inside the srt sandbox, which can read model/ and practice/ and "
-          "write work/, and nothing else. A forward block goes to the forward-pass server outside the sandbox, the "
-          "only way MiniLM runs. It re-checks the edits in work/, runs MiniLM, and grades with wsp.score. The main "
+          "A python block runs in the Python kernel inside a walled-off area, set up by srt, where code can reach only "
+          "the folders listed for it. It can read model/ and practice/ and write work/, and nothing else. A forward "
+          "block goes to the forward-pass server outside the walled-off area, the only way MiniLM runs. It re-checks "
+          "the edits in work/, runs MiniLM, and scores with wsp.score. The main "
           "eval and the regression check are hidden.", out)
 
 
 def edit_checks():
     out = []
     flow = [(40, 170, "Opus 5.5's code", ["in the kernel"], "box"),
-            (270, 190, "save_edit", ["check 1: refuses with", "a message"], "c-purple"),
+            (270, 190, "save_edit", ["checks the edit first,", "refuses with a message"], "c-purple"),
             (520, 150, "work/edited/", ["one file per tensor"], "c-teal"),
-            (730, 190, "Server re-check", ["check 2: before every forward", "pass and at the final answer"], "c-purple")]
+            (730, 190, "Server checks again", ["before every forward pass", "and at the final answer"], "c-purple")]
     for x, w, title, lines, cls in flow:
         box(out, x, 40, w, 76, title, lines, cls)
     for x0, x1 in ((212, 268), (462, 518), (672, 728)):
         out.append(f'<path d="M{x0} 78 L{x1} 78" class="arr" marker-end="url(#arrow)"/>')
     out.append('<path d="M125 118 L125 152 L595 152 L595 120" class="arr" stroke-dasharray="5 4" '
                'marker-end="url(#arrow)"/>')
-    text(out, 360, 166, "code that writes a file directly skips check 1, so check 2 catches it", "tl")
+    text(out, 360, 166, "code that writes a file directly skips save_edit, so the server catches it", "tl")
     text(out, 40, 204, "Both checks refuse the same three kinds of edit:", "th", "start")
     rules = [("Embeddings", ["any tensor named *embeddings*"]),
              ("Classification head", ["classifier.weight, classifier.bias"]),
@@ -244,9 +245,9 @@ def edit_checks():
     for i, (title, lines) in enumerate(rules):
         box(out, 40 + 300 * i, 222, 280, 76, title, lines, "c-coral")
     write("edit_checks.svg", 960, 318, "Where the edit rules are checked",
-          "Opus 5.5's code saves an edit with save_edit, which is check 1. The edit goes to work/edited/. The "
-          "forward-pass server re-checks every file there before each forward pass and at the final answer, which is "
-          "check 2, so code that writes a file directly and skips save_edit is still caught. Both checks refuse edits "
+          "Opus 5.5's code saves an edit with save_edit, which checks it first. The edit goes to work/edited/. The "
+          "forward-pass server checks every file there again before each forward pass and at the final answer, "
+          "so code that writes a file directly and skips save_edit is still caught. Both checks refuse edits "
           "to the embeddings, edits to the classification head, and edits that one scale factor explains 99% or more "
           "of.", out)
 
@@ -261,14 +262,14 @@ def lock_checks():
               ("model", ["MiniLM's six files"]),
               ("environment", ["uv.lock, the srt pin,", "the Node version"]),
               ("baseline", ["baseline.py, outcomes.py,", "the prediction"]),
-              ("run settings", ["CLI command and version,", "limits, no turn cap"])]
+              ("the run's settings", ["CLI command and version,", "CLI environment, limits,", "no limit on turns"])]
     for i, (title, lines) in enumerate(groups):
         box(out, 40 + 225 * (i % 4), 40 + 92 * (i // 4), 210, 76, title, lines, "c-purple")
     out.append('<path d="M480 210 L480 240" class="arr" marker-end="url(#arrow)"/>')
-    box(out, 330, 242, 300, 56, "lock.json", ["one SHA-256 per file, plus the run settings"])
-    text(out, 40, 336, "Where the tree is checked against it", "th", "start")
+    box(out, 330, 242, 300, 56, "lock.json", ["one hash per file, plus the run's settings"])
+    text(out, 40, 336, "Where the files are checked against it", "th", "start")
     checks = [("M5 baseline", ["scripts/baseline.py", "refuses to score"], "c-teal"),
-              ("M6 editor run", ["scripts/run_editor.py also checks", "the settings and the prompt"], "c-teal"),
+              ("M6 editor run", ["scripts/run_editor.py also checks", "the run's settings and the prompt"], "c-teal"),
               ("M7 evaluation", ["the edited model is", "scored the same way"], "box")]
     for i, (title, lines, cls) in enumerate(checks):
         x = 40 + 310 * i
@@ -283,8 +284,8 @@ def lock_checks():
     write("lock_checks.svg", 960, 550, "What lock.json freezes and where it is checked",
           "Seven groups of files, the sets, the scoring code, the forward-pass server, the prompt, MiniLM's files, the "
           "environment and the baseline code with the prediction, are hashed once into lock.json, together with the "
-          "run settings: the exact CLI command, the CLI version and the limits. The M5 baseline, the M6 editor run "
-          "and the M7 evaluation each compare the tree with lock.json and stop if any file changed. The M6 run also "
+          "run's settings: the exact CLI command, its version and environment, and the limits. The M5 baseline, the "
+          "M6 editor run and the M7 evaluation each compare the files with lock.json and stop if any file changed. The M6 run also "
           "checks its settings and re-renders its prompt.", out)
 
 
@@ -317,8 +318,8 @@ def set_roles():
     box(out, xm, 252, 250, 60, "20,211 usable rows", ["filter drops long, duplicate rows", ])
     arrow(272, 282, 328, 282)
     box(out, xr, 230, 280, 108, "Practice set", ["1,000 rows, a random sample",
-                                                 "development set: Opus 5.5 reads",
-                                                 "the answers and grades its edits",
+                                                 "Opus 5.5 reads the rows and",
+                                                 "answers and scores its edits",
                                                  ("M5 baseline F1 0.682", "tv")], "c-teal")
     arrow(582, 282, 648, 282)
     text(out, 616, 270, "1,000", "tl")
@@ -334,8 +335,8 @@ def set_roles():
                                              ("M5 baseline F1 0.674", "tv")], "c-coral")
     arrow(582, 432, 648, 432)
 
-    text(out, xs, 518, "Nothing is trained in this experiment. Opus 5.5 edits MiniLM's weights by hand, so the practice "
-         "set is its development set, not training data.", "ts", "start")
+    text(out, xs, 518, "Nothing in this experiment trains on the practice set, or on anything else. Opus 5.5 edits MiniLM's "
+         "weights by hand.", "ts", "start")
     text(out, xs, 538, "The filter also drops every train row whose text or template appears in validation, so no "
          "practice row copies a main-eval row.", "ts", "start")
     ly = 572
@@ -352,7 +353,7 @@ def set_roles():
           "fine-tuned on 180,000 of them before this experiment. The other 20,000 were held out, and the 18,515 that "
           "fit in 512 tokens are the regression check, a hidden test set for US text. openpii's Singapore rows were "
           "never seen by MiniLM. From the train split's 20,211 usable rows, a random 1,000 form the practice set, "
-          "which Opus 5.5 reads with answers and uses to grade its edits, like a development set. The other 19,211 "
+          "which Opus 5.5 reads with answers and uses to score its edits. Nothing trains on it. The other 19,211 "
           "are not used. The validation split's 5,004 usable rows are the main eval, the hidden Singapore test set. "
           "A dotted line surrounds the three sets, the part M5 works on: M5 hashes them into lock.json and scores the "
           "unedited MiniLM on each, F1 0.952 on the regression check over all labels, 0.682 on the practice set and "
@@ -389,43 +390,47 @@ def baseline_f1():
         text(out, 40, y + 26, sub, "tl", "start")
         f1_pair(y, sg, nem)
     out.append('<path d="M40 258 L900 258" stroke="#E5E3DA" stroke-width="1"/>')
-    text(out, 40, 278, "All three, pooled", "th", "start")
-    text(out, 40, 296, "the gate compares these two", "tl", "start")
+    text(out, 40, 274, "All three labels counted together", "th", "start")
+    text(out, 40, 292, "used by the check that there", "tl", "start")
+    text(out, 40, 306, "is something to repair", "tl", "start")
     f1_pair(270, 0.674, 0.9836)
-    text(out, 40, 332, "Pooled F1 counts every entity together, so first_name, with the most entities, pulls it below "
+    text(out, 40, 332, "Counted together, every entity counts once, so first_name, with the most entities, pulls F1 below "
          "the mean of the three, 0.687.", "ts", "start")
-    text(out, 40, 350, "Gap 0.310. The gate needs more than twice its standard error, 2 × 0.0044 = 0.0087. It passes.",
+    text(out, 40, 350, "Gap 0.310. The check that there is something to repair needs more than twice its standard error, "
+         "2 × 0.0044 = 0.0087. The check passes.",
          "ts", "start")
     write("baseline_f1.svg", 960, 372, "Baseline F1 of the unedited MiniLM by scored label",
           "F1 of the unedited MiniLM, measured in M5, on each scored label, Singapore test set against Nemotron "
           "held-out test set. first_name 0.580 against 0.985, last_name 0.743 against 0.984, national_id 0.737 against "
-          "0.959. Pooled over the three labels, which is what the gate compares, Singapore scores 0.674 and Nemotron "
-          "0.984, a gap of 0.310, far above the gate's threshold of 0.0087.", out)
+          "0.959. With all three labels counted together, which is what the check that there is something to repair "
+          "compares, Singapore scores 0.674 and Nemotron 0.984, a gap of 0.310, far above the check's threshold of "
+          "0.0087. The check passes.", out)
 
 
 def baseline_kinds():
     out = []
-    x0, bw = 330, 520
-    text(out, 40, 22, "Baseline: which Singapore entities the unedited MiniLM gets right, by kind", "th", "start")
-    text(out, 40, 44, "Singapore test set (the main eval, 5,004 rows). Each bar is the share of one kind's entities that "
+    x0, bw = 390, 480
+    text(out, 40, 22, "Baseline: which Singapore entities the unedited MiniLM gets right, by category", "th", "start")
+    text(out, 40, 44, "Singapore test set (the main eval, 5,004 rows). Each bar is the share of one category's entities that "
          "MiniLM tags exactly right.", "ts", "start")
-    text(out, 40, 62, "The misses are not spread evenly: two kinds are almost never right. The prediction says which "
-         "kinds the edit will fix.", "ts", "start")
-    groups = [("national_id", [("NRIC, no tax context", 323, 0.0, True,
+    text(out, 40, 62, "The misses are not spread evenly: two categories are almost never right. The prediction says which "
+         "categories the edit will fix.", "ts", "start")
+    text(out, 40, 80, '"Just before" means within the 60 characters before the number, about ten words.', "ts", "start")
+    groups = [("national_id", [('NRIC without "tax" just before it', 323, 0.0, True,
                                 "most tagged biometric_identifier (168) or missed (118)"),
-                               ("NRIC, tax context", 711, 0.8748, False, "")]),
-              ("first_name", [("Given name, several words, later word", 1434, 0.0516, False,
+                               ('NRIC with "tax" just before it', 711, 0.8748, False, "")]),
+              ("first_name", [("Given name of several words, later words", 1434, 0.0516, False,
                                "1,227 of 1,434 tagged last_name"),
-                              ("Given name, one word", 3376, 0.6182, False, ""),
-                              ("Given name, several words, first word", 1434, 0.6667, False, "")]),
-              ("last_name", [("Surname, one word", 2688, 0.8943, False, ""),
-                             ("Surname, several words, first word", 1274, 0.8124, False, ""),
-                             ("Surname, several words, later word", 1734, 0.8287, False, "")])]
-    y = 84
-    for label, kinds in groups:
+                              ("Given name of one word", 3376, 0.6182, False, ""),
+                              ("Given name of several words, first word", 1434, 0.6667, False, "")]),
+              ("last_name", [("Surname of one word", 2688, 0.8943, False, ""),
+                             ("Surname of several words, first word", 1274, 0.8124, False, ""),
+                             ("Surname of several words, later words", 1734, 0.8287, False, "")])]
+    y = 102
+    for label, categories in groups:
         text(out, 40, y + 10, label, "mono", "start")
         y += 26
-        for name, n, share, fixed, note in kinds:
+        for name, n, share, fixed, note in categories:
             text(out, 56, y + 10, f"{name} ({n:,})", "ts", "start")
             cls = "c-teal" if fixed else "box"
             out.append(f'<rect x="{x0}" y="{y}" width="{bw}" height="20" rx="3" fill="#FAFAF7" '
@@ -442,11 +447,13 @@ def baseline_kinds():
     for x, cls, label in ((40, "c-teal", "Predicted fixed by the edit"), (280, "box", "Predicted unchanged")):
         swatch(out, x, ly, cls)
         text(out, x + 22, ly, label, "ts", "start")
-    write("baseline_kinds.svg", 960, ly + 22, "Baseline share right by kind of Singapore entity",
+    write("baseline_kinds.svg", 960, ly + 22, "Baseline share right by category of Singapore entity",
           "The share of entities the unedited MiniLM tags with the exact span and the right label on the Singapore test "
-          "set, the main eval, split by kind and grouped by scored label. NRICs without tax context are 0% right, most "
-          "tagged biometric_identifier or missed, and are the one kind predicted to be fixed. Later words of given "
-          "names are 5% right, 1,227 of 1,434 tagged last_name. The other kinds are 62% to 89% right.", out)
+          "set, the main eval, split by category and grouped by scored label. Just before means within the 60 "
+          'characters before the number. The category "NRIC without "tax" just before it" is 0% right, most tagged '
+          "biometric_identifier or missed, and is the one category predicted to be fixed. The category "
+          '"Given name of several words, later words" is 5% right, 1,227 of 1,434 tagged last_name. The other '
+          "categories are 62% to 89% right.", out)
 
 
 data_sets()
