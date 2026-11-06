@@ -1,10 +1,13 @@
-"""Generate the figures in the M2 to M6 reports: data_sets, example_rows, label_translation, tax_id_cases,
-harness, edit_checks, lock_checks, set_roles, baseline_f1, baseline_kinds, run_timeline, and edit_map.
+"""Generate the figures in the M2 to M7 reports: data_sets, example_rows, label_translation, tax_id_cases,
+harness, edit_checks, lock_checks, set_roles, baseline_f1, baseline_kinds, run_timeline, edit_map, m7_kinds and
+m7_errors.
 
 The M6 numbers come from runs/p50/, which git does not track: each forward pass's turn and items from
 transcript.jsonl, forward/<k>/request.json and work_notes/split.json, the context from cli_session.jsonl, and
-the edited neurons from edit/edit.npz."""
+the edited neurons from edit/edit.npz. The M7 numbers come from runs/p50/eval/evaluation.json, which
+scripts/evaluate.py writes."""
 
+import json
 from pathlib import Path
 
 HERE = Path(__file__).parent
@@ -579,6 +582,123 @@ def edit_map():
           "classification head are not allowed. In all, 12 tensors and 7,304 numbers change.", out)
 
 
+def evaluation():
+    return json.loads((HERE.parents[1] / "runs" / "p50" / "eval" / "evaluation.json").read_text())
+
+
+KIND_NAMES = {"national_id/no tax context": 'NRIC without "tax" just before it',
+              "national_id/tax context": 'NRIC with "tax" just before it',
+              "first_name/one word": "Given name of one word",
+              "first_name/multi-word, first word": "Given name of several words, first word",
+              "first_name/multi-word, later word": "Given name of several words, later words",
+              "last_name/one word": "Surname of one word",
+              "last_name/multi-word, first word": "Surname of several words, first word",
+              "last_name/multi-word, later word": "Surname of several words, later words"}
+
+
+def m7_kinds():
+    verdicts = evaluation()["kinds"]["verdicts"]
+    out = []
+    x0, bw = 360, 400
+    text(out, 40, 22, "Which Singapore entities MiniLM gets right, before and after the edit, by category", "th", "start")
+    text(out, 40, 44, "Main eval, 5,004 rows. Each pair is the share of one category's entities tagged with the exact "
+         "span and the right label.", "ts", "start")
+    text(out, 40, 62, "Fixed means a rise of at least 10 points. The last two columns give the M5 prediction and the "
+         "result under that rule.", "ts", "start")
+    text(out, x0 + bw + 80, 88, "Predicted", "tl")
+    text(out, x0 + bw + 160, 88, "Result", "tl")
+    groups = [("national_id", list(KIND_NAMES)[:2]), ("name, given names", list(KIND_NAMES)[2:5]),
+              ("name, surnames", list(KIND_NAMES)[5:])]
+    y = 100
+    for label, kinds in groups:
+        text(out, 40, y + 10, label, "mono", "start")
+        y += 26
+        for k in kinds:
+            v = verdicts[k]
+            predicted = "fixed" if k == "national_id/no tax context" else "unchanged"
+            text(out, 56, y + 16, f"{KIND_NAMES[k]} ({v['entities']:,})", "ts", "start")
+            for dy, share, cls in ((0, v["base_share"], "box"), (16, v["edited_share"], "c-teal")):
+                out.append(f'<rect x="{x0}" y="{y + dy}" width="{bw}" height="14" rx="3" fill="#FAFAF7" '
+                           f'stroke="#E5E3DA" stroke-width="0.5"/>')
+                if share:
+                    out.append(f'<g class="{cls}"><rect x="{x0}" y="{y + dy}" width="{bw * share:g}" height="14" '
+                               f'rx="3" stroke-width="0.5"/></g>')
+                text(out, x0 + bw * share + 6, y + dy + 7, f"{share:.0%}", "tl", "start")
+            text(out, x0 + bw + 80, y + 15, predicted, "ts")
+            text(out, x0 + bw + 160, y + 15, v["verdict"], "ok" if v["verdict"] == predicted else "bad")
+            y += 40
+        y += 4
+    note = verdicts["national_id/tax context"]
+    text(out, 40, y + 4, f'NRICs with "tax" just before them rose {note["change_pp"]:.2f} points, '
+         f'{note["base_correct"]} to {note["edited_correct"]} of {note["entities"]}, just under the line for fixed.',
+         "ts", "start")
+    ly = y + 30
+    for x, cls, lab in ((40, "box", "Unedited MiniLM"), (220, "c-teal", "Edited MiniLM")):
+        swatch(out, x, ly, cls)
+        text(out, x + 22, ly, lab, "ts", "start")
+    write("m7_kinds.svg", 960, ly + 22, "Share right by category, before and after the edit",
+          "The share of Singapore main-eval entities MiniLM tags exactly right, before and after Opus 5.5's edit, by "
+          'category. NRICs without "tax" just before them rise from 0% to 85%, which the prediction called fixed. '
+          'NRICs with "tax" just before them rise from 87% to 97%, just under the 10-point line. Every name category '
+          "rises by 1 to 3 points, which counts as unchanged, as predicted.", out)
+
+
+def m7_errors():
+    ev = evaluation()
+    out = []
+    text(out, 40, 22, "Where the Singapore errors went, and what the edit cost on Nemotron", "th", "start")
+    text(out, 40, 44, "Left: errors on the Singapore main eval by kind. Right: the Nemotron labels whose F1 moved most, "
+         "out of all 55.", "ts", "start")
+    base, edited = ev["scores"]["singapore"]["base"]["failures"], ev["scores"]["singapore"]["edited"]["failures"]
+    x0, scale = 170, 250 / 1200
+    names = {"false_positive": "False positive", "wrong_type": "Wrong type", "missed": "Missed",
+             "wrong_boundary": "Wrong boundary"}
+    text(out, 40, 76, "Singapore errors", "th", "start")
+    y = 96
+    for k, lab in names.items():
+        text(out, 40, y + 15, lab, "ts", "start")
+        for dy, n, cls in ((0, base[k], "box"), (16, edited[k], "c-teal")):
+            out.append(f'<g class="{cls}"><rect x="{x0}" y="{y + dy}" width="{n * scale:g}" height="14" rx="3" '
+                       f'stroke-width="0.5"/></g>')
+            text(out, x0 + n * scale + 6, y + dy + 7, f"{n:,}", "tl", "start")
+        y += 42
+    titles = ev["mechanism"]["titles"]["groups"]["targeted"]
+    text(out, 40, y + 6, f"Titles tagged as a name fell from {titles['base_hit']} to {titles['edited_hit']},", "tl", "start")
+    text(out, 40, y + 22, "most of the drop in false positives.", "tl", "start")
+
+    rows = ev["nemotron_regression_by_label"]
+    shown = rows[:4] + rows[-2:]
+    x1, mid, dscale = 520, 880, 120 / 0.05
+    text(out, x1, 76, "Nemotron F1 change, edited minus unedited", "th", "start")
+    out.append(f'<path d="M{mid} 92 L{mid} {96 + 30 * len(shown)}" stroke="#888780" stroke-width="1"/>')
+    for i, r in enumerate(shown):
+        yy = 100 + 30 * i
+        text(out, x1, yy + 8, r["label"], "mono", "start")
+        w = r["change"] * dscale
+        cls = "c-coral" if w < 0 else "c-teal"
+        out.append(f'<g class="{cls}"><rect x="{mid + min(w, 0):g}" y="{yy}" width="{abs(w):g}" height="16" rx="3" '
+                   f'stroke-width="0.5"/></g>')
+        text(out, mid + max(w, 0) + 6, yy + 8, f"{r['change']:+.3f}", "tl", "start")
+    t = ev["nemotron_transitions"][0]
+    yy = 104 + 30 * len(shown)
+    total = ev["scores"]["nemotron_regression"]["bootstrap"]
+    text(out, x1, yy + 6, f"{t['shapes']['A99999999999']} biometric IDs shaped like a letter and 11 digits are now tagged national_id.",
+         "tl", "start")
+    text(out, x1, yy + 22, f"All 55 labels together: {total['diff']:+.4f} ± {total['diff_se']:.4f}, "
+         "inside the prediction's 0.005.", "tl", "start")
+    ly = max(y, yy) + 52
+    for x, cls, lab in ((40, "box", "Unedited MiniLM"), (220, "c-teal", "Edited MiniLM, or a gain"),
+                        (440, "c-coral", "A loss")):
+        swatch(out, x, ly, cls)
+        text(out, x + 22, ly, lab, "ts", "start")
+    write("m7_errors.svg", 960, ly + 22, "Singapore errors by kind and Nemotron F1 changes by label",
+          "Left: errors on the Singapore main eval by kind, before and after the edit. False positives fall from "
+          "1,196 to 251, most of them titles no longer tagged as names. Wrong types fall from 610 to 339, mostly "
+          "NRICs. Right: the Nemotron labels whose F1 changed most. national_id falls by 0.047 and "
+          "biometric_identifier by 0.014, because biometric IDs shaped like a letter and 11 digits are now tagged "
+          "national_id. Over all 55 labels, Nemotron F1 changes by -0.0004.", out)
+
+
 data_sets()
 example_rows()
 label_translation()
@@ -591,3 +711,5 @@ baseline_f1()
 baseline_kinds()
 run_timeline()
 edit_map()
+m7_kinds()
+m7_errors()

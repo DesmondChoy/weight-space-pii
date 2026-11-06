@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="562" viewBox="0 0 960 562" role="img">
+<title>Share right by category, before and after the edit</title>
+<desc>The share of Singapore main-eval entities MiniLM tags exactly right, before and after Opus 5.5's edit, by category. NRICs without "tax" just before them rise from 0% to 85%, which the prediction called fixed. NRICs with "tax" just before them rise from 87% to 97%, just under the 10-point line. Every name category rises by 1 to 3 points, which counts as unchanged, as predicted.</desc>
+<style>
+text { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+.th { font-size: 14px; font-weight: 500; fill: #2C2C2A; }
+.ts { font-size: 12px; fill: #5F5E5A; }
+.tl { font-size: 11px; fill: #5F5E5A; }
+.mono { font-family: Menlo, Consolas, "DejaVu Sans Mono", monospace; font-size: 13px; fill: #2C2C2A; }
+.box rect { fill: #F1EFE8; stroke: #888780; }
+.arr { stroke: #5F5E5A; stroke-width: 1.5; fill: none; }
+.c-teal rect, rect.c-teal { fill: #E1F5EE; stroke: #0F6E56; } .c-teal .th { fill: #085041; } .c-teal .ts { fill: #0F6E56; }
+.c-coral rect, rect.c-coral { fill: #FAECE7; stroke: #993C1D; } .c-coral .th { fill: #712B13; } .c-coral .ts { fill: #993C1D; }
+rect.sc { fill: #E1F5EE; stroke: #0F6E56; } text.sc { fill: #085041; font-weight: 500; }
+rect.dr { fill: none; stroke: #888780; stroke-dasharray: 4 3; }
+.c-purple rect { fill: #EEEDFE; stroke: #534AB7; } .c-purple .th { fill: #3C3489; } .c-purple .ts { fill: #534AB7; }
+.card { fill: #FAFAF7; stroke: #E5E3DA; }
+rect.tag { fill: #FBEAF0; stroke: #993556; }
+.tv { font-size: 12px; font-weight: 500; fill: #2C2C2A; }
+.ok { font-size: 12px; font-weight: 500; fill: #3B6D11; } .bad { font-size: 12px; font-weight: 500; fill: #A32D2D; }
+</style>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#5F5E5A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+<rect x="0" y="0" width="960" height="562" fill="#FFFFFF"/>
+<text class="th" x="40" y="22" text-anchor="start" dominant-baseline="central">Which Singapore entities MiniLM gets right, before and after the edit, by category</text>
+<text class="ts" x="40" y="44" text-anchor="start" dominant-baseline="central">Main eval, 5,004 rows. Each pair is the share of one category's entities tagged with the exact span and the right label.</text>
+<text class="ts" x="40" y="62" text-anchor="start" dominant-baseline="central">Fixed means a rise of at least 10 points. The last two columns give the M5 prediction and the result under that rule.</text>
+<text class="tl" x="840" y="88" text-anchor="middle" dominant-baseline="central">Predicted</text>
+<text class="tl" x="920" y="88" text-anchor="middle" dominant-baseline="central">Result</text>
+<text class="mono" x="40" y="110" text-anchor="start" dominant-baseline="central">national_id</text>
+<text class="ts" x="56" y="142" text-anchor="start" dominant-baseline="central">NRIC without "tax" just before it (323)</text>
+<rect x="360" y="126" width="400" height="14" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
+<text class="tl" x="366" y="133" text-anchor="start" dominant-baseline="central">0%</text>
+<rect x="360" y="142" width="400" height="14" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
+<g class="c-teal"><rect x="360" y="142" width="339.32" height="14" rx="3" stroke-width="0.5"/></g>
+<text class="tl" x="705.32" y="149" text-anchor="start" dominant-baseline="central">85%</text>
+<text class="ts" x="840" y="141" text-anchor="middle" dominant-baseline="central">fixed</text>
+<text class="ok" x="920" y="141" text-anchor="middle" dominant-baseline="central">fixed</text>
+<text class="ts" x="56" y="182" text-anchor="start" dominant-baseline="central">NRIC with "tax" just before it (711)</text>
+<rect x="360" y="166" width="400" height="14" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
+<g class="box"><rect x="360" y="166" width="349.92" height="14" rx="3" stroke-width="0.5"/></g>
+<text class="tl" x="715.92" y="173" text-anchor="start" dominant-baseline="central">87%</text>
+<rect x="360" y="182" width="400" height="14" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
+<g class="c-teal"><rect x="360" y="182" width="389.88" height="14" rx="3" stroke-width="0.5"/></g>
+<text class="tl" x="755.88" y="189" text-anchor="start" dominant-baseline="central">97%</text>
+<text class="ts" x="840" y="181" text-anchor="middle" dominant-baseline="central">unchanged</text>
+<text class="ok" x="920" y="181" text-anchor="middle" dominant-baseline="central">unchanged</text>
+<text class="mono" x="40" y="220" text-anchor="start" dominant-baseline="central">name, given names</text>
+<text class="ts" x="56" y="252" text-anchor="start" dominant-baseline="central">Given name of one word (3,376)</text>
+<rect x="360" y="236" width="400" height="14" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
+<g class="box"><rect x="360" y="236" width="338.04" height="14" rx="3" stroke-width="0.5"/></g>
+<text class="tl" x="704.04" y="243" text-anchor="start" dominant-baseline="central">85%</text>
+<rect x="360" y="252" width="400" height="14" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
+<g class="c-teal"><rect x="360" y="252" width="345.16" height="14" rx="3" stroke-width="0.5"/></g>
+<text class="tl" x="711.16" y="259" text-anchor="start" dominant-baseline="central">86%</text>
+<text class="ts" x="840" y="251" text-anchor="middle" dominant-baseline="central">unchanged</text>
+<text class="ok" x="920" y="251" text-anchor="middle" dominant-baseline="central">unchanged</text>
+<text class="ts" x="56" y="292" text-anchor="start" dominant-baseline="central">Given name of several words, first word (1,434)</text>
+<rect x="360" y="276" width="400" height="14" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
+<g class="box"><rect x="360" y="276" width="348.68" height="14" rx="3" stroke-width="0.5"/></g>
+<text class="tl" x="714.68" y="283" text-anchor="start" dominant-baseline="central">87%</text>
+<rect x="360" y="292" width="400" height="14" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
+<g class="c-teal"><rect x="360" y="292" width="359.84" height="14" rx="3" stroke-width="0.5"/></g>
+<text class="tl" x="725.84" y="299" text-anchor="start" dominant-baseline="central">90%</text>
+<text class="ts" x="840" y="291" text-anchor="middle" dominant-baseline="central">unchanged</text>
+<text class="ok" x="920" y="291" text-anchor="middle" dominant-baseline="central">unchanged</text>
+<text class="ts" x="56" y="332" text-anchor="start" dominant-baseline="central">Given name of several words, later words (1,434)</text>
+<rect x="360" y="316" width="400" height="14" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
+<g class="box"><rect x="360" y="316" width="362.92" height="14" rx="3" stroke-width="0.5"/></g>
+<text class="tl" x="728.92" y="323" text-anchor="start" dominant-baseline="central">91%</text>
+<rect x="360" y="332" width="400" height="14" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
+<g class="c-teal"><rect x="360" y="332" width="368.48" height="14" rx="3" stroke-width="0.5"/></g>
+<text class="tl" x="734.48" y="339" text-anchor="start" dominant-baseline="central">92%</text>
+<text class="ts" x="840" y="331" text-anchor="middle" dominant-baseline="central">unchanged</text>
+<text class="ok" x="920" y="331" text-anchor="middle" dominant-baseline="central">unchanged</text>
+<text class="mono" x="40" y="370" text-anchor="start" dominant-baseline="central">name, surnames</text>
+<text class="ts" x="56" y="402" text-anchor="start" dominant-baseline="central">Surname of one word (2,688)</text>
+<rect x="360" y="386" width="400" height="14" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
+<g class="box"><rect x="360" y="386" width="369.2" height="14" rx="3" stroke-width="0.5"/></g>
+<text class="tl" x="735.2" y="393" text-anchor="start" dominant-baseline="central">92%</text>
+<rect x="360" y="402" width="400" height="14" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
+<g class="c-teal"><rect x="360" y="402" width="374.12" height="14" rx="3" stroke-width="0.5"/></g>
+<text class="tl" x="740.12" y="409" text-anchor="start" dominant-baseline="central">94%</text>
+<text class="ts" x="840" y="401" text-anchor="middle" dominant-baseline="central">unchanged</text>
+<text class="ok" x="920" y="401" text-anchor="middle" dominant-baseline="central">unchanged</text>
+<text class="ts" x="56" y="442" text-anchor="start" dominant-baseline="central">Surname of several words, first word (1,274)</text>
+<rect x="360" y="426" width="400" height="14" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
+<g class="box"><rect x="360" y="426" width="347.56" height="14" rx="3" stroke-width="0.5"/></g>
+<text class="tl" x="713.56" y="433" text-anchor="start" dominant-baseline="central">87%</text>
+<rect x="360" y="442" width="400" height="14" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
+<g class="c-teal"><rect x="360" y="442" width="359.8" height="14" rx="3" stroke-width="0.5"/></g>
+<text class="tl" x="725.8" y="449" text-anchor="start" dominant-baseline="central">90%</text>
+<text class="ts" x="840" y="441" text-anchor="middle" dominant-baseline="central">unchanged</text>
+<text class="ok" x="920" y="441" text-anchor="middle" dominant-baseline="central">unchanged</text>
+<text class="ts" x="56" y="482" text-anchor="start" dominant-baseline="central">Surname of several words, later words (1,734)</text>
+<rect x="360" y="466" width="400" height="14" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
+<g class="box"><rect x="360" y="466" width="332.64" height="14" rx="3" stroke-width="0.5"/></g>
+<text class="tl" x="698.64" y="473" text-anchor="start" dominant-baseline="central">83%</text>
+<rect x="360" y="482" width="400" height="14" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
+<g class="c-teal"><rect x="360" y="482" width="343.04" height="14" rx="3" stroke-width="0.5"/></g>
+<text class="tl" x="709.04" y="489" text-anchor="start" dominant-baseline="central">86%</text>
+<text class="ts" x="840" y="481" text-anchor="middle" dominant-baseline="central">unchanged</text>
+<text class="ok" x="920" y="481" text-anchor="middle" dominant-baseline="central">unchanged</text>
+<text class="ts" x="40" y="514" text-anchor="start" dominant-baseline="central">NRICs with "tax" just before them rose 9.99 points, 622 to 693 of 711, just under the line for fixed.</text>
+<g class="box"><rect x="40" y="533" width="14" height="14" rx="3" stroke-width="0.5"/></g>
+<text class="ts" x="62" y="540" text-anchor="start" dominant-baseline="central">Unedited MiniLM</text>
+<g class="c-teal"><rect x="220" y="533" width="14" height="14" rx="3" stroke-width="0.5"/></g>
+<text class="ts" x="242" y="540" text-anchor="start" dominant-baseline="central">Edited MiniLM</text>
+</svg>
