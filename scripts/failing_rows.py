@@ -9,7 +9,7 @@ import random
 
 from wsp.data import ROOT, SETS, Doc, Span, read_jsonl
 from wsp.outcomes import Outcome, outcomes
-from wsp.score import SG_LABELS, scored_label, split_names
+from wsp.score import SG_LABELS, merged, scored_label, split_names
 
 SEED = 20261105
 ROWS = 12
@@ -38,7 +38,7 @@ TARGETS = (
 
 def false_positives(d: Doc, pred: list[Span]) -> list[Span]:
     """Scored predictions that overlap no scored gold entity and no ignore span, as `wsp.score.grade` counts them."""
-    gold = [w for g in d.spans if g.label in SG_LABELS for w in split_names(d.text, [g])]
+    gold = [w for g in d.spans if merged(g.label, SG_LABELS) in SG_LABELS for w in split_names(d.text, [g])]
     words = [Span(p.start, p.end, scored_label(d.text, p, SG_LABELS)) for p in split_names(d.text, pred)]
     return [p for p in words if p.label in SG_LABELS
             and not any(p.start < g.end and g.start < p.end for g in gold)
@@ -64,6 +64,10 @@ def main() -> None:
         outs, fps = outcomes(d, preds[doc_id]), false_positives(d, preds[doc_id])
         if len(d.text) <= MAX_CHARS and (fps or not all(o.correct for o in outs)):
             pool.append((d, outs, fps))
+    fp_total = sum(len(false_positives(d, preds[i])) for i, d in docs.items())
+    graded = json.loads((ROOT / "runs" / "base" / "baseline.json").read_text())["scores"]["singapore"]["failures"]
+    if fp_total != graded["false_positive"]:
+        raise RuntimeError(f"false_positives finds {fp_total}, the scoring code {graded['false_positive']}")
     random.Random(SEED).shuffle(pool)
 
     picked, used = [], set()
