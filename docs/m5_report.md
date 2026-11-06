@@ -2,7 +2,7 @@
 
 M5 freezes everything that decides a score, then scores the unedited MiniLM on every set. It writes `lock.json`, checks that the Singapore data leaves something to repair, records a prediction for each category, and estimates what the 50-pass run in M6 will cost. It follows §4, §5 and §7 of [weight-space-pii-handoff.md](weight-space-pii-handoff.md), with the decisions in the M2, M3 and M4 reports.
 
-Status: built and run on 2026-11-05 and committed on `main`, where `git log` lists every M5 commit. `lock.json` was re-frozen six times: four times after reviews and once for a `claude` update, all on 2026-11-05, and once on 2026-11-06 to score given names and surnames as one category. Waiting for Desmond to review the items under "Show me".
+Status: complete, 2026-11-06. Desmond reviewed the five items under "Show me" and approved all of them, and he asked to hold M6 until he starts it. `lock.json` was re-frozen six times: four times after reviews and once for a `claude` update, all on 2026-11-05, and once on 2026-11-06 to score given names and surnames as one category. Committed on `main`, where `git log` lists every M5 commit.
 
 ## What you need to know first
 
@@ -180,6 +180,8 @@ These numbers are estimates, and each rests on an assumption that M6 will test:
 - The prediction: [docs/m5_prediction.md](m5_prediction.md).
 - The cost estimate: the table above.
 
+Desmond reviewed these on a sign-off page built from `runs/base/` and the committed prediction, and approved all five on 2026-11-06.
+
 ## Reproduce M5
 
 Run these commands from the repository root.
@@ -312,6 +314,7 @@ Three checks show the fix works:
 
 ## Open items
 
+- **M6 is on hold until Desmond starts it.**
 - **M7's scoring must call `wsp.lock.check` and compare the hash of `lock.json` with `baseline.json`.** The script does not exist yet.
 - **M7 must pair Nemotron rows by position, never by id.** Joining `pred_nemotron_eval.jsonl` by id drops the regression F1 from 0.952 to 0.905. M7 should check that both files have the same rows in the same order.
 - **M7 must compare `run.json` with the locked settings, whatever the run is named.** It should also refuse a run whose `run.json` says the code had uncommitted changes.
