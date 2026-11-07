@@ -54,7 +54,7 @@ The last check ties M7 to the run. It shows that loading the edit into MiniLM he
 
 The ± values are bootstrap standard errors over rows. The edited row gives the paired difference against the base, with both models scored on the same random redraws of rows.
 
-| Model | Singapore F1 | Nemotron F1, all labels | NRICs without "tax" right | Titles tagged as a name | Weights changed |
+| Model | Singapore F1 | Nemotron F1, all labels | NRICs without "tax" right | Titles wrongly tagged as a name, lower is better | Weights changed |
 |---|---|---|---|---|---|
 | Base | 0.865 ± 0.003 | 0.952 ± 0.001 | 0% (0 of 323) | 63% (909 of 1,450) | none |
 | Edited, 50 passes | 0.924, +0.059 ± 0.002 | 0.952, −0.0004 ± 0.0001 | 85% (274 of 323) | 0.1% (2 of 1,450) | 12 tensors, 7,304 numbers, 0.03% of MiniLM's 22.6 million |
@@ -74,7 +74,7 @@ The gain holds on the full practice set too, +0.059 ± 0.004, and Opus 5.5's own
 
 **The NRIC repair works on hidden text.** Of the 323 NRICs without "tax" just before them, the edited MiniLM gets 274 right, against none before. It also fixes most of the ones MiniLM missed entirely. Untagged NRICs fall from 118 to 22, and NRICs tagged `biometric_identifier` from 168 to 6. NRICs with "tax" just before them rise from 87% to 97% right, 622 to 693 of 711.
 
-**The title repair works on hidden text, and only on the targeted titles.** Before the edit, MiniLM tagged 909 of the 1,450 targeted titles as part of a name. After it, MiniLM tags 2.
+**The title repair works on hidden text, and only on the targeted titles.** The answers never include a title in a name, so a name tag on a title is a false positive, and fewer is better. Before the edit, MiniLM tagged 909 of the 1,450 targeted titles as part of a name. After it, MiniLM tags 2. One more targeted title, a "Master" that the answers mark as a surname, is skipped.
 
 | Title | Occurrences | Tagged as a name, base | Tagged as a name, edited |
 |---|---|---|---|

@@ -1,0 +1,439 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Run __RUN__ Logbook</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@500;600&display=swap">
+<style>
+/* Layout: a run map across the top, then a sticky index on the left and one card per turn on the right.
+   Each card reads top to bottom as the exchange happened: what the harness sent, then what Opus 5.5 replied. */
+:root {
+  --bg: #f3f5f7; --surface: #ffffff; --sunk: #eef1f5; --fg: #1a2230; --muted: #5a6577; --line: #d9dfe6;
+  --accent: #2a57c0; --accent-soft: #e4ebfb;
+  --py: #6a7f9e; --fwd: #b8740f; --fwd-soft: #fbf0dc; --final: #1d7a4c; --final-soft: #dff3e8; --bad: #b0392a; --bad-soft: #f9e4e0;
+  --dev: #6f8fbf; --held: #b8740f; --own: #9aa5b4; --flash: #fff3b0;
+  --hk: #8a3fb5; --hs: #1f7a4c; --hn: #b8740f; --hc: #7b8696;
+  --display: "IBM Plex Serif", Georgia, serif; --body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f1319; --surface: #161c24; --sunk: #111820; --fg: #e2e7ee; --muted: #93a0b2; --line: #273140;
+  --accent: #86a6ff; --accent-soft: #1c2742;
+  --py: #8fa3c2; --fwd: #e3a843; --fwd-soft: #33260f; --final: #52c78f; --final-soft: #12301f; --bad: #f07d69; --bad-soft: #3a1c17;
+  --dev: #7f9fd0; --held: #e3a843; --own: #6d7888; --flash: #4a4212;
+  --hk: #c792ea; --hs: #7fd1a3; --hn: #e3a843; --hc: #7d8898; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0f1319; --surface: #161c24; --sunk: #111820; --fg: #e2e7ee; --muted: #93a0b2; --line: #273140;
+  --accent: #86a6ff; --accent-soft: #1c2742;
+  --py: #8fa3c2; --fwd: #e3a843; --fwd-soft: #33260f; --final: #52c78f; --final-soft: #12301f; --bad: #f07d69; --bad-soft: #3a1c17;
+  --dev: #7f9fd0; --held: #e3a843; --own: #6d7888; --flash: #4a4212;
+  --hk: #c792ea; --hs: #7fd1a3; --hn: #e3a843; --hc: #7d8898; color-scheme: dark; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.55 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 80px; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.page { max-width: 1320px; margin: 0 auto; display: grid; gap: 28px; }
+h1, h2 { font-family: var(--display); font-weight: 600; margin: 0; text-wrap: balance; }
+h1 { font-size: 1.9rem; line-height: 1.2; }
+h2 { font-size: 1.2rem; }
+h3 { margin: 0; font-size: .78rem; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); font-weight: 600; }
+p { margin: 0; max-width: 72ch; }
+code, pre { font-family: var(--mono); }
+code { font-size: .88em; }
+a { color: var(--accent); }
+.num { font-variant-numeric: tabular-nums; font-family: var(--mono); }
+.eyebrow { font-family: var(--mono); font-size: .74rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.intro { display: grid; gap: 12px; }
+.stats { display: flex; flex-wrap: wrap; gap: 8px 22px; font-size: .9rem; color: var(--muted); }
+.stats b { color: var(--fg); font-family: var(--mono); font-weight: 500; }
+
+/* How a turn works */
+.loop { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; counter-reset: step; }
+.loop div { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; font-size: .9rem; position: relative; }
+.loop div::before { counter-increment: step; content: counter(step); display: block; margin-bottom: 4px; font-family: var(--mono); color: var(--accent); font-size: .8rem; }
+.loop div:not(:last-child)::after { content: "→"; position: absolute; right: -10px; top: 50%; transform: translate(50%, -50%); color: var(--muted); }
+.loop b { font-weight: 600; }
+
+/* Run map */
+.map { display: grid; gap: 8px; }
+.mapwrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 10px 8px 4px; }
+.mapwrap svg { display: block; width: 100%; min-width: 760px; height: auto; }
+.map .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: .82rem; color: var(--muted); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+svg text { font-family: var(--mono); font-size: 10px; fill: var(--muted); }
+svg .phase-band { fill: var(--sunk); stroke: var(--line); }
+svg .phase-label { fill: var(--fg); font-family: var(--body); font-size: 11px; }
+svg .tk-python { fill: var(--py); } svg .tk-forward { fill: var(--fwd); } svg .tk-final { fill: var(--final); } svg .tk-invalid { fill: var(--bad); }
+svg .ctx-area { fill: var(--accent-soft); } svg .ctx-line { fill: none; stroke: var(--accent); stroke-width: 1.5; }
+svg .limit { stroke: var(--bad); stroke-dasharray: 4 3; } svg .limit-label { fill: var(--bad); }
+svg .grid { stroke: var(--line); }
+svg .moment { fill: var(--fg); }
+svg .hit { fill: transparent; cursor: pointer; } svg .hit:hover { fill: var(--accent); fill-opacity: .14; }
+
+/* Shell */
+.shell { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 24px; align-items: start; }
+aside { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); max-height: calc(100vh - 24px); overflow-y: auto; display: grid; gap: 20px; padding-right: 4px; }
+aside section { display: grid; gap: 8px; }
+.navbtn { font: inherit; text-align: left; background: none; border: 0; border-left: 2px solid var(--line); padding: 4px 0 4px 10px; color: var(--fg); cursor: pointer; display: grid; gap: 1px; }
+.navbtn:hover { border-left-color: var(--accent); }
+.navbtn small { color: var(--muted); font-family: var(--mono); font-size: .74rem; }
+.navbtn span { font-size: .88rem; line-height: 1.35; }
+.passgrid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px; }
+.passgrid button { font: 500 .7rem var(--mono); padding: 4px 0; border-radius: 3px; border: 1px solid transparent; cursor: pointer; color: #fff; }
+.passgrid .dev { background: var(--dev); } .passgrid .held { background: var(--held); } .passgrid .own { background: var(--own); }
+.passgrid .mixed { background: linear-gradient(135deg, var(--dev) 50%, var(--own) 50%); }
+.keyrow { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: .78rem; color: var(--muted); }
+
+/* Toolbar */
+.toolbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding-block: 10px; display: grid; gap: 10px; border-bottom: 1px solid var(--line); }
+.tabs, .filters { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.tabs a { font-size: .88rem; padding: 6px 12px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); border-radius: 99px; text-decoration: none; }
+.tabs a[aria-current="page"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.filters button { font: inherit; font-size: .82rem; padding: 4px 10px; border-radius: 4px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); cursor: pointer; }
+.filters button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.filters input { font: inherit; font-size: .85rem; padding: 5px 9px; border: 1px solid var(--line); border-radius: 4px; background: var(--surface); color: var(--fg); min-width: 0; }
+#q { flex: 1 1 220px; } #jump { width: 92px; }
+.count { font-size: .82rem; color: var(--muted); margin-left: auto; }
+:is(a, button, input, summary):focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Turn cards */
+.turns { display: grid; gap: 16px; padding-top: 14px; }
+.phase-head { display: grid; gap: 4px; padding-top: 18px; scroll-margin-top: 130px; }
+.phase-head:first-child { padding-top: 0; }
+.turn { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; display: grid; min-width: 0; scroll-margin-top: 130px; }
+.turn.flash { animation: flash 1.6s ease-out; }
+@keyframes flash { from { background: var(--flash); } to { background: var(--surface); } }
+@media (prefers-reduced-motion: reduce) { .turn.flash { animation: none; outline: 2px solid var(--accent); } }
+.turn > header { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: baseline; padding: 10px 16px; border-bottom: 1px solid var(--line); }
+.tnum { font: 600 1rem var(--display); color: var(--fg); text-decoration: none; }
+.tnum:hover { color: var(--accent); }
+.chip { font: 500 .74rem var(--mono); padding: 1px 8px; border-radius: 99px; }
+.chip.python { background: var(--sunk); color: var(--py); }
+.chip.forward { background: var(--fwd-soft); color: var(--fwd); }
+.chip.final { background: var(--final-soft); color: var(--final); }
+.chip.invalid { background: var(--bad-soft); color: var(--bad); }
+.meta { font-size: .8rem; color: var(--muted); font-family: var(--mono); margin-left: auto; }
+.part { padding: 12px 16px; display: grid; gap: 8px; min-width: 0; }
+.part + .part { border-top: 1px dashed var(--line); }
+.who { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }
+.who b { font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; }
+.who span { font-size: .82rem; color: var(--muted); }
+.sent .who b { color: var(--muted); } .reply .who b { color: var(--accent); }
+pre { margin: 0; background: var(--sunk); border: 1px solid var(--line); border-radius: 4px; padding: 10px 12px; font-size: .8rem; line-height: 1.5; overflow-x: auto; }
+pre.msg { white-space: pre-wrap; overflow-wrap: anywhere; }
+pre.clamp { max-height: 15.5em; overflow: hidden; -webkit-mask-image: linear-gradient(#000 70%, transparent); mask-image: linear-gradient(#000 70%, transparent); }
+.more { justify-self: start; font: inherit; font-size: .8rem; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; }
+.md { display: grid; gap: 8px; max-width: 80ch; overflow-wrap: anywhere; }
+.md > * { margin: 0; }
+.md ul, .md ol { padding-left: 22px; display: grid; gap: 3px; }
+.md table { border-collapse: collapse; font-size: .86rem; display: block; overflow-x: auto; }
+.md th, .md td { border: 1px solid var(--line); padding: 4px 8px; text-align: left; vertical-align: top; }
+.md h1, .md h2, .md h3 { font-family: var(--display); text-transform: none; letter-spacing: 0; color: var(--fg); }
+.md h1 { font-size: 1.3rem; } .md h2 { font-size: 1.1rem; } .md h3 { font-size: 1rem; }
+.md :not(pre) > code { background: var(--sunk); padding: 0 4px; border-radius: 3px; }
+.blockhead { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: baseline; font-size: .82rem; color: var(--muted); }
+.req { display: flex; flex-wrap: wrap; gap: 6px; }
+.req span { font-size: .8rem; padding: 2px 8px; border-radius: 4px; background: var(--sunk); border: 1px solid var(--line); }
+.res { font-size: .86rem; display: flex; flex-wrap: wrap; gap: 4px 16px; }
+.res b { font-family: var(--mono); font-weight: 500; }
+details summary { cursor: pointer; font-size: .82rem; color: var(--accent); }
+details[open] summary { margin-bottom: 6px; }
+
+/* Code highlighting tokens */
+.hljs-keyword, .hljs-built_in, .hljs-literal { color: var(--hk); }
+.hljs-string { color: var(--hs); } .hljs-number { color: var(--hn); }
+.hljs-comment { color: var(--hc); font-style: italic; }
+.hljs-title, .hljs-attr { color: var(--accent); }
+
+/* Other views */
+.view { padding-top: 16px; display: grid; gap: 14px; min-width: 0; }
+.doc { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 18px 22px; }
+.tblwrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; }
+table.passes { border-collapse: collapse; width: 100%; font-size: .84rem; }
+.passes th, .passes td { padding: 7px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+.passes thead th { font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); position: sticky; top: 0; background: var(--surface); }
+.passes td.why { min-width: 280px; max-width: 460px; }
+.passes .stripe { width: 4px; padding: 0; }
+.stripe.dev { background: var(--dev); } .stripe.held { background: var(--held); } .stripe.own { background: var(--own); }
+.stripe.mixed { background: linear-gradient(var(--dev) 50%, var(--own) 50%); }
+.empty { color: var(--muted); padding: 20px 0; }
+footer { color: var(--muted); font-size: .84rem; display: grid; gap: 4px; }
+
+@media (max-width: 900px) {
+  .shell { grid-template-columns: minmax(0, 1fr); }
+  aside { position: static; max-height: none; overflow: visible; }
+  .loop { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .loop div::after { display: none; }
+  .meta { margin-left: 0; }
+  .toolbar { position: static; }
+}
+@media (max-width: 520px) { .loop { grid-template-columns: minmax(0, 1fr); } h1 { font-size: 1.55rem; } }
+</style>
+
+<div class="page">
+  <div class="intro">
+    <span class="eyebrow">Weight-space PII · run __RUN__ · transcript</span>
+    <h1>Run __RUN__ logbook</h1>
+    <p>Every message the harness sent Opus 5.5 during the 50-pass run, and every reply Opus 5.5 sent back, in order. Opus 5.5 edited the weights of MiniLM, a small PII detector, to make it better on Singapore text. Use the map or the index to jump to any turn. Use the tabs for the forward-pass index, the task prompt, Opus 5.5's own notes and its final answer.</p>
+    <div class="stats" id="stats"></div>
+  </div>
+
+  <section class="loop" aria-label="How one turn works">
+    <div><b>The harness sends a message.</b> At turn 1 it is the task prompt. After that it is the output of the block Opus 5.5 sent in the turn before.</div>
+    <div><b>Opus 5.5 replies.</b> It explains in plain English what it learned and what it will do next, then sends exactly one block.</div>
+    <div><b>The harness runs the block.</b> A <code>python</code> block runs in a walled-off Python kernel. A <code>forward</code> block asks a server to run MiniLM, and costs one of 50 passes.</div>
+    <div><b>The output becomes the next message.</b> The loop ends when the passes run out and Opus 5.5 sends a final answer with no block.</div>
+  </section>
+
+  <section class="map" aria-label="Run map">
+    <h2>Run map</h2>
+    <p>One column per turn. Tall marks are forward passes, short marks are Python runs. The shaded area is the context Opus 5.5 rereads each turn. Click any column to open that turn.</p>
+    <div class="legend"><span><i style="background:var(--py)"></i>Python run</span><span><i style="background:var(--fwd)"></i>Forward pass</span><span><i style="background:var(--bad)"></i>Reply refused</span><span><i style="background:var(--final)"></i>Final answer</span><span><i style="background:var(--accent)"></i>Context, in tokens</span><span>▼ Key moment, listed on the left</span></div>
+    <div class="mapwrap"><svg id="map" role="img" aria-label="Map of all turns in the run"></svg></div>
+  </section>
+
+  <div class="shell">
+    <aside aria-label="Index">
+      <section><h3>Phases</h3><div id="phases"></div></section>
+      <section><h3>Key moments</h3><div id="moments"></div></section>
+      <section><h3>Forward passes</h3>
+        <div class="passgrid" id="passgrid"></div>
+        <div class="keyrow"><span><i style="display:inline-block;width:9px;height:9px;background:var(--dev);border-radius:2px"></i> dev half</span><span><i style="display:inline-block;width:9px;height:9px;background:var(--held);border-radius:2px"></i> held-back half</span><span><i style="display:inline-block;width:9px;height:9px;background:linear-gradient(135deg, var(--dev) 50%, var(--own) 50%);border-radius:2px"></i> dev half and own texts</span><span><i style="display:inline-block;width:9px;height:9px;background:var(--own);border-radius:2px"></i> own texts only</span></div>
+      </section>
+    </aside>
+
+    <main>
+      <div class="toolbar">
+        <nav class="tabs" aria-label="Views">
+          <a href="#conversation" data-view="conversation">Conversation</a>
+          <a href="#passes" data-view="passes">Forward passes</a>
+          <a href="#prompt" data-view="prompt">Task prompt</a>
+          <a href="#notes" data-view="notes">Opus 5.5's notes</a>
+          <a href="#final" data-view="final">Final answer</a>
+        </nav>
+        <div class="filters" id="filters">
+          <button type="button" id="f-all" data-kind="all" aria-pressed="true">All turns</button>
+          <button type="button" id="f-forward" data-kind="forward" aria-pressed="false">Forward passes</button>
+          <button type="button" id="f-python" data-kind="python" aria-pressed="false">Python runs</button>
+          <input id="q" type="search" placeholder="Search messages, replies and code. Capitals match exactly" aria-label="Search">
+          <input id="jump" type="number" min="1" placeholder="Turn #" aria-label="Jump to turn">
+          <span class="count" id="count"></span>
+        </div>
+      </div>
+      <div class="view" id="v-conversation"><div class="turns" id="turns"></div><p class="empty" id="empty" hidden>No turn matches. Clear the search or pick another filter.</p></div>
+      <div class="view" id="v-passes" hidden>
+        <p>All 50 forward passes. "Rows" counts practice rows from each half of Opus 5.5's own split. "Own texts" are texts Opus 5.5 wrote, which get no grades. The last column quotes the first two sentences of Opus 5.5's explanation in that turn.</p>
+        <div class="tblwrap"><table class="passes"><thead><tr><th class="stripe"></th><th>Pass</th><th>Turn</th><th>Model</th><th>Rows</th><th>Own texts</th><th>Arrays saved</th><th>Result</th><th>Opening of Opus 5.5's explanation</th></tr></thead><tbody id="passrows"></tbody></table></div>
+      </div>
+      <div class="view" id="v-prompt" hidden><p>The first message of the run, sent verbatim at turn 1. Every later message is the output of Opus 5.5's last block.</p><pre class="msg doc" id="prompt"></pre></div>
+      <div class="view" id="v-notes" hidden><p>Opus 5.5 kept <code>work/notes.md</code> as a running log during the run. This is the file as the run left it.</p><div class="doc md" id="notes"></div></div>
+      <div class="view" id="v-final" hidden><p>Opus 5.5's last reply, sent at turn 232 with no block.</p><div class="doc md" id="final"></div></div>
+    </main>
+  </div>
+
+  <footer>
+    <span>Generated by <code>scripts/transcript_page.py</code> from <code>runs/__RUN__/transcript.jsonl</code>, <code>work_notes/</code> and <code>final_answer.md</code>. The text of every message and reply is verbatim.</span>
+    <span>Keys: <code>j</code> and <code>k</code> move to the next and the previous turn in the conversation.</span>
+  </footer>
+</div>
+
+<script type="application/json" id="data">__DATA__</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>
+(() => {
+  const D = JSON.parse(document.getElementById('data').textContent);
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const md = s => (window.marked && window.DOMPurify) ? DOMPurify.sanitize(marked.parse(s)) : `<p style="white-space:pre-wrap">${esc(s)}</p>`;
+  const f3 = x => x.toFixed(3);
+  const hm = s => `${Math.floor(s / 3600)}:${String(Math.floor(s % 3600 / 60)).padStart(2, '0')}`;
+  const kTok = n => n >= 1e6 ? (n / 1e6).toFixed(2) + 'M' : Math.round(n / 1000) + 'k';
+  const phaseOf = id => D.phases.find(p => p.id === id);
+  const byT = new Map(D.turns.map(t => [t.t, t]));
+  const S = D.stats;
+
+  $('stats').innerHTML = [
+    ['Turns', S.turns], ['Python runs', S.python], ['Forward passes', S.passes], ['Replies refused', S.invalid],
+    ['Wall time', hm(S.wall)], ['Cost at API prices', '$' + S.cost.toFixed(2)], ['Model', `${S.model}, effort ${S.effort}`],
+  ].map(([k, v]) => `<span>${k} <b>${esc(v)}</b></span>`).join('');
+
+  // Rows of a forward pass, by half of Opus 5.5's own split.
+  const rowsKind = p => p.items.held ? 'held' : p.items.dev ? (p.texts ? 'mixed' : 'dev') : 'own';
+  const rowsText = p => [p.items.dev && `${p.items.dev} dev`, p.items.held && `${p.items.held} held-back`].filter(Boolean).join(', ') || 'none';
+  const resultText = r => {
+    if (r.diff) return `${f3(r.original.f1)} → ${f3(r.edited.f1)}, ${r.diff[0] >= 0 ? '+' : ''}${f3(r.diff[0])} ± ${f3(r.diff[1])}, ${r.diff[2]} rows better, ${r.diff[3]} worse`;
+    if (r.original) return `unedited F1 ${f3(r.original.f1)}`;
+    if (r.edited) return `edited F1 ${f3(r.edited.f1)}`;
+    return 'ungraded, own texts only';
+  };
+
+  // ---------- Run map ----------
+  (function map() {
+    const n = D.turns.length, cw = 4, L = 46, R = 70, W = L + n * cw + R;
+    const y0 = 4, bandH = 20, tickTop = 30, tickH = 40, momY = 76, cTop = 92, cH = 66, H = cTop + cH + 18;
+    const x = t => L + (t - 1) * cw;
+    const yc = v => cTop + cH - v / 1e6 * cH;
+    let s = '';
+    for (const p of D.phases) {
+      const w = (p.last - p.first + 1) * cw;
+      s += `<rect class="phase-band" x="${x(p.first)}" y="${y0}" width="${w}" height="${bandH}"/>`;
+      s += `<text class="phase-label" x="${x(p.first) + 5}" y="${y0 + 14}">${p.id}. ${esc(p.short)}</text>`;
+    }
+    for (const t of D.turns) {
+      const k = t.block.kind, h = (k === 'python') ? tickH * .45 : tickH;
+      s += `<rect class="tk-${k}" x="${x(t.t) + .5}" y="${tickTop + tickH - h}" width="${cw - 1}" height="${h}"/>`;
+    }
+    for (const m of D.moments) s += `<path class="moment" d="M${x(m.t) + cw / 2 - 4},${momY - 6} h8 l-4,6 z"><title>Turn ${m.t}: ${esc(m.label)}</title></path>`;
+    for (const v of [0, 500000]) s += `<line class="grid" x1="${L}" x2="${L + n * cw}" y1="${yc(v)}" y2="${yc(v)}"/><text x="${L - 6}" y="${yc(v) + 3}" text-anchor="end">${v ? '500k' : '0'}</text>`;
+    const pts = D.turns.map(t => `${x(t.t) + cw / 2},${yc(t.ctx)}`).join(' ');
+    s += `<polygon class="ctx-area" points="${x(1) + cw / 2},${yc(0)} ${pts} ${x(n) + cw / 2},${yc(0)}"/><polyline class="ctx-line" points="${pts}"/>`;
+    s += `<line class="limit" x1="${L}" x2="${L + n * cw}" y1="${yc(967000)}" y2="${yc(967000)}"/><text class="limit-label" x="${L + n * cw + 4}" y="${yc(967000) + 3}">967k: CLI</text><text class="limit-label" x="${L + n * cw + 4}" y="${yc(967000) + 14}">compacts</text>`;
+    s += `<text x="${L - 6}" y="${tickTop + tickH - 4}" text-anchor="end">blocks</text>`;
+    for (const t of [1, 50, 100, 150, 200, 232]) s += `<text x="${x(t) + cw / 2}" y="${H - 4}" text-anchor="middle">${t}</text>`;
+    s += `<text x="${L - 6}" y="${H - 4}" text-anchor="end">turn</text>`;
+    for (const t of D.turns) {
+      const label = t.block.kind === 'forward' ? `forward pass ${t.block.k}` : t.block.kind === 'python' ? `Python run ${t.block.n}` : t.block.kind === 'final' ? 'final answer' : 'reply refused';
+      s += `<rect class="hit" data-t="${t.t}" x="${x(t.t)}" y="0" width="${cw}" height="${H - 16}"><title>Turn ${t.t}, ${label}. ${kTok(t.ctx)} tokens of context.</title></rect>`;
+    }
+    const svg = $('map');
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    svg.innerHTML = s;
+    svg.addEventListener('click', e => { const t = e.target.dataset && e.target.dataset.t; if (t) location.hash = 'turn-' + t; });
+  })();
+
+  // ---------- Index ----------
+  const count = (p, kind) => D.turns.filter(t => t.phase === p.id && t.block.kind === kind).length;
+  $('phases').innerHTML = D.phases.map(p => `<button class="navbtn" type="button" data-goto="phase-${p.id}"><small>Turns ${p.first}–${p.last} · ${count(p, 'forward')} passes, ${count(p, 'python')} Python runs</small><span>${p.id}. ${esc(p.name)}</span></button>`).join('');
+  $('moments').innerHTML = D.moments.map(m => `<button class="navbtn" type="button" data-goto="turn-${m.t}"><small>Turn ${m.t} · pass ${m.k}</small><span>${esc(m.label)}</span></button>`).join('') +
+    `<button class="navbtn" type="button" data-goto="turn-${D.turns.length}"><small>Turn ${D.turns.length}</small><span>Final answer</span></button>`;
+  $('passgrid').innerHTML = D.passes.map(p => `<button type="button" class="${rowsKind(p)}" data-goto="turn-${p.t}" title="Pass ${p.k}, turn ${p.t}: ${esc(resultText(p.result))}">${p.k}</button>`).join('');
+  document.querySelector('aside').addEventListener('click', e => { const b = e.target.closest('[data-goto]'); if (b) location.hash = b.dataset.goto; });
+
+  // ---------- Turn cards ----------
+  const CLAMP = 14;
+  const clampable = (text, cls) => {
+    const lines = text.split('\n').length;
+    const long = lines > CLAMP || text.length > 1800;
+    return `<pre class="${cls}${long ? ' clamp' : ''}">${esc(text)}</pre>` + (long ? `<button class="more" type="button" data-label="${lines > CLAMP ? `Show all ${lines} lines` : 'Show the full message'}">${lines > CLAMP ? `Show all ${lines} lines` : 'Show the full message'}</button>` : '');
+  };
+  const chip = b => b.kind === 'forward' ? `<span class="chip forward">Forward pass ${b.k} of 50</span>`
+    : b.kind === 'python' ? `<span class="chip python">Python run ${b.n}</span>`
+    : b.kind === 'final' ? `<span class="chip final">Final answer</span>` : `<span class="chip invalid">Refused: ${b.blocks} blocks</span>`;
+  const blockHtml = t => {
+    const b = t.block;
+    if (b.kind === 'python') return `<div class="blockhead"><span>Python block, ran in ${b.secs < 0.1 ? 'under 0.1' : b.secs} s${b.restarted ? ', kernel restarted' : ''}</span></div>` +
+      `<pre class="code${b.code.split('\n').length > CLAMP ? ' clamp' : ''}"><code class="language-python">${esc(b.code)}</code></pre>` +
+      (b.code.split('\n').length > CLAMP ? `<button class="more" type="button" data-label="Show all ${b.code.split('\n').length} lines">Show all ${b.code.split('\n').length} lines</button>` : '');
+    if (b.kind === 'forward') {
+      const r = b.result, labels = m => r[m] ? Object.entries(r[m].labels).map(([k, v]) => `${k} ${f3(v)}`).join(', ') : '';
+      return `<div class="blockhead"><span>Forward block, ran in ${b.secs} s</span></div>
+        <div class="req"><span>model: <b>${esc(b.model)}</b></span><span>rows: ${rowsText(b)}</span><span>own texts: ${b.texts}</span><span>arrays: ${b.returns.length ? esc(b.returns.join(', ')) : 'none'}</span></div>
+        <div class="res"><span>Result: <b>${esc(resultText(r))}</b></span>${r.original && r.edited ? `<span>by label, unedited: ${labels('original')}; edited: ${labels('edited')}</span>` : (r.original || r.edited) ? `<span>by label: ${labels(r.original ? 'original' : 'edited')}</span>` : ''}</div>
+        <details><summary>Full request JSON</summary><pre class="code"><code class="language-json">${esc(JSON.stringify(JSON.parse(b.request), null, 1))}</code></pre></details>`;
+    }
+    return '';
+  };
+  const card = t => {
+    const replyLabel = t.block.kind === 'final' ? 'Final answer, with no block' : t.block.kind === 'invalid' ? 'Reply sent back unrun' : 'Explanation, then one block';
+    return `<article class="turn" id="turn-${t.t}" data-t="${t.t}" data-kind="${t.block.kind}">
+      <header><a class="tnum" href="#turn-${t.t}">Turn ${t.t}</a>${chip(t.block)}<span class="meta">phase ${t.phase} · ${hm(t.elapsed)} elapsed · reply ${t.secs} s · context ${kTok(t.ctx)}</span></header>
+      <div class="part sent"><div class="who"><b>Sent to Opus 5.5</b><span>${esc(t.from)}</span></div>${clampable(t.sent, 'msg')}</div>
+      <div class="part reply"><div class="who"><b>Opus 5.5 replied</b><span>${replyLabel}</span></div>${t.expl ? `<div class="md">${md(t.expl)}</div>` : `<p class="empty" style="padding:0">No explanation before the block.</p>`}${blockHtml(t)}</div>
+    </article>`;
+  };
+  let html = '';
+  for (const p of D.phases) {
+    html += `<div class="phase-head" id="phase-${p.id}" data-phase="${p.id}"><span class="eyebrow">Phase ${p.id} · turns ${p.first}–${p.last}</span><h2>${esc(p.name)}</h2></div>`;
+    for (const t of D.turns) if (t.phase === p.id) html += card(t);
+  }
+  $('turns').innerHTML = html;
+  $('turns').addEventListener('click', e => {
+    const b = e.target.closest('.more'); if (!b) return;
+    const pre = b.previousElementSibling, open = pre.classList.toggle('clamp');
+    b.textContent = open ? b.dataset.label : 'Show less';
+  });
+  const hl = el => { if (window.hljs && !el.dataset.hl) { hljs.highlightElement(el); el.dataset.hl = 1; } };
+  // Highlight Python blocks in small batches so the page stays responsive while it loads.
+  const pending = [...document.querySelectorAll('#turns pre.code > code.language-python')];
+  (function batch() { pending.splice(0, 12).forEach(hl); if (pending.length) setTimeout(batch, 0); })();
+  document.querySelectorAll('#turns details').forEach(d => d.addEventListener('toggle', () => d.open && d.querySelectorAll('code').forEach(hl)));
+
+  // ---------- Filters ----------
+  // Smart case, as in ripgrep: a query with a capital letter matches case exactly, so "Mary" skips "summary".
+  const hay = new Map(D.turns.map(t => [t.t, t.sent + '\n' + t.expl + '\n' + (t.block.code || '') + (t.block.request || '')]));
+  const hayLow = new Map([...hay].map(([k, v]) => [k, v.toLowerCase()]));
+  const matches = (t, q) => q === q.toLowerCase() ? hayLow.get(t).includes(q) : hay.get(t).includes(q);
+  let kind = 'all', query = '';
+  const cards = [...document.querySelectorAll('.turn')];
+  const heads = [...document.querySelectorAll('.phase-head')];
+  function apply() {
+    let shown = 0;
+    for (const c of cards) {
+      const ok = (kind === 'all' || c.dataset.kind === kind) && (!query || matches(+c.dataset.t, query));
+      c.hidden = !ok; if (ok) shown++;
+    }
+    for (const h of heads) h.hidden = !cards.some(c => !c.hidden && byT.get(+c.dataset.t).phase === +h.dataset.phase);
+    $('count').textContent = shown === cards.length ? `${shown} turns` : `Showing ${shown} of ${cards.length} turns`;
+    $('empty').hidden = shown > 0;
+  }
+  $('filters').addEventListener('click', e => {
+    const b = e.target.closest('button[data-kind]'); if (!b) return;
+    kind = b.dataset.kind;
+    document.querySelectorAll('#filters button[data-kind]').forEach(x => x.setAttribute('aria-pressed', x === b));
+    apply();
+  });
+  let timer;
+  $('q').addEventListener('input', e => { clearTimeout(timer); timer = setTimeout(() => { query = e.target.value.trim(); apply(); }, 150); });
+  $('jump').addEventListener('keydown', e => { if (e.key === 'Enter' && byT.has(+e.target.value)) location.hash = 'turn-' + (+e.target.value); });
+  apply();
+
+  // ---------- Other views ----------
+  $('prompt').textContent = D.turns[0].sent;
+  $('notes').innerHTML = md(D.notes);
+  $('final').innerHTML = md(D.final);
+  $('passrows').innerHTML = D.passes.map(p => `<tr><td class="stripe ${rowsKind(p)}"></td><td class="num">${p.k}</td><td><a href="#turn-${p.t}">${p.t}</a></td><td>${esc(p.model)}</td><td>${rowsText(p)}</td><td class="num">${p.texts || ''}</td><td>${esc(p.returns.join(', '))}</td><td class="num">${esc(resultText(p.result))}</td><td class="why">${esc(p.why)}</td></tr>`).join('');
+
+  // ---------- Routing ----------
+  const views = ['conversation', 'passes', 'prompt', 'notes', 'final'];
+  function show(view) {
+    for (const v of views) $('v-' + v).hidden = v !== view;
+    $('filters').hidden = view !== 'conversation';
+    document.querySelectorAll('.tabs a').forEach(a => a.dataset.view === view ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current'));
+  }
+  // Room for the sticky toolbar, which is static on narrow screens.
+  const offset = () => { const tb = document.querySelector('.toolbar'); return getComputedStyle(tb).position === 'sticky' ? tb.offsetHeight + 10 : 10; };
+  function route() {
+    const h = location.hash.slice(1);
+    const m = /^(turn|phase)-(\d+)$/.exec(h);
+    if (m) {
+      show('conversation');
+      let el = $(h);
+      if (el && el.hidden) { kind = 'all'; query = ''; $('q').value = ''; document.querySelectorAll('#filters button[data-kind]').forEach(x => x.setAttribute('aria-pressed', x.dataset.kind === 'all')); apply(); }
+      el = $(h);
+      if (el) { window.scrollTo(0, el.getBoundingClientRect().top + scrollY - offset()); if (m[1] === 'turn') { el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); } }
+      return;
+    }
+    show(views.includes(h) ? h : 'conversation');
+  }
+  window.addEventListener('hashchange', route);
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+  route();
+  // Fonts and late layout move the cards after the first jump, so jump again once the page settles.
+  const settle = () => { if (/^(turn|phase)-\d+$/.test(location.hash.slice(1))) route(); };
+  window.addEventListener('load', settle);
+  if (document.fonts) document.fonts.ready.then(settle);
+
+  // ---------- Keys ----------
+  document.addEventListener('keydown', e => {
+    if (e.target.closest('input, textarea') || e.metaKey || e.ctrlKey || e.altKey || !(e.key === 'j' || e.key === 'k') || $('v-conversation').hidden) return;
+    const vis = cards.filter(c => !c.hidden), y = offset();
+    const i = vis.findIndex(c => c.getBoundingClientRect().top > y + 4);
+    const cur = i === -1 ? vis.length : i;
+    const target = e.key === 'j' ? vis[cur] : vis[Math.max(0, cur - 2)];
+    if (target) location.hash = 'turn-' + target.dataset.t;
+  });
+})();
+</script>
