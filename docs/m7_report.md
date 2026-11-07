@@ -2,7 +2,7 @@
 
 M7 scores MiniLM with Opus 5.5's edit on the two hidden sets, which Opus 5.5 never saw, and compares it with the unedited MiniLM and with the M5 prediction. On the Singapore main eval, F1 rises from 0.865 to 0.924, a paired gain of +0.059 ± 0.002. On the Nemotron regression check, F1 changes by −0.0004 ± 0.0001, inside the prediction's limit for unchanged. Both repairs Opus 5.5 described work on the hidden text. NRICs without a cue word go from 0% to 85% right, and Singapore titles tagged as names fall from 909 to 2. The cost is on Nemotron's own ID labels. `national_id` F1 there falls by 0.047, because biometric IDs shaped like a letter and 11 digits are now tagged `national_id`. The prediction got the NRIC category right and every name category right, but it expected an overall gain of at most 0.009. It follows §5 and §7 of [weight-space-pii-handoff.md](weight-space-pii-handoff.md), with the decisions in the M2 to M6 reports.
 
-Status: scored and written on 2026-11-06. Desmond chose 5 fixed and 5 broken rows from each set. Waiting for Desmond to review the items under "Show me". Committed on `main`, where `git log` lists every M7 commit.
+Status: complete. Scored and written on 2026-11-06, and Desmond approved M7 on 2026-11-07. Desmond chose 5 fixed and 5 broken rows from each set. Committed on `main`, where `git log` lists every M7 commit.
 
 ## What you need to know first
 
@@ -172,6 +172,6 @@ Run these commands from the repository root. Both read `runs/`, which git does n
 
 ## Open items
 
-- **`runs/p50/` has no copy off this Mac.** The backup in `~/Backups/weight-space-pii/p50-2026-11-06/` is on the same disk. It does not yet hold `runs/p50/eval/`, which `scripts/evaluate.py` can rebuild.
+- **`runs/p50/` has no copy off this Mac.** The backup in `~/Backups/weight-space-pii/p50-2026-11-06/` is on the same disk. On 2026-11-07, `runs/p50/eval/` and `runs/p50/transcript.md` were added to it, and the SHA-256 of all 302 files matches the original.
 - **The NRIC detector's response to IDs of other lengths is inferred, not tested.** A direct test would run the edited MiniLM on the same sentence with codes of a letter and 7 to 12 digits. It is a question for the write-up, not a change to the edit, which is frozen.
 - **`data/sets.json` still lists `first_name` and `last_name` as scored labels, and [docs/m3_review.md](m3_review.md) predates the merge.** Both are unchanged from the M5 report.
