@@ -33,7 +33,7 @@ The figure puts the two runs side by side on the hidden sets. Each group of thre
 
 ## The run
 
-Both sessions ran to a final answer within the budget. Neither needed compaction, and each sent one reply the harness couldn't parse.
+Both sessions ran to a final answer within the budget. Neither needed compaction, and each sent one reply the harness couldn't parse. [docs/p50b_logbook.html](p50b_logbook.html) shows every turn of `p50b`: each message the harness sent Opus 5.5, each reply, the code Opus 5.5 wrote, and every forward pass. Download it and open it in a browser, which needs internet access to load the page's Markdown and code-highlighting libraries.
 
 | | `p50` | `p50b` |
 |---|---|---|
@@ -138,6 +138,12 @@ Run these commands from the repository root. They read `runs/`, which git doesn'
 
 	```bash
 	uv run python -I docs/figures/report_figures.py
+	```
+
+4. Rebuild the logbook of the session.
+
+	```bash
+	uv run python -I scripts/transcript_page.py runs/p50b docs/p50b_logbook.html
 	```
 
 ## Open items

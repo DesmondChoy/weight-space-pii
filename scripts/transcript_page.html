@@ -228,7 +228,7 @@ footer { color: var(--muted); font-size: .84rem; display: grid; gap: 4px; }
       </div>
       <div class="view" id="v-prompt" hidden><p>The first message of the run, sent verbatim at turn 1. Every later message is the output of Opus 5.5's last block.</p><pre class="msg doc" id="prompt"></pre></div>
       <div class="view" id="v-notes" hidden><p>Opus 5.5 kept <code>work/notes.md</code> as a running log during the run. This is the file as the run left it.</p><div class="doc md" id="notes"></div></div>
-      <div class="view" id="v-final" hidden><p>Opus 5.5's last reply, sent at turn 232 with no block.</p><div class="doc md" id="final"></div></div>
+      <div class="view" id="v-final" hidden><p>Opus 5.5's last reply, sent at turn __LAST__ with no block.</p><div class="doc md" id="final"></div></div>
     </main>
   </div>
 
@@ -292,7 +292,8 @@ footer { color: var(--muted); font-size: .84rem; display: grid; gap: 4px; }
     s += `<polygon class="ctx-area" points="${x(1) + cw / 2},${yc(0)} ${pts} ${x(n) + cw / 2},${yc(0)}"/><polyline class="ctx-line" points="${pts}"/>`;
     s += `<line class="limit" x1="${L}" x2="${L + n * cw}" y1="${yc(967000)}" y2="${yc(967000)}"/><text class="limit-label" x="${L + n * cw + 4}" y="${yc(967000) + 3}">967k: CLI</text><text class="limit-label" x="${L + n * cw + 4}" y="${yc(967000) + 14}">compacts</text>`;
     s += `<text x="${L - 6}" y="${tickTop + tickH - 4}" text-anchor="end">blocks</text>`;
-    for (const t of [1, 50, 100, 150, 200, 232]) s += `<text x="${x(t) + cw / 2}" y="${H - 4}" text-anchor="middle">${t}</text>`;
+    const last = D.turns[D.turns.length - 1].t;
+    for (const t of [1, ...Array.from({length: Math.floor((last - 20) / 50)}, (_, i) => 50 * (i + 1)), last]) s += `<text x="${x(t) + cw / 2}" y="${H - 4}" text-anchor="middle">${t}</text>`;
     s += `<text x="${L - 6}" y="${H - 4}" text-anchor="end">turn</text>`;
     for (const t of D.turns) {
       const label = t.block.kind === 'forward' ? `forward pass ${t.block.k}` : t.block.kind === 'python' ? `Python run ${t.block.n}` : t.block.kind === 'final' ? 'final answer' : 'reply refused';

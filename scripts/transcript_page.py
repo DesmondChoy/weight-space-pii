@@ -4,6 +4,8 @@ Reads runs/<run>/transcript.jsonl, work_notes/notes.md, work_notes/split.json an
 self-contained HTML page. The page renders Markdown and highlights code with libraries from cdnjs.
 
 Usage: uv run python -I scripts/transcript_page.py runs/p50 <out.html>
+
+The phases and key moments are read by hand from each run, so RUNS holds them for every run the page supports.
 """
 
 import argparse
@@ -11,25 +13,54 @@ import json
 import re
 from pathlib import Path
 
-PHASES = [  # From docs/m6_report.md, "How Opus 5.5 spent its 50 passes". Turn 121 is a key moment inside phase 3.
-    {"id": 1, "first": 1, "last": 42, "short": "Read and measure",
-     "name": "Read the data and the unedited MiniLM"},
-    {"id": 2, "first": 43, "last": 120, "short": "Build repairs",
-     "name": "Build the repairs on the dev half"},
-    {"id": 3, "first": 121, "last": 207, "short": "Test and take apart",
-     "name": "Test on the held-back half, check for damage, take the edit apart"},
-    {"id": 4, "first": 208, "last": 232, "short": "Confirm",
-     "name": "Confirm the final edit and answer"},
-]
-MOMENTS = [  # (forward pass, label). The turn is looked up from the transcript, never typed in.
-    (1, "First forward pass: the unedited MiniLM on the dev half"),
-    (4, "First edit tested: the NRIC repair in layer 4"),
-    (15, "First test on the held-back half"),
-    (23, "Each repair scored alone on the held-back half (passes 23 to 25)"),
-    (33, "Test that MiniLM uses the title signal"),
-    (40, "Final edit first tested on the held-back half"),
-    (50, "Last forward pass"),
-]
+RUNS = {
+    "p50": {  # From docs/m6_report.md, "How Opus 5.5 spent its 50 passes". Turn 121 is a key moment inside phase 3.
+        "phases": [
+            {"id": 1, "first": 1, "last": 42, "short": "Read and measure",
+             "name": "Read the data and the unedited MiniLM"},
+            {"id": 2, "first": 43, "last": 120, "short": "Build repairs",
+             "name": "Build the repairs on the dev half"},
+            {"id": 3, "first": 121, "last": 207, "short": "Test and take apart",
+             "name": "Test on the held-back half, check for damage, take the edit apart"},
+            {"id": 4, "first": 208, "last": 232, "short": "Confirm",
+             "name": "Confirm the final edit and answer"},
+        ],
+        "moments": [  # (forward pass, label). The turn is looked up from the transcript, never typed in.
+            (1, "First forward pass: the unedited MiniLM on the dev half"),
+            (4, "First edit tested: the NRIC repair in layer 4"),
+            (15, "First test on the held-back half"),
+            (23, "Each repair scored alone on the held-back half (passes 23 to 25)"),
+            (33, "Test that MiniLM uses the title signal"),
+            (40, "Final edit first tested on the held-back half"),
+            (50, "Last forward pass"),
+        ],
+    },
+    "p50b": {  # Read from the p50b transcript: each phase ends with the last forward pass of its stage.
+        "phases": [
+            {"id": 1, "first": 1, "last": 35, "short": "Read and measure",
+             "name": "Read the data and the unedited MiniLM"},
+            {"id": 2, "first": 36, "last": 135, "short": "Build repairs",
+             "name": "Build both repairs on the dev half"},
+            {"id": 3, "first": 136, "last": 216, "short": "Test and tighten",
+             "name": "Test on the held-back half, tighten the gates and check for damage"},
+            {"id": 4, "first": 217, "last": 274, "short": "Extend and confirm",
+             "name": "Add the Master gate, map Miss and Mayoress to Madam, and confirm"},
+        ],
+        "moments": [
+            (1, "First forward pass: the unedited MiniLM on the dev half"),
+            (3, "First edit: ablating seven title neurons, which changes nothing"),
+            (5, "First repair tested: the NRIC gate in layer 4"),
+            (6, "Both repairs together for the first time"),
+            (13, "First test on the held-back half"),
+            (23, "Dose-response: both repairs at 0.5, 0.75 and 1.25 strength (passes 23 to 25)"),
+            (29, "Gates moved to the quietest neurons, checked on 440 US sentences"),
+            (38, "Each repair scored alone on the held-back half (passes 38 and 39)"),
+            (44, "Final edit first tested: Miss and Mayoress now map to Madam"),
+            (45, "Final edit on the held-back half"),
+            (50, "Last forward pass"),
+        ],
+    },
+}
 FENCE = re.compile(r"^```(python|forward)\s*$", re.M)
 
 
@@ -55,6 +86,7 @@ def compact(summary: dict) -> dict:
 
 
 def build(run: Path) -> dict:
+    phases, moments = RUNS[run.name]["phases"], RUNS[run.name]["moments"]
     events = [json.loads(line) for line in (run / "transcript.jsonl").open()]
     split = json.loads((run / "work_notes" / "split.json").read_text())
     dev, hold = set(split["dev"]), set(split["hold"])
@@ -72,7 +104,7 @@ def build(run: Path) -> dict:
                "secs": round(r["seconds"], 1), "cost": r["cost"],
                "ctx": usage["input_tokens"] + usage["cache_creation_input_tokens"] + usage["cache_read_input_tokens"],
                "out": usage["output_tokens"],
-               "phase": next(p["id"] for p in PHASES if p["first"] <= t <= p["last"])}
+               "phase": next(p["id"] for p in phases if p["first"] <= t <= p["last"])}
         if b is None:
             row["block"] = {"kind": "final"}
         elif b["kind"] == "python":
@@ -104,8 +136,8 @@ def build(run: Path) -> dict:
             row["from"] = f"Refusal of turn {prev['t']}, which held {prev['block']['blocks']} code blocks"
     by_pass = {p["k"]: p["t"] for p in passes}
     run_json = json.loads((run / "run.json").read_text())
-    return {"run": run.name, "turns": turns, "passes": passes, "phases": PHASES,
-            "moments": [{"k": k, "t": by_pass[k], "label": label} for k, label in MOMENTS],
+    return {"run": run.name, "turns": turns, "passes": passes, "phases": phases,
+            "moments": [{"k": k, "t": by_pass[k], "label": label} for k, label in moments],
             "notes": (run / "work_notes" / "notes.md").read_text(), "final": (run / "final_answer.md").read_text(),
             "stats": {"turns": run_json["turns"], "python": run_json["python_runs"], "passes": run_json["passes_used"],
                       "invalid": run_json["invalid_replies"], "wall": run_json["wall_seconds"],
@@ -118,9 +150,11 @@ def main() -> None:
     ap.add_argument("run", type=Path)
     ap.add_argument("out", type=Path)
     a = ap.parse_args()
-    data = json.dumps(build(a.run), ensure_ascii=False).replace("</", "<\\/")
+    log = build(a.run)
+    data = json.dumps(log, ensure_ascii=False).replace("</", "<\\/")
     page = (Path(__file__).with_name("transcript_page.html").read_text()
-            .replace("__RUN__", a.run.name).replace("__DATA__", data))
+            .replace("__RUN__", a.run.name).replace("__LAST__", str(log["turns"][-1]["t"]))
+            .replace("__DATA__", data))
     a.out.write_text(page)
     print(f"wrote {a.out} ({len(page):,} bytes)")
 
