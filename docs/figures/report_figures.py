@@ -1,11 +1,12 @@
-"""Generate the figures in the M2 to M7 reports: data_sets, example_rows, label_translation, tax_id_cases,
-harness, edit_checks, lock_checks, set_roles, baseline_f1, baseline_kinds, run_timeline, edit_map, m7_kinds and
-m7_errors.
+"""Generate the figures in the M2 to M7 reports and the p50b report: data_sets, example_rows, label_translation,
+tax_id_cases, harness, edit_checks, lock_checks, set_roles, baseline_f1, baseline_kinds, run_timeline, edit_map,
+m7_kinds, m7_errors and p50b_compare.
 
 The M6 numbers come from runs/p50/, which git does not track: each forward pass's turn and items from
 transcript.jsonl, forward/<k>/request.json and work_notes/split.json, the context from cli_session.jsonl, and
 the edited neurons from edit/edit.npz. The M7 numbers come from runs/p50/eval/evaluation.json, which
-scripts/evaluate.py writes."""
+scripts/evaluate.py writes. The p50b numbers come from runs/p50b/eval/evaluation.json, which
+`scripts/evaluate.py --run p50b --replicate-of p50` writes."""
 
 import json
 from pathlib import Path
@@ -582,8 +583,8 @@ def edit_map():
           "classification head are not allowed. In all, 12 tensors and 7,304 numbers change.", out)
 
 
-def evaluation():
-    return json.loads((HERE.parents[1] / "runs" / "p50" / "eval" / "evaluation.json").read_text())
+def evaluation(run="p50"):
+    return json.loads((HERE.parents[1] / "runs" / run / "eval" / "evaluation.json").read_text())
 
 
 KIND_NAMES = {"national_id/no tax context": 'NRIC without "tax" just before it',
@@ -699,6 +700,75 @@ def m7_errors():
           "national_id. Over all 55 labels, Nemotron F1 changes by -0.0004.", out)
 
 
+def p50b_compare():
+    runs = {r: evaluation(r) for r in ("p50", "p50b")}
+
+    def measures(ev):
+        s, v = ev["scores"], ev["kinds"]["verdicts"]
+        t, nem = ev["mechanism"]["titles"], {r["label"]: r for r in ev["nemotron_regression_by_label"]}
+        boot = {k: (s[k]["bootstrap"]["f1"], s[k]["bootstrap"]["f1"] + s[k]["bootstrap"]["diff"]) for k in s}
+        return [boot["singapore"],
+                (v["national_id/no tax context"]["base_share"], v["national_id/no tax context"]["edited_share"]),
+                (v["national_id/tax context"]["base_share"], v["national_id/tax context"]["edited_share"]),
+                (t["groups"]["targeted"]["base_share"], t["groups"]["targeted"]["edited_share"]),
+                (t["name_after_targeted_title"]["base_share"], t["name_after_targeted_title"]["edited_share"]),
+                boot["nemotron_regression"],
+                (nem["national_id"]["base_f1"], nem["national_id"]["edited_f1"])]
+
+    m = {r: measures(ev) for r, ev in runs.items()}
+    gain = {r: ev["scores"]["singapore"]["bootstrap"]["diff"] for r, ev in runs.items()}
+    nem_diff = {r: ev["scores"]["nemotron_regression"]["bootstrap"]["diff"] for r, ev in runs.items()}
+    tests = [("gain +0.039 to +0.079", all(0.039 <= gain[r] <= 0.079 for r in runs)),
+             ("at least 50%", all(m[r][1][1] >= 0.5 for r in runs)), None,
+             ("below 10%", all(m[r][3][1] < 0.1 for r in runs)), None,
+             ("change within ±0.005", all(abs(nem_diff[r]) <= 0.005 for r in runs)), None]
+    rows = [("Singapore F1, both labels", "main eval, 5,004 rows"),
+            ('NRICs without "tax" just before them', "share right, 323 entities"),
+            ('NRICs with "tax" just before them', "share right, 711 entities"),
+            ("Targeted titles tagged as a name", "share of 1,450, lower is better"),
+            ("Name word just after a targeted title", "share right, 1,372 words"),
+            ("Nemotron F1, all 55 labels", "regression check, 18,515 rows"),
+            ("Nemotron national_id F1", "the label the NRIC repair costs")]
+    out = []
+    x0, bw, tx = 330, 400, 860
+    text(out, 40, 22, "Two Opus 5.5 runs with the same locked settings, scored on the same hidden sets", "th", "start")
+    text(out, 40, 44, "Each group of bars is one measure: the unedited MiniLM, then MiniLM with the p50 edit, then with "
+         "the p50b edit. Every bar runs from 0 to 1.", "ts", "start")
+    text(out, 40, 62, "The right column gives the test the p50b prediction set for reproducing p50, and whether both "
+         "runs pass it.", "ts", "start")
+    text(out, tx, 88, "Test for reproducing p50", "tl")
+    y = 102
+    for i, (label, sub_) in enumerate(rows):
+        text(out, 40, y + 14, label, "ts", "start")
+        text(out, 40, y + 30, sub_, "tl", "start")
+        for j, (share, cls) in enumerate(((m["p50"][i][0], "box"), (m["p50"][i][1], "c-teal"),
+                                          (m["p50b"][i][1], "c-purple"))):
+            yy = y + 15 * j
+            out.append(f'<rect x="{x0}" y="{yy}" width="{bw}" height="12" rx="3" fill="#FAFAF7" stroke="#E5E3DA" '
+                       f'stroke-width="0.5"/>')
+            if share:
+                out.append(f'<g class="{cls}"><rect x="{x0}" y="{yy}" width="{bw * share:g}" height="12" rx="3" '
+                           f'stroke-width="0.5"/></g>')
+            text(out, x0 + bw * share + 6, yy + 6, f"{share:.3f}" if i in (0, 5, 6) else f"{share:.1%}", "tl", "start")
+        if tests[i]:
+            rule, ok = tests[i]
+            text(out, tx, y + 14, rule, "ts")
+            text(out, tx, y + 30, "both pass" if ok else "a run fails", "ok" if ok else "bad")
+        y += 60
+    ly = y + 8
+    for x, cls, lab in ((40, "box", "Unedited MiniLM"), (220, "c-teal", "p50 edit, 12 tensors in layers 1, 2, 4"),
+                        (520, "c-purple", "p50b edit, 8 tensors in layers 1, 4")):
+        swatch(out, x, ly, cls)
+        text(out, x + 22, ly, lab, "ts", "start")
+    write("p50b_compare.svg", 960, ly + 22, "The p50 and p50b edits on the hidden sets",
+          "Seven measures for the unedited MiniLM, the p50 edit and the p50b edit. Singapore F1 rises from 0.865 to "
+          f"{m['p50'][0][1]:.3f} and {m['p50b'][0][1]:.3f}. NRICs without \"tax\" just before them go from 0% to "
+          f"{m['p50'][1][1]:.0%} and {m['p50b'][1][1]:.0%} right. Targeted titles tagged as a name fall from "
+          f"{m['p50'][3][0]:.0%} to {m['p50'][3][1]:.1%} and {m['p50b'][3][1]:.1%}. Nemotron F1 over all labels stays "
+          f"at 0.952. Nemotron national_id F1 falls from {m['p50'][6][0]:.3f} to {m['p50'][6][1]:.3f} and "
+          f"{m['p50b'][6][1]:.3f}. Both runs pass all four reproduction tests.", out)
+
+
 data_sets()
 example_rows()
 label_translation()
@@ -713,3 +783,4 @@ run_timeline()
 edit_map()
 m7_kinds()
 m7_errors()
+p50b_compare()

@@ -1,9 +1,13 @@
-"""M7: check the p50 run, score the edited MiniLM on the locked sets, and compare it with the baseline and the prediction.
+"""M7: check a run, score the edited MiniLM on the locked sets, and compare it with the baseline and the prediction.
 
-Needs runs/base/ from scripts/baseline.py and runs/p50/ from the M6 run. Writes runs/p50/eval/: pred_<set>.jsonl,
-changed_rows.jsonl, and evaluation.json. Stops with an error if any check fails.
+Needs runs/base/ from scripts/baseline.py and runs/<run>/ from an editor run, by default runs/p50/ from M6. Writes
+runs/<run>/eval/: pred_<set>.jsonl, changed_rows.jsonl, and evaluation.json. Stops with an error if any check fails.
+
+A replicate run, started with `run_editor.py --replicate-of p50`, is scored with `--run <name> --replicate-of p50`.
+Its name may differ from the locked one, and the harness check allows the one commit that added --replicate-of.
 """
 
+import argparse
 import importlib.util
 import json
 import platform
@@ -32,6 +36,8 @@ BASE = ROOT / "runs" / "base"
 RUN = ROOT / "runs" / "p50"
 FORWARD = RUN / "forward"
 OUT = RUN / "eval"
+REPLICATE_OF: str | None = None
+REPLICATE_COMMIT = "18c86e72b2b6e766e5b5137923d950ec7d65c94f"  # adds --replicate-of to scripts/run_editor.py
 ORIGINAL = ROOT / "data" / "model" / "model.safetensors"
 FROZEN_HARNESS = {"lock.json", "pyproject.toml", "uv.lock", "scripts/run_editor.py"}
 TITLE_GROUPS = {"targeted": ("Madame", "Master", "Miss", "Mstr", "Mayoress"), "control": ("Mr", "Mrs"),
@@ -101,14 +107,21 @@ def run_checks(lock: dict) -> dict:
     settings = lock["run"]
     same = {"cli_command": strip_session_id(run["cli_command"]) == settings["cli_command"],
             **{k: run[k] == settings[k] for k in ("cli_env", "cli_env_passed", "cli_version", "budget", "max_turns")},
-            "name": RUN.name == settings["name"]}
+            "name": RUN.name == settings["name"] if REPLICATE_OF is None
+            else REPLICATE_OF == settings["name"] != RUN.name}
     record("run.json settings equal lock run settings", all(same.values()), same)
 
     freeze = git("log", "-1", "--format=%H", "--", "lock.json")
     changed = git("diff", "--name-only", freeze, run["git"]["head"]).splitlines()
     touched = [p for p in changed if p.startswith("src/") or p in FROZEN_HARNESS]
-    record("harness code unchanged between the freeze and the run's head", not touched,
-           {"freeze": freeze, "head": run["git"]["head"], "changed_paths": changed, "harness_paths": touched})
+    allowed = []
+    if REPLICATE_OF is not None:
+        commits = git("log", "--format=%H", f"{freeze}..{run['git']['head']}", "--", *touched).split()
+        allowed = touched if commits == [REPLICATE_COMMIT] and touched == ["scripts/run_editor.py"] else []
+    record("harness code unchanged between the freeze and the run's head"
+           + (", except the commit that added --replicate-of" if REPLICATE_OF is not None else ""),
+           touched == allowed, {"freeze": freeze, "head": run["git"]["head"], "changed_paths": changed,
+                                "harness_paths": touched, "allowed": allowed})
 
     base_ok = {}
     for set_name, want in baseline_json["pred_sha256"].items():
@@ -161,19 +174,28 @@ def key(spans) -> list[tuple]:
     return sorted((s.start, s.end, s.label) for s in spans)
 
 
-def server_agreement(docs, base_preds, edited_preds) -> dict:
+def agreement_pass(passes: dict) -> int:
+    """The last forward pass that ran the submitted edit on practice rows only, not on texts Opus 5.5 wrote."""
+    for k in sorted(passes, reverse=True):
+        rows = [json.loads(line) for line in (FORWARD / str(k) / "pred.jsonl").open()]
+        if passes[k]["equals_submitted"] and rows and all(r["id"] is not None for r in rows):
+            return k
+    raise SystemExit("no forward pass ran the submitted edit on practice rows")
+
+
+def server_agreement(docs, base_preds, edited_preds, k: int) -> dict:
     by_id = {d.id: i for i, d in enumerate(docs)}
     mismatches = Counter()
-    rows = [json.loads(line) for line in (FORWARD / "50" / "pred.jsonl").open()]
+    rows = [json.loads(line) for line in (FORWARD / str(k) / "pred.jsonl").open()]
     for r in rows:
         i = by_id[r["id"]]
         mine = base_preds[i] if r["model"] == "original" else edited_preds[i]
         server = sorted((p["start"], p["end"], p["label"]) for p in r["pred"])
         mismatches[r["model"], key(mine) == server] += 1
     result = {m: {"matches": mismatches[m, True], "mismatches": mismatches[m, False]} for m in ("original", "edited")}
-    record("forward pass 50 server predictions equal ours (original vs base, edited vs edited)",
+    record(f"forward pass {k} server predictions equal ours (original vs base, edited vs edited)",
            all(v["mismatches"] == 0 and v["matches"] > 0 for v in result.values()), result)
-    return result
+    return {"pass": k, **result}
 
 
 def verdict(pp: float) -> str:
@@ -296,6 +318,13 @@ def regression_by_label(base_summary: dict, edited_summary: dict) -> list[dict]:
 
 
 def main() -> None:
+    global RUN, FORWARD, OUT, REPLICATE_OF
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--run", default="p50", help="the run folder under runs/ to score")
+    ap.add_argument("--replicate-of", help="the locked run this run repeats under its own name")
+    args = ap.parse_args()
+    RUN, REPLICATE_OF = ROOT / "runs" / args.run, args.replicate_of
+    FORWARD, OUT = RUN / "forward", RUN / "eval"
     start = time.time()
     lock = check()
     ctx = run_checks(lock)
@@ -313,7 +342,8 @@ def main() -> None:
                 f.write(json.dumps({"id": d.id, "spans": [vars(s) for s in pred]}, ensure_ascii=False) + "\n")
         print(f"predicted {set_name}: {len(docs[set_name])} rows")
 
-    agreement = server_agreement(docs["sg_train"], base_preds["sg_train"], edited_preds["sg_train"])
+    agreement = server_agreement(docs["sg_train"], base_preds["sg_train"], edited_preds["sg_train"],
+                                 agreement_pass(ctx["passes"]))
     require_all()
 
     scores, grades = {}, {}
@@ -357,7 +387,7 @@ def main() -> None:
             f.write(json.dumps(r, ensure_ascii=False) + "\n")
     print(f"changed rows: {change_counts}")
 
-    result = {"lock_sha256": sha256_file(LOCK), "checks": checks, "environment": ctx["environment"],
+    result = {"run": RUN.name, "replicate_of": REPLICATE_OF, "lock_sha256": sha256_file(LOCK), "checks": checks, "environment": ctx["environment"],
               "freeze_commit": ctx["freeze"], "harness_diff_paths": ctx["harness_diff"],
               "forward_passes": ctx["passes"], "server_agreement": agreement,
               "pred_sha256": {s: sha256_file(OUT / f"pred_{s}.jsonl") for s in edited_preds},

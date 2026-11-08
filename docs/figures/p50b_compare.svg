@@ -1,0 +1,118 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="552" viewBox="0 0 960 552" role="img">
+<title>The p50 and p50b edits on the hidden sets</title>
+<desc>Seven measures for the unedited MiniLM, the p50 edit and the p50b edit. Singapore F1 rises from 0.865 to 0.924 and 0.923. NRICs without "tax" just before them go from 0% to 85% and 93% right. Targeted titles tagged as a name fall from 63% to 0.1% and 1.0%. Nemotron F1 over all labels stays at 0.952. Nemotron national_id F1 falls from 0.960 to 0.913 and 0.889. Both runs pass all four reproduction tests.</desc>
+<style>
+text { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+.th { font-size: 14px; font-weight: 500; fill: #2C2C2A; }
+.ts { font-size: 12px; fill: #5F5E5A; }
+.tl { font-size: 11px; fill: #5F5E5A; }
+.mono { font-family: Menlo, Consolas, "DejaVu Sans Mono", monospace; font-size: 13px; fill: #2C2C2A; }
+.box rect { fill: #F1EFE8; stroke: #888780; }
+.arr { stroke: #5F5E5A; stroke-width: 1.5; fill: none; }
+.c-teal rect, rect.c-teal { fill: #E1F5EE; stroke: #0F6E56; } .c-teal .th { fill: #085041; } .c-teal .ts { fill: #0F6E56; }
+.c-coral rect, rect.c-coral { fill: #FAECE7; stroke: #993C1D; } .c-coral .th { fill: #712B13; } .c-coral .ts { fill: #993C1D; }
+rect.sc { fill: #E1F5EE; stroke: #0F6E56; } text.sc { fill: #085041; font-weight: 500; }
+rect.dr { fill: none; stroke: #888780; stroke-dasharray: 4 3; }
+.c-purple rect { fill: #EEEDFE; stroke: #534AB7; } .c-purple .th { fill: #3C3489; } .c-purple .ts { fill: #534AB7; }
+.card { fill: #FAFAF7; stroke: #E5E3DA; }
+rect.tag { fill: #FBEAF0; stroke: #993556; }
+.tv { font-size: 12px; font-weight: 500; fill: #2C2C2A; }
+.ok { font-size: 12px; font-weight: 500; fill: #3B6D11; } .bad { font-size: 12px; font-weight: 500; fill: #A32D2D; }
+</style>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#5F5E5A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+<rect x="0" y="0" width="960" height="552" fill="#FFFFFF"/>
+<text class="th" x="40" y="22" text-anchor="start" dominant-baseline="central">Two Opus 5.5 runs with the same locked settings, scored on the same hidden sets</text>
+<text class="ts" x="40" y="44" text-anchor="start" dominant-baseline="central">Each group of bars is one measure: the unedited MiniLM, then MiniLM with the p50 edit, then with the p50b edit. Every bar runs from 0 to 1.</text>
+<text class="ts" x="40" y="62" text-anchor="start" dominant-baseline="central">The right column gives the test the p50b prediction set for reproducing p50, and whether both runs pass it.</text>
+<text class="tl" x="860" y="88" text-anchor="middle" dominant-baseline="central">Test for reproducing p50</text>
+<text class="ts" x="40" y="116" text-anchor="start" dominant-baseline="central">Singapore F1, both labels</text>
+<text class="tl" x="40" y="132" text-anchor="start" dominant-baseline="central">main eval, 5,004 rows</text>
+<rect x="330" y="102" width="400" height="12" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
+<g class="box"><rect x="330" y="102" width="345.973" height="12" rx="3" stroke-width="0.5"/></g>
+<text class="tl" x="681.973" y="108" text-anchor="start" dominant-baseline="central">0.865</text>
+<rect x="330" y="117" width="400" height="12" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
+<g class="c-teal"><rect x="330" y="117" width="369.68" height="12" rx="3" stroke-width="0.5"/></g>
+<text class="tl" x="705.68" y="123" text-anchor="start" dominant-baseline="central">0.924</text>
+<rect x="330" y="132" width="400" height="12" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
+<g class="c-purple"><rect x="330" y="132" width="369.104" height="12" rx="3" stroke-width="0.5"/></g>
+<text class="tl" x="705.104" y="138" text-anchor="start" dominant-baseline="central">0.923</text>
+<text class="ts" x="860" y="116" text-anchor="middle" dominant-baseline="central">gain +0.039 to +0.079</text>
+<text class="ok" x="860" y="132" text-anchor="middle" dominant-baseline="central">both pass</text>
+<text class="ts" x="40" y="176" text-anchor="start" dominant-baseline="central">NRICs without "tax" just before them</text>
+<text class="tl" x="40" y="192" text-anchor="start" dominant-baseline="central">share right, 323 entities</text>
+<rect x="330" y="162" width="400" height="12" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
+<text class="tl" x="336" y="168" text-anchor="start" dominant-baseline="central">0.0%</text>
+<rect x="330" y="177" width="400" height="12" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
+<g class="c-teal"><rect x="330" y="177" width="339.32" height="12" rx="3" stroke-width="0.5"/></g>
+<text class="tl" x="675.32" y="183" text-anchor="start" dominant-baseline="central">84.8%</text>
+<rect x="330" y="192" width="400" height="12" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
+<g class="c-purple"><rect x="330" y="192" width="371.52" height="12" rx="3" stroke-width="0.5"/></g>
+<text class="tl" x="707.52" y="198" text-anchor="start" dominant-baseline="central">92.9%</text>
+<text class="ts" x="860" y="176" text-anchor="middle" dominant-baseline="central">at least 50%</text>
+<text class="ok" x="860" y="192" text-anchor="middle" dominant-baseline="central">both pass</text>
+<text class="ts" x="40" y="236" text-anchor="start" dominant-baseline="central">NRICs with "tax" just before them</text>
+<text class="tl" x="40" y="252" text-anchor="start" dominant-baseline="central">share right, 711 entities</text>
+<rect x="330" y="222" width="400" height="12" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
+<g class="box"><rect x="330" y="222" width="349.92" height="12" rx="3" stroke-width="0.5"/></g>
+<text class="tl" x="685.92" y="228" text-anchor="start" dominant-baseline="central">87.5%</text>
+<rect x="330" y="237" width="400" height="12" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
+<g class="c-teal"><rect x="330" y="237" width="389.88" height="12" rx="3" stroke-width="0.5"/></g>
+<text class="tl" x="725.88" y="243" text-anchor="start" dominant-baseline="central">97.5%</text>
+<rect x="330" y="252" width="400" height="12" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
+<g class="c-purple"><rect x="330" y="252" width="383.12" height="12" rx="3" stroke-width="0.5"/></g>
+<text class="tl" x="719.12" y="258" text-anchor="start" dominant-baseline="central">95.8%</text>
+<text class="ts" x="40" y="296" text-anchor="start" dominant-baseline="central">Targeted titles tagged as a name</text>
+<text class="tl" x="40" y="312" text-anchor="start" dominant-baseline="central">share of 1,450, lower is better</text>
+<rect x="330" y="282" width="400" height="12" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
+<g class="box"><rect x="330" y="282" width="250.76" height="12" rx="3" stroke-width="0.5"/></g>
+<text class="tl" x="586.76" y="288" text-anchor="start" dominant-baseline="central">62.7%</text>
+<rect x="330" y="297" width="400" height="12" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
+<g class="c-teal"><rect x="330" y="297" width="0.56" height="12" rx="3" stroke-width="0.5"/></g>
+<text class="tl" x="336.56" y="303" text-anchor="start" dominant-baseline="central">0.1%</text>
+<rect x="330" y="312" width="400" height="12" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
+<g class="c-purple"><rect x="330" y="312" width="3.88" height="12" rx="3" stroke-width="0.5"/></g>
+<text class="tl" x="339.88" y="318" text-anchor="start" dominant-baseline="central">1.0%</text>
+<text class="ts" x="860" y="296" text-anchor="middle" dominant-baseline="central">below 10%</text>
+<text class="ok" x="860" y="312" text-anchor="middle" dominant-baseline="central">both pass</text>
+<text class="ts" x="40" y="356" text-anchor="start" dominant-baseline="central">Name word just after a targeted title</text>
+<text class="tl" x="40" y="372" text-anchor="start" dominant-baseline="central">share right, 1,372 words</text>
+<rect x="330" y="342" width="400" height="12" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
+<g class="box"><rect x="330" y="342" width="349.28" height="12" rx="3" stroke-width="0.5"/></g>
+<text class="tl" x="685.28" y="348" text-anchor="start" dominant-baseline="central">87.3%</text>
+<rect x="330" y="357" width="400" height="12" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
+<g class="c-teal"><rect x="330" y="357" width="378.12" height="12" rx="3" stroke-width="0.5"/></g>
+<text class="tl" x="714.12" y="363" text-anchor="start" dominant-baseline="central">94.5%</text>
+<rect x="330" y="372" width="400" height="12" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
+<g class="c-purple"><rect x="330" y="372" width="380.48" height="12" rx="3" stroke-width="0.5"/></g>
+<text class="tl" x="716.48" y="378" text-anchor="start" dominant-baseline="central">95.1%</text>
+<text class="ts" x="40" y="416" text-anchor="start" dominant-baseline="central">Nemotron F1, all 55 labels</text>
+<text class="tl" x="40" y="432" text-anchor="start" dominant-baseline="central">regression check, 18,515 rows</text>
+<rect x="330" y="402" width="400" height="12" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
+<g class="box"><rect x="330" y="402" width="380.946" height="12" rx="3" stroke-width="0.5"/></g>
+<text class="tl" x="716.946" y="408" text-anchor="start" dominant-baseline="central">0.952</text>
+<rect x="330" y="417" width="400" height="12" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
+<g class="c-teal"><rect x="330" y="417" width="380.775" height="12" rx="3" stroke-width="0.5"/></g>
+<text class="tl" x="716.775" y="423" text-anchor="start" dominant-baseline="central">0.952</text>
+<rect x="330" y="432" width="400" height="12" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
+<g class="c-purple"><rect x="330" y="432" width="380.741" height="12" rx="3" stroke-width="0.5"/></g>
+<text class="tl" x="716.741" y="438" text-anchor="start" dominant-baseline="central">0.952</text>
+<text class="ts" x="860" y="416" text-anchor="middle" dominant-baseline="central">change within ±0.005</text>
+<text class="ok" x="860" y="432" text-anchor="middle" dominant-baseline="central">both pass</text>
+<text class="ts" x="40" y="476" text-anchor="start" dominant-baseline="central">Nemotron national_id F1</text>
+<text class="tl" x="40" y="492" text-anchor="start" dominant-baseline="central">the label the NRIC repair costs</text>
+<rect x="330" y="462" width="400" height="12" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
+<g class="box"><rect x="330" y="462" width="383.96" height="12" rx="3" stroke-width="0.5"/></g>
+<text class="tl" x="719.96" y="468" text-anchor="start" dominant-baseline="central">0.960</text>
+<rect x="330" y="477" width="400" height="12" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
+<g class="c-teal"><rect x="330" y="477" width="365.32" height="12" rx="3" stroke-width="0.5"/></g>
+<text class="tl" x="701.32" y="483" text-anchor="start" dominant-baseline="central">0.913</text>
+<rect x="330" y="492" width="400" height="12" rx="3" fill="#FAFAF7" stroke="#E5E3DA" stroke-width="0.5"/>
+<g class="c-purple"><rect x="330" y="492" width="355.72" height="12" rx="3" stroke-width="0.5"/></g>
+<text class="tl" x="691.72" y="498" text-anchor="start" dominant-baseline="central">0.889</text>
+<g class="box"><rect x="40" y="523" width="14" height="14" rx="3" stroke-width="0.5"/></g>
+<text class="ts" x="62" y="530" text-anchor="start" dominant-baseline="central">Unedited MiniLM</text>
+<g class="c-teal"><rect x="220" y="523" width="14" height="14" rx="3" stroke-width="0.5"/></g>
+<text class="ts" x="242" y="530" text-anchor="start" dominant-baseline="central">p50 edit, 12 tensors in layers 1, 2, 4</text>
+<g class="c-purple"><rect x="520" y="523" width="14" height="14" rx="3" stroke-width="0.5"/></g>
+<text class="ts" x="542" y="530" text-anchor="start" dominant-baseline="central">p50b edit, 8 tensors in layers 1, 4</text>
+</svg>
