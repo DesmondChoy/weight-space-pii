@@ -89,7 +89,18 @@ The two gains differ by 0.0015, less than the standard error of either gain. On 
 | Singapore F1 gain | Between +0.039 and +0.079 | +0.058 ± 0.002 | Yes |
 | Edit location | MLP neurons again, possibly in other layers | MLP neurons in layers 1 and 4, a subset of `p50`'s layers 1, 2 and 4 | Yes |
 | Nemotron, all labels | Within ±0.005 | −0.0005 ± 0.0001 | Yes |
-| New names MiniLM didn't tag before | At least 150 of the 212 untagged one-word given names stay untagged | 181 stay untagged. Gains for names sit next to titles: name words just after a title go from 90.0% to 94.9% right, and the rest from 86.7% to 87.6% | Yes |
+| New names MiniLM didn't tag before | At least 150 of the 212 untagged one-word given names stay untagged | 181 stay untagged, and 31 are now right. Gains for names sit next to titles: name words just after a title go from 90.0% to 94.9% right, and the rest from 86.7% to 87.6% | Yes |
+
+The given-name test follows each of the 212 one-word given names that the unedited MiniLM leaves untagged, and records what each edit does to it.
+
+| What happened to the name | `p50` | `p50b` |
+|---|---|---|
+| Of the 212, still untagged | 182 | 181 |
+| Of the 212, now tagged right | 28 | 31 |
+| Of the 212, now tagged with the wrong label or span | 2 | 0 |
+| Not among the 212: tagged before the edit, untagged after | 4 | 1 |
+
+The M7 report first counted this differently. It compared two totals: 212 one-word given names untagged before the `p50` edit and 186 after. It wrote that the edit "finds 26 of them, so 186 are still untagged". But the 186 include the 4 names the edit newly left untagged, so 182 of the original 212 stay untagged. The M7 report was corrected on 2026-11-08 to give the per-name count. Under either count, both runs leave far more than 150 untagged.
 
 The prediction's condition for changing the conclusion doesn't apply. `p50b` found both repairs, and its gain is far above +0.039. The obstacle-versus-ability reading from M7 also holds. The edit removed the title confusion and the reliance on cue words, and taught MiniLM few names it didn't know.
 
@@ -131,8 +142,9 @@ Run these commands from the repository root. They read `runs/`, which git doesn'
 
 ## Open items
 
-- **`runs/p50b/` has no backup.** The `p50` backup in `~/Backups/weight-space-pii/p50-2026-11-06/` doesn't include it, and both live on this Mac's disk.
-- **M7 counts 186 given names still untagged after the `p50` edit, but this report's count gives 184.** This report counts a one-word given name as untagged when its word isn't tagged exactly right. The M7 count may use a slightly different rule. Both runs are far above the prediction's 150 either way.
-- **The NRIC detector's response to code length is still untested.** It now matters for both edits. A direct test would run each edited MiniLM on one sentence with codes of a letter and 7 to 12 digits.
-- **Runs with Sonnet 5.5 and Haiku 5.5 as the editor haven't been decided.** They change the locked Opus 5.5 command, so they need a decision about the lock first.
+- **`runs/p50b/` has no copy off this Mac.** On 2026-11-08 it was copied to `~/Backups/weight-space-pii/p50b-2026-11-08/`, with the launch and scoring logs, and the SHA-256 of all 317 files matches the original. That backup is on the same disk, like the one for `p50`.
+- **Closed on 2026-11-08: the M7 report's "186 are still untagged" overstated the count by 4.** 182 of the 212 names stay untagged after the `p50` edit. The other 4 were tagged before and lost their tag. Desmond approved the correction, and the M7 report now gives the per-name count with a dated note in its status line.
+- **Closed on 2026-11-08: the NRIC detector's response to code length won't be tested.** The test would explain why the Nemotron `national_id` cost happens, not whether the edit helps. The experiment's question doesn't need it, and the cost itself is measured above. The length explanation stays labelled as inferred.
+- **Closed on 2026-11-08: runs with Sonnet 5.5 and Haiku 5.5 as the editor move to future work.** They would ask how capable the editing model has to be, which is a different question from this experiment's. Two Opus 5.5 runs already answer whether the edits help. M8's write-up lists them as future work. They would need a new lock, because `lock.json` fixes Opus 5.5 in the run command.
+- **Closed on 2026-11-08: the old label list in `data/sets.json` and [docs/m3_review.md](m3_review.md) stays as it is.** The item has been open since M5, which merged `first_name` and `last_name` into `name`. `lock.json` hashes `data/sets.json`, the scoring code ignores its label list, and `docs/m3_review.md` stays a record of M3's scoring.
 - **M8, the write-up and demo, hasn't started.** It can cite both runs.
