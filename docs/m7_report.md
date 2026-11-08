@@ -2,7 +2,7 @@
 
 M7 scores MiniLM with Opus 5.5's edit on the two hidden sets, which Opus 5.5 never saw, and compares it with the unedited MiniLM and with the M5 prediction. On the Singapore main eval, F1 rises from 0.865 to 0.924, a paired gain of +0.059 ± 0.002. On the Nemotron regression check, F1 changes by −0.0004 ± 0.0001, inside the prediction's limit for unchanged. Both repairs Opus 5.5 described work on the hidden text. NRICs without a cue word go from 0% to 85% right, and Singapore titles tagged as names fall from 909 to 2. The cost is on Nemotron's own ID labels. `national_id` F1 there falls by 0.047, because biometric IDs shaped like a letter and 11 digits are now tagged `national_id`. The prediction got the NRIC category right and every name category right, but it expected an overall gain of at most 0.009. It follows §5 and §7 of [weight-space-pii-handoff.md](weight-space-pii-handoff.md), with the decisions in the M2 to M6 reports.
 
-Status: complete. Scored and written on 2026-11-06, and Desmond approved M7 on 2026-11-07. Desmond chose 5 fixed and 5 broken rows from each set. Committed on `main`, where `git log` lists every M7 commit. Corrected on 2026-11-08: the count of untagged given names said "186 are still untagged", which included 4 names that were tagged before the edit. [docs/p50b_report.md](p50b_report.md) explains the two counts.
+Status: complete. Scored and written on 2026-11-06, and Desmond approved M7 on 2026-11-07. Desmond chose 5 fixed and 5 broken rows from each set. Committed on `main`, where `git log` lists every M7 commit. Corrected on 2026-11-08: the count of untagged given names said "186 are still untagged", which included 4 names that were tagged before the edit. [results/p50b_report.md](../results/p50b_report.md) explains the two counts.
 
 ## What you need to know first
 
@@ -147,6 +147,7 @@ The edited MiniLM still gets Nemotron's own national IDs right, 527 against 526 
 - The main table, under "Main table".
 - The per-category results next to the prediction, in the first figure and under "The prediction against the result".
 - The rows the edit changed, both fixed and broken: 5 of each from each set, in [docs/m7_changed_rows.md](m7_changed_rows.md).
+- Every turn of the run: what the harness sent Opus 5.5 and how Opus 5.5 replied, in [results/p50_logbook.html](../results/p50_logbook.html). Added on 2026-11-08.
 
 ## Reproduce M7
 
@@ -168,6 +169,12 @@ Run these commands from the repository root. Both read `runs/`, which git does n
 
 	```bash
 	uv run python -I docs/figures/report_figures.py
+	```
+
+4. Rebuild the logbook of the run.
+
+	```bash
+	uv run python -I scripts/transcript_page.py runs/p50 results/p50_logbook.html
 	```
 
 ## Open items

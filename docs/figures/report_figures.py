@@ -1,6 +1,6 @@
 """Generate the figures in the M2 to M7 reports and the p50b report: data_sets, example_rows, label_translation,
 tax_id_cases, harness, edit_checks, lock_checks, set_roles, baseline_f1, baseline_kinds, run_timeline, edit_map,
-m7_kinds, m7_errors and p50b_compare.
+m7_kinds, m7_errors and p50b_compare. All go to docs/figures/ except p50b_compare, which goes to results/figures/.
 
 The M6 numbers come from runs/p50/, which git does not track: each forward pass's turn and items from
 transcript.jsonl, forward/<k>/request.json and work_notes/split.json, the context from cli_session.jsonl, and
@@ -12,6 +12,7 @@ import json
 from pathlib import Path
 
 HERE = Path(__file__).parent
+RESULTS = HERE.parent.parent / "results" / "figures"  # Figures for the p50 and p50b results pages.
 CW = 7.8
 STYLE = """<style>
 text { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
@@ -49,11 +50,11 @@ def box(out, x, y, w, h, title, lines=(), cls="box"):
     out.append("</g>")
 
 
-def write(name, w, h, title, desc, out):
+def write(name, w, h, title, desc, out, where=HERE):
     head = (f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}" role="img">\n'
             f"<title>{title}</title>\n<desc>{desc}</desc>\n{STYLE}"
             f'<rect x="0" y="0" width="{w}" height="{h}" fill="#FFFFFF"/>\n')
-    (HERE / name).write_text(head + "\n".join(out) + "\n</svg>\n")
+    (where / name).write_text(head + "\n".join(out) + "\n</svg>\n")
 
 
 def data_sets():
@@ -766,7 +767,7 @@ def p50b_compare():
           f"{m['p50'][1][1]:.0%} and {m['p50b'][1][1]:.0%} right. Targeted titles tagged as a name fall from "
           f"{m['p50'][3][0]:.0%} to {m['p50'][3][1]:.1%} and {m['p50b'][3][1]:.1%}. Nemotron F1 over all labels stays "
           f"at 0.952. Nemotron national_id F1 falls from {m['p50'][6][0]:.3f} to {m['p50'][6][1]:.3f} and "
-          f"{m['p50b'][6][1]:.3f}. Both runs pass all four reproduction tests.", out)
+          f"{m['p50b'][6][1]:.3f}. Both runs pass all four reproduction tests.", out, RESULTS)
 
 
 data_sets()

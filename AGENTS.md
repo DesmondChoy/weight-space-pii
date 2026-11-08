@@ -16,7 +16,7 @@ The milestone reports, `docs/m<N>_report.md`, record the latest decisions, and t
 The work follows eight milestones, M1 to M8, in §7 of the brief. To find the next step:
 
 1. Read the brief, §7 in particular.
-2. Read every milestone report for the decisions that change the brief.
+2. Read every milestone report for the decisions that change the brief. Also read [results/p50b_report.md](results/p50b_report.md), which records decisions made after M7. `results/` holds the reports, logbooks and figures of the runs `p50` and `p50b`.
 3. Find the latest milestone report, `docs/m<N>_report.md`. Its status line says whether that milestone is complete, and its "Open items" section lists what is left.
 4. Check `git log` and `git status` for work done since that report.
 5. The next milestone is M<N+1>, unless the latest report still has open items.

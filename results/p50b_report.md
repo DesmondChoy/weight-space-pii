@@ -1,6 +1,6 @@
 # Repeat-run report: p50b, a second Opus 5.5 run
 
-Run `p50b` repeats the M6 run `p50` with every setting M5 locked, and this report scores it with the M7 protocol. The question is whether `p50`'s result was a one-off. It wasn't. On the Singapore main eval, F1 rises from 0.865 to 0.923, a paired gain of +0.058 ± 0.002, against +0.059 ± 0.002 for `p50`. Opus 5.5 found the same two repairs again. NRICs without a cue word go from 0% to 93% right, against 85%, and Singapore titles tagged as names fall from 909 to 14, against 2. On the Nemotron regression check, F1 changes by −0.0005 ± 0.0001. Both runs pass all four tests that [docs/p50b_prediction.md](p50b_prediction.md) set for reproducing `p50`. The edits themselves differ: 8 tensors in layers 1 and 4 instead of 12 in layers 1, 2 and 4. The side effect on Nemotron's own ID labels is also larger, with `national_id` F1 down 0.071 against 0.047.
+Run `p50b` repeats the M6 run `p50` with every setting M5 locked, and this report scores it with the M7 protocol. The question is whether `p50`'s result was a one-off. It wasn't. On the Singapore main eval, F1 rises from 0.865 to 0.923, a paired gain of +0.058 ± 0.002, against +0.059 ± 0.002 for `p50`. Opus 5.5 found the same two repairs again. NRICs without a cue word go from 0% to 93% right, against 85%, and Singapore titles tagged as names fall from 909 to 14, against 2. On the Nemotron regression check, F1 changes by −0.0005 ± 0.0001. Both runs pass all four tests that [results/p50b_prediction.md](p50b_prediction.md) set for reproducing `p50`. The edits themselves differ: 8 tensors in layers 1 and 4 instead of 12 in layers 1, 2 and 4. The side effect on Nemotron's own ID labels is also larger, with `national_id` F1 down 0.071 against 0.047.
 
 Status: scored and written on 2026-11-08. Desmond has not reviewed it yet. This run is extra to the brief's eight milestones and changes nothing M1 to M7 froze.
 
@@ -19,21 +19,21 @@ This section restates what the repeat run depends on. Each step builds on the on
 
 ![Seven measures for the unedited MiniLM, the p50 edit and the p50b edit, as bars from 0 to 1. Singapore F1 rises from 0.865 to 0.924 and 0.923. NRICs without "tax" just before them go from 0% to 85% and 93% right. Targeted titles tagged as a name fall from 63% to 0.1% and 1.0%. Nemotron F1 over all labels stays at 0.952. Nemotron national_id F1 falls from 0.960 to 0.913 and 0.889. Both runs pass all four reproduction tests](figures/p50b_compare.svg)
 
-The figure puts the two runs side by side on the hidden sets. Each group of three bars is one measure: the unedited MiniLM in grey, the `p50` edit in green, and the `p50b` edit in purple. Every bar runs from 0 to 1, so equal lengths mean equal results. For "Targeted titles tagged as a name", a shorter bar is better. The right column gives the four tests from the prediction and whether both runs pass. The last row, which has no test, shows the side effect that differs most between the runs. [docs/figures/report_figures.py](figures/report_figures.py) generates the figure from `runs/p50/eval/evaluation.json` and `runs/p50b/eval/evaluation.json`.
+The figure puts the two runs side by side on the hidden sets. Each group of three bars is one measure: the unedited MiniLM in grey, the `p50` edit in green, and the `p50b` edit in purple. Every bar runs from 0 to 1, so equal lengths mean equal results. For "Targeted titles tagged as a name", a shorter bar is better. The right column gives the four tests from the prediction and whether both runs pass. The last row, which has no test, shows the side effect that differs most between the runs. [docs/figures/report_figures.py](../docs/figures/report_figures.py) generates the figure from `runs/p50/eval/evaluation.json` and `runs/p50b/eval/evaluation.json`.
 
 ## Decisions
 
 | Item | Decision and reason |
 |---|---|
 | How the repeat is locked | `scripts/run_editor.py --name p50b --replicate-of p50`. Before this, the runner applied the lock checks only to a run named `p50`, so a run under another name would have skipped them. The flag applies every check under the new name. The settings must equal the locked ones except the name. The rendered prompt must equal the frozen one except the sandbox path, which contains the run name. `lock.json` is unchanged, because the runner isn't one of the files it hashes |
-| The prediction | Written and committed before the run, in [docs/p50b_prediction.md](p50b_prediction.md). Unlike the M5 prediction, it was written after seeing `p50`'s result, so it forecasts a repeat rather than guessing blind |
+| The prediction | Written and committed before the run, in [results/p50b_prediction.md](p50b_prediction.md). Unlike the M5 prediction, it was written after seeing `p50`'s result, so it forecasts a repeat rather than guessing blind |
 | How `p50b` is scored | `scripts/evaluate.py --run p50b --replicate-of p50`. The default, with no flags, still scores `p50`. For a replicate, the name check accepts the new name. The harness check allows exactly one change to the frozen harness files: commit `18c86e7`, which added `--replicate-of` to `scripts/run_editor.py`. Without `--replicate-of`, scoring `p50b` fails both checks |
 | The forward pass that ties scoring to the run | The last pass that ran the submitted edit on practice rows. M7 used pass 50, but `p50b`'s pass 50 ran the edit on sentences Opus 5.5 wrote, which have no row ids. For `p50b` the rule picks pass 48, and for `p50` it still picks pass 50 |
 | The measures | M7's, unchanged, so the two runs are compared like for like. The title measure counts the five titles from `p50`'s final answer. `p50b`'s final answer also targets Mister, which is reported separately under "Where the two runs differ" |
 
 ## The run
 
-Both sessions ran to a final answer within the budget. Neither needed compaction, and each sent one reply the harness couldn't parse. [docs/p50b_logbook.html](p50b_logbook.html) shows every turn of `p50b`: each message the harness sent Opus 5.5, each reply, the code Opus 5.5 wrote, and every forward pass. Download it and open it in a browser, which needs internet access to load the page's Markdown and code-highlighting libraries.
+Both sessions ran to a final answer within the budget. Neither needed compaction, and each sent one reply the harness couldn't parse. [results/p50b_logbook.html](p50b_logbook.html) shows every turn of `p50b`: each message the harness sent Opus 5.5, each reply, the code Opus 5.5 wrote, and every forward pass. Download it and open it in a browser, which needs internet access to load the page's Markdown and code-highlighting libraries.
 
 | | `p50` | `p50b` |
 |---|---|---|
@@ -143,7 +143,7 @@ Run these commands from the repository root. They read `runs/`, which git doesn'
 4. Rebuild the logbook of the session.
 
 	```bash
-	uv run python -I scripts/transcript_page.py runs/p50b docs/p50b_logbook.html
+	uv run python -I scripts/transcript_page.py runs/p50b results/p50b_logbook.html
 	```
 
 ## Open items
@@ -152,5 +152,5 @@ Run these commands from the repository root. They read `runs/`, which git doesn'
 - **Closed on 2026-11-08: the M7 report's "186 are still untagged" overstated the count by 4.** 182 of the 212 names stay untagged after the `p50` edit. The other 4 were tagged before and lost their tag. Desmond approved the correction, and the M7 report now gives the per-name count with a dated note in its status line.
 - **Closed on 2026-11-08: the NRIC detector's response to code length won't be tested.** The test would explain why the Nemotron `national_id` cost happens, not whether the edit helps. The experiment's question doesn't need it, and the cost itself is measured above. The length explanation stays labelled as inferred.
 - **Closed on 2026-11-08: runs with Sonnet 5.5 and Haiku 5.5 as the editor move to future work.** They would ask how capable the editing model has to be, which is a different question from this experiment's. Two Opus 5.5 runs already answer whether the edits help. M8's write-up lists them as future work. They would need a new lock, because `lock.json` fixes Opus 5.5 in the run command.
-- **Closed on 2026-11-08: the old label list in `data/sets.json` and [docs/m3_review.md](m3_review.md) stays as it is.** The item has been open since M5, which merged `first_name` and `last_name` into `name`. `lock.json` hashes `data/sets.json`, the scoring code ignores its label list, and `docs/m3_review.md` stays a record of M3's scoring.
+- **Closed on 2026-11-08: the old label list in `data/sets.json` and [docs/m3_review.md](../docs/m3_review.md) stays as it is.** The item has been open since M5, which merged `first_name` and `last_name` into `name`. `lock.json` hashes `data/sets.json`, the scoring code ignores its label list, and `docs/m3_review.md` stays a record of M3's scoring.
 - **M8, the write-up and demo, hasn't started.** It can cite both runs.
