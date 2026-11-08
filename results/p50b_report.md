@@ -1,19 +1,19 @@
 # Repeat-run report: p50b, a second Opus 5.5 run
 
-Run `p50b` repeats the M6 run `p50` with every setting M5 locked, and this report scores it with the M7 protocol. The question is whether `p50`'s result was a one-off. It wasn't. On the Singapore main eval, F1 rises from 0.865 to 0.923, a paired gain of +0.058 ± 0.002, against +0.059 ± 0.002 for `p50`. Opus 5.5 found the same two repairs again. NRICs without a cue word go from 0% to 93% right, against 85%, and Singapore titles tagged as names fall from 909 to 14, against 2. On the Nemotron regression check, F1 changes by −0.0005 ± 0.0001. Both runs pass all four tests that [results/p50b_prediction.md](p50b_prediction.md) set for reproducing `p50`. The edits themselves differ: 8 tensors in layers 1 and 4 instead of 12 in layers 1, 2 and 4. The side effect on Nemotron's own ID labels is also larger, with `national_id` F1 down 0.071 against 0.047.
+Run `p50b` repeats the M6 run `p50` with every setting M5 locked, and this report scores it with the M7 protocol. The question is whether `p50`'s result was a one-off. It wasn't. On the Singapore main eval, F1 rises from 0.865 to 0.923, a paired gain of +0.058 ± 0.002, against +0.059 ± 0.002 for `p50`. Opus 5.5 found the same two repairs again. NRICs without a cue word go from 0% to 93% right, against 85%, and the targeted titles tagged as names fall from 909 to 14, against 2. On the Nemotron regression check, F1 changes by −0.0005 ± 0.0001. Both runs pass all four tests that [results/p50b_prediction.md](p50b_prediction.md) set for reproducing `p50`. The edits themselves differ: 8 tensors in layers 1 and 4 instead of 12 in layers 1, 2 and 4. The side effect on Nemotron's own ID labels is also larger, with `national_id` F1 down 0.071 against 0.047.
 
-Status: scored and written on 2026-11-08. Desmond has not reviewed it yet. This run is extra to the brief's eight milestones and changes nothing M1 to M7 froze.
+Status: scored and written on 2026-11-08. Desmond has not reviewed it yet. This run is extra to the brief's eight milestones and changes nothing M1 to M7 froze. Amended on 2026-11-08 after a peer review, at Desmond's request, together with the M7 report. Step 1 of the refresher now says how Opus 5.5 computes the edit. The titles are no longer called Singapore titles. The comparison with the paper's pattern is now an open question, not a finding. "Where the two runs differ" now gives the split of the gain, the Nemotron `national_id` precision, and the `national_id` tags that the Singapore scoring drops. No score changed. [scripts/review_checks.py](../scripts/review_checks.py) reproduces the new numbers.
 
 ## What you need to know first
 
 This section restates what the repeat run depends on. Each step builds on the one before it.
 
-1. **Two AI models take part.** MiniLM (`MiniLM-L6-finetuned-pii-detection`) is the small model being edited. It tags each word of a text as a type of personal information, such as `first_name` or `national_id`, or as nothing. Opus 5.5 does the editing. The brief calls it "the editor". It reads MiniLM's weights and changes some of them by hand. Nothing is trained.
+1. **Two AI models take part.** MiniLM (`MiniLM-L6-finetuned-pii-detection`) is the small model being edited. It tags each word of a text as a type of personal information, such as `first_name` or `national_id`, or as nothing. Opus 5.5 does the editing. The brief calls it "the editor". It reads MiniLM's weights and computes new values for some of them. No gradient descent or optimizer runs, as the task's rules require. But Opus 5.5 does fit each new detector to practice rows with answers, in a single closed-form calculation, which the rules allow.
 2. **The question is whether direct weight edits help.** MiniLM learned from American data and makes mistakes on Singapore text. The paper this experiment copies found that weight edits can remove an obstacle that hides an ability a model already has, but can't add a missing one.
 3. **Opus 5.5 saw only the practice set.** It worked on 1,000 Singapore rows with their answers. Two hidden sets measure the result. The main eval is 5,004 Singapore rows. The regression check is 18,515 Nemotron rows like MiniLM's training data, and it shows whether the edit broke anything.
 4. **Two labels are scored on Singapore text.** A given name and a surname count as one label, `name`, and an NRIC, a Singapore ID number, counts as `national_id`. On Nemotron, all 55 labels are scored separately. An entity is right only if its span and its type both match.
 5. **M5 froze the run's settings in `lock.json`.** They are the Opus 5.5 command, its effort, the CLI version, a budget of 50 forward passes, and the prompt. A forward pass is one request in which Opus 5.5 asks the harness to run MiniLM, with or without an edit, on texts it chooses.
-6. **M6 ran the session once, as `p50`, and M7 scored it.** Opus 5.5 found two repairs. The title repair stops MiniLM tagging Singapore titles such as Madame and Mstr as names. The NRIC repair makes MiniLM tag an NRIC as `national_id` from its shape, without a nearby cue word. The cost was on Nemotron, where biometric IDs shaped like a letter and 11 digits became `national_id`.
+6. **M6 ran the session once, as `p50`, and M7 scored it.** Opus 5.5 found two repairs. The title repair stops MiniLM tagging titles such as Madame and Mstr as names. These titles are common in openpii's Singapore rows and almost absent from Nemotron. The NRIC repair makes MiniLM tag an NRIC as `national_id` from its shape, without a nearby cue word. The cost was on Nemotron, where biometric IDs shaped like a letter and 11 digits became `national_id`.
 7. **One run can't show how much the result depends on chance.** Opus 5.5 doesn't give the same answer twice, so a second session with the same settings can take a different path. The paper's Experiment 8 ran each budget once and reports no spread.
 8. **This run's job is to repeat `p50` once and compare.** `p50b` uses the locked settings under a new name. A prediction committed before it started says what counts as reproducing `p50`. This report scores `p50b` on the hidden sets, with the same checks and measures as M7, and puts it next to `p50`.
 
@@ -49,8 +49,8 @@ The submitted edit rebuilds exactly. Every one of the 8 rebuilt tensors matches 
 
 Opus 5.5's final answer, in `runs/p50b/final_answer.md`, describes the same two repairs as `p50`'s:
 
-- **Titles.** In layer 1, pairs of neurons that almost never fire were repurposed. Each pair spots a failing title and moves its representation to that of a title MiniLM handles well. Mstr, Mister and Master become Mr. Madame, Miss and Mayoress become Madam. Opus 5.5 trained each pair against look-alikes, such as the verb "miss", "Master's degree" and "Mastercard".
-- **NRICs.** In layer 4, a neuron pair spots a code that starts with S, T, F, G or M followed by digits. It adds the shift MiniLM itself makes when "national ID" comes before the code. Opus 5.5 trained it to stay off after other ID keywords such as "Employee number".
+- **Titles.** In layer 1, pairs of neurons that almost never fire were repurposed. Each pair spots a failing title and moves its representation to that of a title MiniLM handles well. Mstr, Mister and Master become Mr. Madame, Miss and Mayoress become Madam. Opus 5.5 fitted each pair's detector against look-alikes, such as the verb "miss", "Master's degree" and "Mastercard". Its final answer calls this training.
+- **NRICs.** In layer 4, a neuron pair spots a code that starts with S, T, F, G or M followed by digits. It adds the shift MiniLM itself makes when "national ID" comes before the code. Opus 5.5 refitted it to stay off after other ID keywords such as "Employee number".
 
 Opus 5.5 reported F1 rising from 0.856 to 0.916 on 400 practice texts it held back. It also said it looked at those texts several times, so its cleanest single estimate was +0.048, from its first look.
 
@@ -102,7 +102,7 @@ The given-name test follows each of the 212 one-word given names that the unedit
 
 The M7 report first counted this differently. It compared two totals: 212 one-word given names untagged before the `p50` edit and 186 after. It wrote that the edit "finds 26 of them, so 186 are still untagged". But the 186 include the 4 names the edit newly left untagged, so 182 of the original 212 stay untagged. The M7 report was corrected on 2026-11-08 to give the per-name count. Under either count, both runs leave far more than 150 untagged.
 
-The prediction's condition for changing the conclusion doesn't apply. `p50b` found both repairs, and its gain is far above +0.039. The obstacle-versus-ability reading from M7 also holds. The edit removed the title confusion and the reliance on cue words, and taught MiniLM few names it didn't know.
+The prediction's condition for changing the conclusion doesn't apply. `p50b` found both repairs, and its gain is far above +0.039. The given-name test also comes out as it did for `p50`. But [the amended M7 report](../docs/m7_report.md) explains why that test can't settle the obstacle-versus-ability question, and `p50b`'s final answer adds to the doubt. It says "the model has no NRIC concept", and that the model "simply doesn't recognise these words as honorifics". On Opus 5.5's own account, both repairs give MiniLM something it lacked. Whether the result fits the paper's pattern stays an open question.
 
 ## Where the two runs differ
 
@@ -110,13 +110,15 @@ The headline numbers match, but the details don't.
 
 - **The NRIC repair is stronger.** NRICs without "tax" just before them are 93% right against 85%. Untagged NRICs fall from 118 to 12, against 22 for `p50`. NRICs with "tax" just before them are 96% right against 97%.
 - **The title repair leaks a little.** Miss is tagged as a name 9 times in 280 and Mstr 5 times in 273, against 1 and 0 for `p50`. Madame, Master and Mayoress are at 0 or 1 in both runs. Mister, which only `p50b`'s final answer targets, appears 298 times outside a gold entity. It's tagged as a name 36 times before the edit, 0 times after `p50`'s edit and once after `p50b`'s. So `p50`'s edit fixed Mister too, without naming it.
-- **The cost on Nemotron's ID labels is larger.** `national_id` F1 on Nemotron falls from 0.960 to 0.889, against 0.913 for `p50`, and `biometric_identifier` falls by 0.018, against 0.014. Gold biometric IDs whose tag changes from `biometric_identifier` to `national_id` number 72, against 39. 65 of those 72 are a capital letter followed by 11 digits. Neither final answer reports testing codes of that length. So in both runs the NRIC detector appears to ignore code length, and more so in `p50b`. As in M7, the length explanation is inferred from the shapes, not tested directly.
+- **The cost on Nemotron's ID labels is larger.** `national_id` F1 on Nemotron falls from 0.960 to 0.889, against 0.913 for `p50`, and `biometric_identifier` falls by 0.018, against 0.014. `national_id` precision falls from 0.963 to 0.831, against 0.873, as its false positives rise from 20 to 107, against 77. Gold biometric IDs whose tag changes from `biometric_identifier` to `national_id` number 72, against 39. 65 of those 72 are a capital letter followed by 11 digits. Neither final answer reports testing codes of that length. So in both runs the NRIC detector appears to ignore code length, and more so in `p50b`. As in M7, the length explanation is inferred from the shapes, not tested directly.
+- **The tags the Singapore scoring drops rise more too.** M3 decided that a scored tag on an ID number openpii doesn't map, such as a passport number, counts neither right nor wrong. The forward-pass server used the same rule, so Opus 5.5 got no signal about these tags. Dropped `national_id` tags rise from 287 to 477, against 344 for `p50`. Passport numbers tagged `national_id` go from 32 to 118, against 74, and driver's licence numbers from 36 to 82, against 42. Before either edit, MiniLM gave most of these a wrong ID type or no tag, so the new tags mostly replace wrong ones. They show that the NRIC detector fires on other ID formats, which the scored Singapore false positives, 31 before and 36 after, don't show.
+- **The title repair gives most of the gain in both runs.** Changing only the `name` counts, with `national_id` left as before the edit, gives +0.0424 of `p50b`'s +0.0578, against +0.0445 of +0.0593 for `p50`. Changing only the `national_id` counts gives +0.0155, against +0.0150. Each targeted title occurs 263 to 330 times in the main eval. Madame, Mstr, Mayoress and Mister never occur in Nemotron's 18,515 rows.
 - **The errors shift differently.** Singapore false positives fall from 1,196 to 267, against 251. Wrong types fall from 610 to 319, against 339. Wrong boundaries fall from 619 to 559, against 508.
 - **Most rows still get the same predictions.** 4,531 of the 5,004 Singapore rows get identical predictions from the two edits. On the main eval, `p50b` fixes 1,295 rows and breaks 27, against 1,328 and 31 for `p50`. On Nemotron, it fixes 97 and breaks 168, against 102 and 163.
 
 ## What this shows
 
-Two runs agree closely on the overall gain and on which failures Opus 5.5 repairs. So `p50`'s +0.059 isn't a lucky draw, and a single run was a fair measure of the headline result. The implementation varies between runs, from the layers used to the number of weights changed. So does the size of the side effect on Nemotron's ID labels, which nearly doubles in the second run. Two runs can't give a reliable spread. They show that the headline holds and that the side effects vary more than the gain.
+Two runs agree closely on the overall gain and on which failures Opus 5.5 repairs. So `p50`'s +0.059 isn't a lucky draw, and a single run was a fair measure of the headline result. The implementation varies between runs, from the layers used to the number of weights changed. So does the size of the side effect on Nemotron's ID labels, which nearly doubles in the second run. Two runs can't give a reliable spread. They show that the headline holds and that the side effects vary more than the gain. That includes the side effect the Singapore score drops. They don't show whether the result fits the paper's pattern, which stays an open question.
 
 ## Reproduce this report
 
@@ -144,6 +146,12 @@ Run these commands from the repository root. They read `runs/`, which git doesn'
 
 	```bash
 	uv run python -I scripts/transcript_page.py runs/p50b results/p50b_logbook.html
+	```
+
+5. Print the numbers the 2026-11-08 amendment added. This takes about a second and needs step 2's output and the M7 scoring of `p50`.
+
+	```bash
+	uv run python -I scripts/review_checks.py
 	```
 
 ## Open items
