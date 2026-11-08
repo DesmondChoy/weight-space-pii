@@ -148,6 +148,7 @@ The edited MiniLM still gets Nemotron's own national IDs right, 527 against 526 
 - The per-category results next to the prediction, in the first figure and under "The prediction against the result".
 - The rows the edit changed, both fixed and broken: 5 of each from each set, in [docs/m7_changed_rows.md](m7_changed_rows.md).
 - Every turn of the run: what the harness sent Opus 5.5 and how Opus 5.5 replied, in [results/p50_logbook.html](../results/p50_logbook.html). Added on 2026-11-08.
+- The review pack Desmond used to approve M7, with how Opus 5.5 reached each result, in [results/m7_review.html](../results/m7_review.html). Added on 2026-11-08.
 
 ## Reproduce M7
 
@@ -175,6 +176,12 @@ Run these commands from the repository root. Both read `runs/`, which git does n
 
 	```bash
 	uv run python -I scripts/transcript_page.py runs/p50 results/p50_logbook.html
+	```
+
+5. Rebuild the review pack.
+
+	```bash
+	uv run python -I scripts/m7_review_page.py results/m7_review.html
 	```
 
 ## Open items

@@ -1,0 +1,389 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>M7 Review Pack</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@500;600&display=swap">
+<style>
+/* Layout: one reading column of review items in the order the brief lists them, each a numbered item you tick off. */
+:root {
+  --bg: #f6f7f5; --surface: #ffffff; --fg: #1d2421; --muted: #5d6a64; --line: #dde3df;
+  --accent: #0f6e56; --accent-soft: #e1f5ee; --base: #c9cec9; --bad: #a8402a; --bad-soft: #fbe9e3;
+  --mark: #fff2b8;
+  --display: "IBM Plex Serif", Georgia, serif; --body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121614; --surface: #1a201d; --fg: #e4ebe7; --muted: #9aa8a1; --line: #2c3531;
+  --accent: #5fcfa8; --accent-soft: #173a2f; --base: #4a524e; --bad: #f08a6f; --bad-soft: #3d201a;
+  --mark: #574a12; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #121614; --surface: #1a201d; --fg: #e4ebe7; --muted: #9aa8a1; --line: #2c3531;
+  --accent: #5fcfa8; --accent-soft: #173a2f; --base: #4a524e; --bad: #f08a6f; --bad-soft: #3d201a;
+  --mark: #574a12; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.55 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 32px 64px; }
+main { max-width: 980px; margin: 0 auto; display: grid; gap: 40px; }
+h1, h2 { font-family: var(--display); font-weight: 600; text-wrap: balance; margin: 0; }
+h1 { font-size: 2rem; line-height: 1.2; }
+h2 { font-size: 1.35rem; display: flex; gap: 12px; align-items: baseline; }
+h3 { font-size: 1rem; margin: 0; }
+p { margin: 0; max-width: 68ch; }
+code { font-family: var(--mono); font-size: .86em; }
+.eyebrow { font-family: var(--mono); font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.intro { display: grid; gap: 12px; }
+.num, td.num { font-variant-numeric: tabular-nums; font-family: var(--mono); font-size: .9em; }
+.n { color: var(--muted); font-family: var(--mono); font-size: .8em; font-weight: 400; }
+section { display: grid; gap: 16px; }
+.check { display: flex; align-items: center; gap: 8px; margin-left: auto; font-family: var(--body); font-size: .85rem; font-weight: 500; color: var(--muted); cursor: pointer; }
+.check input { width: 18px; height: 18px; accent-color: var(--accent); }
+.step { font-family: var(--mono); font-size: .85rem; color: var(--accent); }
+.headline { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; display: grid; gap: 4px; }
+.stat b { font-family: var(--mono); font-size: 1.35rem; font-weight: 500; }
+.stat .delta-good { color: var(--accent); } .stat .delta-bad { color: var(--bad); }
+.stat small { color: var(--muted); }
+.tbl { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; background: var(--surface); }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+thead th { font-size: .78rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+tbody th { font-weight: 500; }
+td.bars { width: 42%; min-width: 180px; }
+.bar { position: relative; height: 15px; margin: 2px 0; background: transparent; }
+.bar::before { content: ""; position: absolute; inset: 0 auto 0 0; width: calc(var(--w) * 85%); border-radius: 3px; }
+.bar.base::before { background: var(--base); } .bar.ed::before { background: var(--accent); }
+.bar span { position: absolute; left: calc(var(--w) * 85% + 6px); top: -2px; font-family: var(--mono); font-size: .75rem; color: var(--muted); }
+.pill { display: inline-block; padding: 1px 8px; border-radius: 99px; font-size: .8rem; font-weight: 500; }
+.pill.match { background: var(--accent-soft); color: var(--accent); } .pill.miss { background: var(--bad-soft); color: var(--bad); }
+.legend { display: flex; flex-wrap: wrap; gap: 16px; font-size: .85rem; color: var(--muted); }
+.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+.callout { border-left: 3px solid var(--bad); background: var(--bad-soft); padding: 12px 16px; border-radius: 0 6px 6px 0; display: grid; gap: 6px; }
+.callout.good { border-color: var(--accent); background: var(--accent-soft); }
+.delta { display: flex; align-items: center; gap: 8px; min-width: 160px; }
+.dbar { height: 12px; width: calc(var(--w) * 110px); border-radius: 2px; }
+.dbar.neg { background: var(--bad); } .dbar.pos { background: var(--accent); }
+.checks { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+.checks li { display: flex; gap: 10px; align-items: baseline; }
+.mark { font-family: var(--mono); font-size: .75rem; padding: 0 6px; border-radius: 3px; background: var(--accent-soft); color: var(--accent); flex: none; }
+.fail .mark { background: var(--bad-soft); color: var(--bad); }
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.tabs button { font: inherit; font-size: .88rem; padding: 6px 12px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); border-radius: 99px; cursor: pointer; }
+.tabs button[aria-selected="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.tabs button:focus-visible, .check input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.panel { display: grid; gap: 14px; }
+.row { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; display: grid; gap: 10px; min-width: 0; }
+.row.fixed { border-top: 3px solid var(--accent); } .row.broken { border-top: 3px solid var(--bad); }
+.row header { display: flex; flex-wrap: wrap; gap: 10px; align-items: baseline; }
+.idx { font-family: var(--mono); color: var(--muted); }
+.rid { color: var(--muted); overflow-wrap: anywhere; }
+.err { margin-left: auto; font-family: var(--mono); font-size: .82rem; }
+blockquote { margin: 0; font-size: .9rem; color: var(--fg); overflow-wrap: anywhere; line-height: 1.6; }
+mark.chg { background: var(--mark); color: inherit; padding: 0 2px; border-radius: 2px; }
+.br { color: var(--muted); }
+table.tags { font-size: .85rem; } table.tags td, table.tags th { padding: 5px 8px; }
+.decision { display: grid; gap: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 16px; }
+.decision ul { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+footer { color: var(--muted); font-size: .85rem; }
+.how { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 14px 18px; display: grid; gap: 8px; }
+.how ol { margin: 0; padding-left: 22px; display: grid; gap: 8px; max-width: 76ch; }
+.how li::marker { font-family: var(--mono); color: var(--accent); font-size: .85em; }
+.how ol ul { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 4px; }
+.how .src { color: var(--muted); font-size: .82rem; }
+@media (max-width: 560px) { h1 { font-size: 1.6rem; } td.bars { min-width: 140px; } }
+</style>
+<main>
+<div class="intro">
+  <span class="eyebrow">Weight-space PII · milestone 7 · for Desmond's review</span>
+  <h1>Did Opus 5.5's edit make MiniLM better on Singapore text?</h1>
+  <p>Opus 5.5 edited 12 tensors in MiniLM's MLPs during the 50-pass run. This page scores the edited MiniLM on the two hidden sets it never saw, against the unedited baseline and the M5 prediction. Every number comes from <code>runs/p50/eval/evaluation.json</code>, written by <code>scripts/evaluate.py</code>. Tick each item once you have reviewed it. The ticks stay in this browser only.</p>
+  <div class="headline">
+    <div class="stat"><small>Singapore F1</small><b>0.865 → 0.924</b><span class="delta-good num">+0.059 ± 0.002</span></div>
+    <div class="stat"><small>Nemotron F1, all 55 labels</small><b>0.952 → 0.952</b><span class="num">-0.0004 ± 0.0001, counts as unchanged</span></div>
+    <div class="stat"><small>Cue-less NRICs right</small><b>0 → 274</b><span class="num">of 323</span></div>
+    <div class="stat"><small>Titles wrongly tagged as a name, lower is better</small><b>909 → 2</b><span class="num">of 1,450</span></div>
+  </div>
+</div>
+
+<section id="main-table">
+  <h2><span class="step">1</span>Main table<label class="check"><input type="checkbox" id="c-main" data-key="main"> Reviewed</label></h2>
+  <p>The ± values are bootstrap standard errors over rows. The edited row gives the paired difference against the base, with both models scored on the same rows.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Model</th><th>Singapore F1</th><th>Nemotron F1</th><th>NRICs without "tax" right</th><th>Titles wrongly tagged as a name (lower is better)</th><th>Weights changed</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">Base</th><td class="num">0.865 ± 0.003</td><td class="num">0.952 ± 0.001</td><td class="num">0% (0 of 323)</td><td class="num">63% (909 of 1,450)</td><td>none</td></tr>
+      <tr><th scope="row">Edited, 50 passes</th><td class="num">0.924, +0.059 ± 0.002</td><td class="num">0.952, -0.0004 ± 0.0001</td><td class="num">85% (274 of 323)</td><td class="num">0.1% (2 of 1,450)</td><td>12 tensors, 7,304 numbers, 0.03% of MiniLM</td></tr>
+    </tbody></table></div>
+  <p>Opus 5.5 estimated +0.065 ± 0.005 on its held-back half of the practice set. The clean main-eval gain, +0.059, is close, so tuning on that half inflated its number only a little.</p>
+  <div class="how"><h3>How Opus 5.5 got this result</h3><ol><li><b>It kept half the practice set for testing.</b> The practice set has 1,000 Singapore rows. Opus 5.5 built its edits on 500 of them, the dev half, and tested them on the other 500, the held-back half.</li><li><b>It found two failures before it changed any weights.</b><ul><li>MiniLM tagged Singapore titles, such as Madame, Miss and Mstr, as given names. It never did this to Mr or Mrs.</li><li>MiniLM chose an NRIC's ID type from a nearby word such as "tax". With no such word, it got every NRIC wrong.</li></ul></li><li><b>It fixed each failure by rewiring a few unused neurons.</b> MiniLM has neurons that almost never fire. Opus 5.5 set their weights by hand, so that they fire on one thing, such as an NRIC. When they fire, they push MiniLM toward the answer it already gives when it gets that case right. Opus 5.5 calculated the weights from MiniLM's own activations. It trained nothing.</li><li><b>It tried 19 edits and kept two repairs.</b> A pass is one run of MiniLM that Opus 5.5 asked for, and it had 50. It also built a repair for hyphenated names, then dropped it because its gain was within noise.</li><li><b>Its own estimate was a little high.</b> It measured +0.065 on the held-back half. But it had also used that half to choose which repairs to keep. The main eval, which it never saw, gives +0.059.</li></ol><p class="src">Source: <code>runs/p50/work_notes/notes.md</code>, <code>runs/p50/final_answer.md</code>, and each pass's <code>forward/&lt;k&gt;/edit_manifest.json</code>.</p></div>
+</section>
+
+<section id="categories">
+  <h2><span class="step">2</span>Categories against the M5 prediction<label class="check"><input type="checkbox" id="c-kinds" data-key="kinds"> Reviewed</label></h2>
+  <p>Share of Singapore main-eval entities tagged with the exact span and the right label. A category is fixed if its share rises by at least 10 points. All eight verdicts match the prediction.</p>
+  <div class="legend"><span><i style="background:var(--base)"></i>Unedited MiniLM</span><span><i style="background:var(--accent)"></i>Edited MiniLM</span></div>
+  <div class="tbl"><table>
+    <thead><tr><th>Category</th><th>Share right</th><th>Change, points</th><th>Predicted</th><th>Result</th></tr></thead>
+    <tbody><tr><th scope="row">NRIC without &quot;tax&quot; just before it <span class="n">323</span></th>
+<td class="bars"><div class="bar base" style="--w:0.0"><span>0%</span></div>
+<div class="bar ed" style="--w:0.8483"><span>85%</span></div></td>
+<td class="num">+84.83</td><td>fixed</td><td><span class="pill match">fixed</span></td></tr>
+<tr><th scope="row">NRIC with &quot;tax&quot; just before it <span class="n">711</span></th>
+<td class="bars"><div class="bar base" style="--w:0.8748"><span>87%</span></div>
+<div class="bar ed" style="--w:0.9747"><span>97%</span></div></td>
+<td class="num">+9.99</td><td>unchanged</td><td><span class="pill match">unchanged</span></td></tr>
+<tr><th scope="row">Given name, one word <span class="n">3,376</span></th>
+<td class="bars"><div class="bar base" style="--w:0.8451"><span>85%</span></div>
+<div class="bar ed" style="--w:0.8629"><span>86%</span></div></td>
+<td class="num">+1.78</td><td>unchanged</td><td><span class="pill match">unchanged</span></td></tr>
+<tr><th scope="row">Given name, several words, first word <span class="n">1,434</span></th>
+<td class="bars"><div class="bar base" style="--w:0.8717"><span>87%</span></div>
+<div class="bar ed" style="--w:0.8996"><span>90%</span></div></td>
+<td class="num">+2.79</td><td>unchanged</td><td><span class="pill match">unchanged</span></td></tr>
+<tr><th scope="row">Given name, several words, later words <span class="n">1,434</span></th>
+<td class="bars"><div class="bar base" style="--w:0.9073"><span>91%</span></div>
+<div class="bar ed" style="--w:0.9212"><span>92%</span></div></td>
+<td class="num">+1.39</td><td>unchanged</td><td><span class="pill match">unchanged</span></td></tr>
+<tr><th scope="row">Surname, one word <span class="n">2,688</span></th>
+<td class="bars"><div class="bar base" style="--w:0.923"><span>92%</span></div>
+<div class="bar ed" style="--w:0.9353"><span>94%</span></div></td>
+<td class="num">+1.23</td><td>unchanged</td><td><span class="pill match">unchanged</span></td></tr>
+<tr><th scope="row">Surname, several words, first word <span class="n">1,274</span></th>
+<td class="bars"><div class="bar base" style="--w:0.8689"><span>87%</span></div>
+<div class="bar ed" style="--w:0.8995"><span>90%</span></div></td>
+<td class="num">+3.06</td><td>unchanged</td><td><span class="pill match">unchanged</span></td></tr>
+<tr><th scope="row">Surname, several words, later words <span class="n">1,734</span></th>
+<td class="bars"><div class="bar base" style="--w:0.8316"><span>83%</span></div>
+<div class="bar ed" style="--w:0.8576"><span>86%</span></div></td>
+<td class="num">+2.60</td><td>unchanged</td><td><span class="pill match">unchanged</span></td></tr></tbody></table></div>
+  <div class="callout">
+    <h3>Where the prediction went wrong</h3>
+    <p>It expected Singapore F1 to rise by 0.002 to 0.009. It rose by 0.059. The title repair mostly removes false positives, which no category counts: false positives fell from 1,196 to 251. And the prediction assumed the 118 NRICs MiniLM never tagged would stay untagged, which capped the fix at 205. The edit fixed 274.</p>
+    <p>NRICs with "tax" just before them rose 9.99 points, 622 to 693 of 711, just under the line for fixed.</p>
+  </div>
+  <div class="how"><h3>What happened in each category</h3><ol><li><b>NRICs without "tax" were fixed.</b> MiniLM could already tell that a code looked like an NRIC. It just never used that to choose the ID type. Opus 5.5's neurons in layer 4 fire on the NRIC's shape and push MiniLM to <code>national_id</code>.</li><li><b>The fix beat the prediction's limit.</b> The prediction assumed that MiniLM would keep missing the 118 NRICs it never tagged, so at most 205 of 323 could become right. 274 did. So the edit also made MiniLM tag at least 69 NRICs that it used to skip.</li><li><b>NRICs after "tax" were almost fixed.</b> These already counted as right when MiniLM called them <code>tax_id</code>. The same neurons fire here and turned some wrong answers into <code>national_id</code>. The share rose 9.99 points, just under the 10-point line.</li><li><b>The name categories did not change.</b> These categories count how many real names MiniLM tags. The title repair stops MiniLM from tagging the title, and a title is never a real name. So the repair shows up as fewer false positives, not in these categories.</li><li><b>Opus 5.5 tried to make MiniLM find more names, and failed.</b> It tried a repair for hyphenated names and a repair for names used as chat speaker labels. The first gained too little. The second created about as many false positives as it fixed, because MiniLM's last layer cannot tell rare speaker names from other words. This fits the paper. An edit can remove an obstacle, but it cannot teach MiniLM a name it does not know.</li></ol><p class="src">Source: <code>runs/p50/work_notes/notes.md</code>, the sections on the NRIC failure, the speaker labels, and the scores of each repair alone.</p></div>
+</section>
+
+<section id="mechanism">
+  <h2><span class="step">3</span>The two repairs, measured<label class="check"><input type="checkbox" id="c-mech" data-key="mech"> Reviewed</label></h2>
+  <p>Both mechanism metrics were defined from Opus 5.5's final answer before any edited score existed. Mr and Mrs are the control, because the final answer says MiniLM already handled them. In the answers, a title is never part of a name, so every name tag on a title is a false positive and a lower share is better. Of the 1,451 targeted titles in the main eval, 1,450 sit outside every gold name. The one inside is a surname, and the metric skips it.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Group</th><th>Title</th><th>Occurrences</th><th>Tagged as a name, unedited</th><th>Tagged as a name, edited</th></tr></thead>
+    <tbody><tr><td>Targeted</td><td><code>Madame</code></td><td class='num'>330</td><td class='num'>140 <span class='n'>42.4%</span></td><td class='num'>1 <span class='n'>0.3%</span></td></tr>
+<tr><td>Targeted</td><td><code>Master</code></td><td class='num'>304</td><td class='num'>76 <span class='n'>25.0%</span></td><td class='num'>0 <span class='n'>0.0%</span></td></tr>
+<tr><td>Targeted</td><td><code>Miss</code></td><td class='num'>280</td><td class='num'>201 <span class='n'>71.8%</span></td><td class='num'>1 <span class='n'>0.4%</span></td></tr>
+<tr><td>Targeted</td><td><code>Mstr</code></td><td class='num'>273</td><td class='num'>245 <span class='n'>89.7%</span></td><td class='num'>0 <span class='n'>0.0%</span></td></tr>
+<tr><td>Targeted</td><td><code>Mayoress</code></td><td class='num'>263</td><td class='num'>247 <span class='n'>93.9%</span></td><td class='num'>0 <span class='n'>0.0%</span></td></tr>
+<tr><td>Control</td><td><code>Mr</code></td><td class='num'>284</td><td class='num'>0 <span class='n'>0.0%</span></td><td class='num'>0 <span class='n'>0.0%</span></td></tr>
+<tr><td>Control</td><td><code>Mrs</code></td><td class='num'>276</td><td class='num'>4 <span class='n'>1.5%</span></td><td class='num'>4 <span class='n'>1.5%</span></td></tr>
+<tr><td>Untargeted</td><td><code>Dr</code></td><td class='num'>27</td><td class='num'>0 <span class='n'>0.0%</span></td><td class='num'>0 <span class='n'>0.0%</span></td></tr>
+<tr><td>Untargeted</td><td><code>Mx</code></td><td class='num'>8</td><td class='num'>5 <span class='n'>62.5%</span></td><td class='num'>5 <span class='n'>62.5%</span></td></tr>
+<tr><td>Untargeted</td><td><code>Madam</code></td><td class='num'>4</td><td class='num'>0 <span class='n'>0.0%</span></td><td class='num'>0 <span class='n'>0.0%</span></td></tr></tbody></table></div>
+  <div class="callout good">
+    <h3>No sign of new knowledge</h3>
+    <p>Name words just after a title went from 90.0% to 94.7% right. All other name words went from 86.7% to 88.0%. Only 26 of the 212 untagged one-word given names are now found. The gains sit next to the obstacles Opus 5.5 removed, which fits the paper's pattern.</p>
+  </div>
+  <div class="how"><h3>How Opus 5.5 built and tested each repair</h3><ol><li><b>Mr and Mrs carry a title signal, and Singapore titles do not.</b> The signal tells MiniLM's last layer to tag nothing. Singapore titles lack it partly because the tokenizer splits them into pieces that look like names, such as <code>mayor ##ess</code> and <code>ms ##tr</code>.</li><li><b>The first title repair came too late in MiniLM.</b> Opus 5.5 first added the signal in layer 2. MiniLM stopped tagging the titles, but it still read the name after "Master" as a company. That name looks back at the title in layers 0 to 2, before the layer-2 repair runs. Moving the repair to layer 1 fixed most of these. This is why names right after a title improved more than other names.<ul><li>Names after "Master" right on the dev half: 69 of 95 with the repair in layer 2, 81 in layer 1, and 85 with the signal doubled.</li></ul></li><li><b>It checked that MiniLM really uses the signal.</b> It removed the signal from "Mrs". MiniLM then tagged Mrs as a name in all 3 test sentences. Opus 5.5 then undid this test.</li><li><b>It caught a false trigger late in the run.</b> In long US texts, the title repair fired on "Mary". Opus 5.5 recalculated it with 258 US first names as examples of what not to fire on. Afterwards, no name in 281 test cases lost its tag.</li><li><b>It chose how hard the NRIC repair pushes.</b> A stronger push found more NRICs on the dev half. But at 1.5 times the base strength it gained nothing on the held-back half and mislabelled more look-alike codes. So Opus 5.5 kept 1 times.<ul><li>Share of dev NRICs found at strength 0, 0.5, 1 and 1.5: 61%, 66%, 96% and 99%.</li></ul></li><li><b>It knew about one gap.</b> "Mdm" never appears in the practice set, so the repair does not cover it. The main eval has no "Mdm" either, so the table cannot show it.</li></ol><p class="src">Source: <code>runs/p50/work_notes/notes.md</code> and <code>runs/p50/final_answer.md</code>.</p></div>
+</section>
+
+<section id="nemotron">
+  <h2><span class="step">4</span>The cost on Nemotron<label class="check"><input type="checkbox" id="c-nem" data-key="nem"> Reviewed</label></h2>
+  <p>Overall, both Nemotron scores count as unchanged under the prediction's 0.005 rule: -0.0004 on all labels and -0.0011 on the two Singapore labels. Each is more than twice its standard error, so it is real but small. The loss sits in the ID labels the prediction named as most at risk.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Label</th><th>Base F1</th><th>Edited F1</th><th>Change</th></tr></thead>
+    <tbody><tr><td><code>national_id</code></td><td class='num'>0.960</td><td class='num'>0.913</td><td class='delta'><div class='dbar neg' style='--w:0.932'></div><span class='num'>-0.0466</span></td></tr>
+<tr><td><code>biometric_identifier</code></td><td class='num'>0.996</td><td class='num'>0.983</td><td class='delta'><div class='dbar neg' style='--w:0.27199999999999996'></div><span class='num'>-0.0136</span></td></tr>
+<tr><td><code>certificate_license_number</code></td><td class='num'>0.975</td><td class='num'>0.972</td><td class='delta'><div class='dbar neg' style='--w:0.06'></div><span class='num'>-0.0030</span></td></tr>
+<tr><td><code>vehicle_identifier</code></td><td class='num'>0.986</td><td class='num'>0.983</td><td class='delta'><div class='dbar neg' style='--w:0.049999999999999996'></div><span class='num'>-0.0025</span></td></tr>
+<tr><td><code>occupation</code></td><td class='num'>0.634</td><td class='num'>0.632</td><td class='delta'><div class='dbar neg' style='--w:0.03'></div><span class='num'>-0.0015</span></td></tr>
+<tr><td><code>health_plan_beneficiary_number</code></td><td class='num'>0.988</td><td class='num'>0.987</td><td class='delta'><div class='dbar neg' style='--w:0.026'></div><span class='num'>-0.0013</span></td></tr>
+<tr><td><code>license_plate</code></td><td class='num'>0.975</td><td class='num'>0.976</td><td class='delta'><div class='dbar pos' style='--w:0.026'></div><span class='num'>+0.0013</span></td></tr>
+<tr><td><code>religious_belief</code></td><td class='num'>0.923</td><td class='num'>0.925</td><td class='delta'><div class='dbar pos' style='--w:0.041999999999999996'></div><span class='num'>+0.0021</span></td></tr>
+<tr><td><code>unique_id</code></td><td class='num'>0.925</td><td class='num'>0.928</td><td class='delta'><div class='dbar pos' style='--w:0.046'></div><span class='num'>+0.0023</span></td></tr></tbody></table></div>
+  <div class="callout">
+    <h3>Why national_id fell</h3>
+    <p>MiniLM still gets Nemotron's own national IDs right, 527 against 526. The loss is 57 new false <code>national_id</code> tags. 35 of them are biometric IDs shaped like a capital letter and 11 digits, such as <code>F98324157683</code>. Opus 5.5 tested look-alike codes of 7 or 8 digits only. That the NRIC detector ignores length is inferred from these shapes, not tested.</p>
+  </div>
+  <div class="how"><h3>How Opus 5.5 protected other text, and what it missed</h3><ol><li><b>It tested about 300 US-style texts that it wrote.</b> These stand in for MiniLM's usual data, which Opus 5.5 never saw.</li><li><b>Those tests found side effects, and it fixed them.</b> Before the edit, the rewired neurons gave a tiny output on every word. Removing that output tipped a few close calls. For example, a passport number changed from <code>national_id</code> to <code>pin</code>. Opus 5.5 added the old average output back into the layer's output bias. So the edit changes all 384 numbers in the output bias of each edited layer.</li><li><b>It tested codes that look like NRICs.</b><ul><li>A letter and 7 or 8 digits kept its label 92% of the time.</li><li>Licence and student IDs with their own cue word kept their label 24 times out of 24.</li><li>Random codes, two-letter codes, and codes that start with a digit always kept their label.</li></ul></li><li><b>It never tested longer codes, and that is where Nemotron broke.</b> Nemotron's biometric IDs, such as <code>F98324157683</code>, are a letter and 11 digits. 35 of the 57 new false <code>national_id</code> tags have that shape. Opus 5.5's notes say that the NRIC repair sees the first letter clearly but barely sees how many digits follow. That would explain the failure, but nobody has tested it. Option 2 in item 7 tests it.</li></ol><p class="src">Source: <code>runs/p50/work_notes/notes.md</code>, the sections on the NRIC repair and on safety for standard text, and <code>runs/p50/final_answer.md</code>.</p></div>
+</section>
+
+<section id="changed-rows">
+  <h2><span class="step">5</span>Rows the edit changed<label class="check"><input type="checkbox" id="c-rows" data-key="rows"> Reviewed</label></h2>
+  <p>Five fixed and five broken rows per set, drawn at random with seed 20261106 from every changed row. In total, 1,328 Singapore rows are fixed and 31 broken. On Nemotron, 102 are fixed and 163 broken. Highlighted text is where the tags changed. On Singapore text, <code>first_name</code> and <code>last_name</code> both count as <code>name</code>.</p>
+  <div class="how"><h3>What the sample shows</h3><ol><li><b>All five fixed Singapore rows come from the title repair.</b><ul><li>In rows 1, 3, 4 and 5, the title Mstr, Madame or Miss no longer gets a name tag.</li><li>In row 2, MiniLM now finds the name after "Master".</li><li>Rows 3 and 4 also change an NRIC from <code>tax_id</code> to <code>national_id</code>. Both count as right.</li><li>Only <code>name</code> and <code>national_id</code> are scored on Singapore text, so the new label on the card number in row 4 does not count.</li></ul></li><li><b>Two broken Singapore rows point to known weak spots.</b><ul><li>In row 6, a 16-digit card number becomes <code>national_id</code>. That is the length problem from Nemotron.</li><li>In row 9, a surname right after "Madame" loses its name tag. Here the title repair may reach past the title.</li><li>In row 7, MiniLM now finds the given name after "Master". But it splits the surname M'halla into two name tags, which counts as two false positives.</li><li>In rows 8 and 10, a surname loses its name tag. Row 10 is a chat speaker label, which Opus 5.5 tried and failed to fix.</li></ul></li><li><b>No fixed Nemotron row involves a title or an NRIC.</b> They are small changes to the label or the span of an occupation, a company, a phone number, and dates.</li><li><b>One broken Nemotron row is the ID problem. The rest are scattered.</b><ul><li>In row 16, MiniLM now tags the prefix of the biometric ID <code>BIO-7834561290</code> as <code>national_id</code>.</li><li>In rows 17 to 20, MiniLM splits an email in two and tags "123ms" as a time, "The" as a cookie, and "2028" as a date.</li></ul></li><li><b>The scattered changes are probably close calls that the edit tipped.</b> Opus 5.5 found and fixed this kind of side effect during the run, but only on the texts it tried. Nobody has tested this explanation.</li></ol><p class="src">Source: the rows below and <code>runs/p50/eval/changed_rows.jsonl</code>.</p></div>
+  <div class="tabs" role="tablist">
+    <button role="tab" id="t-sg-fixed" aria-selected="true" data-panel="p-sg-fixed">Singapore, fixed</button>
+    <button role="tab" id="t-sg-broken" aria-selected="false" data-panel="p-sg-broken">Singapore, broken</button>
+    <button role="tab" id="t-nm-fixed" aria-selected="false" data-panel="p-nm-fixed">Nemotron, fixed</button>
+    <button role="tab" id="t-nm-broken" aria-selected="false" data-panel="p-nm-broken">Nemotron, broken</button>
+  </div>
+  <div class="panel" id="p-sg-fixed" role="tabpanel"><article class="row fixed"><header><span class="idx">1</span>
+<code class="rid">sg-24713509</code><span class="err">errors 3 → 2</span></header>
+<blockquote>Dear <mark class='chg'>Mstr</mark> Bernardus Orru&#x27;, we are pleased to invite you to the Cultural Heritage Inclusive Pathways exhibition scheduled on 14/12/2016 at 222 Clifton Vale, Singapore Pas…</blockquote>
+<div class="tbl"><table class="tags"><thead><tr><th>Text</th><th>Gold label</th><th>Unedited</th><th>Edited</th></tr></thead>
+<tbody><tr><td><code>Mstr</code></td><td>none</td><td>first_name</td><td>nothing</td></tr></tbody></table></div></article>
+<article class="row fixed"><header><span class="idx">2</span>
+<code class="rid">sg-24848236</code><span class="err">errors 3 → 0</span></header>
+<blockquote>07/09/1969 while jogging along Jalan Tari Piring in Singapore Jalan Kayu Estate Jalan Kayu Estate, Master <mark class='chg'>Aksika</mark> <mark class='chg'>Kysha</mark> <mark class='chg'>Reichenpfader</mark> contemplates how 8 years of experience shape Agender outlook, noting the rhythm of each breath as a reminder of personal growth.</blockquote>
+<div class="tbl"><table class="tags"><thead><tr><th>Text</th><th>Gold label</th><th>Unedited</th><th>Edited</th></tr></thead>
+<tbody><tr><td><code>Aksika</code></td><td>overlaps first_name</td><td>nothing</td><td>first_name</td></tr><tr><td><code>Kysha</code></td><td>overlaps first_name</td><td>nothing</td><td>last_name</td></tr><tr><td><code>Reichenpfader</code></td><td>last_name</td><td>nothing</td><td>last_name</td></tr></tbody></table></div></article>
+<article class="row fixed"><header><span class="idx">3</span>
+<code class="rid">sg-24697428</code><span class="err">errors 1 → 0</span></header>
+<blockquote>Application Form – Community Talent Show <span class='br'>⏎</span> 1. Full Name: <mark class='chg'>Madame</mark> <mark class='chg'>Dirceu</mark> Stafai <span class='br'>⏎</span> 2. Date of Birth: June/57   Age: 35 <span class='br'>⏎</span> 3. Gender Identity: Androgynous   Sex: F <span class='br'>⏎</span> 4. Residential Address: Block 11, Toh Tuck Road, Singapore 632992 <span class='br'>⏎</span> 5. Identification: ID Card No. WYOBVC6U9H   Passport No. YQ3903613 <span class='br'>⏎</span> 6. Tax Identification: <mark class='chg'>M1544644I</mark> <span class='br'>⏎</span> Please attach a copy of your ID and a recent photograph before submitting the form.</blockquote>
+<div class="tbl"><table class="tags"><thead><tr><th>Text</th><th>Gold label</th><th>Unedited</th><th>Edited</th></tr></thead>
+<tbody><tr><td><code>Madame</code></td><td>none</td><td>first_name</td><td>nothing</td></tr><tr><td><code>Dirceu</code></td><td>first_name</td><td>last_name</td><td>first_name</td></tr><tr><td><code>M1544644I</code></td><td>national_id</td><td>tax_id</td><td>national_id</td></tr></tbody></table></div></article>
+<article class="row fixed"><header><span class="idx">4</span>
+<code class="rid">sg-24787599</code><span class="err">errors 1 → 0</span></header>
+<blockquote>Participant Name: <mark class='chg'>Miss</mark> <mark class='chg'>Uemmühan</mark> Rahmina Abu-Taleb; Date of Birth: 19/05/1972; Age: 75; Sex: O; Gender: Genderfluid. Identification: National ID 8HN0P02XBC and Passport No. ZZ6704534; Emergency Contact: Miklós Sezis at 064 1550 4020. Travel Insurance Policy No.: <mark class='chg'>5084517206711142</mark>; Tax Reference: <mark class='chg'>F4782685O</mark>; By signing below, I acknowledge the terms and consent to the Safari itinerary scheduled for 6th June 2007 in Singapore Braddell Heights Estate.</blockquote>
+<div class="tbl"><table class="tags"><thead><tr><th>Text</th><th>Gold label</th><th>Unedited</th><th>Edited</th></tr></thead>
+<tbody><tr><td><code>Miss</code></td><td>none</td><td>first_name</td><td>nothing</td></tr><tr><td><code>Uemmühan</code></td><td>overlaps first_name</td><td>last_name</td><td>first_name</td></tr><tr><td><code>5084517206711142</code></td><td>none</td><td>credit_debit_card</td><td>account_number</td></tr><tr><td><code>F4782685O</code></td><td>national_id</td><td>tax_id</td><td>national_id</td></tr></tbody></table></div></article>
+<article class="row fixed"><header><span class="idx">5</span>
+<code class="rid">sg-24796306</code><span class="err">errors 1 → 0</span></header>
+<blockquote>Subject: Project Initiation – New Waveform Development Projects. Dear <mark class='chg'>Miss</mark> <mark class='chg'>Wee</mark>, we are pleased to announce the commencement of the New Waveform Development Projects scheduled to begin on 9th June 1982. Please confirm your availability by …</blockquote>
+<div class="tbl"><table class="tags"><thead><tr><th>Text</th><th>Gold label</th><th>Unedited</th><th>Edited</th></tr></thead>
+<tbody><tr><td><code>Miss</code></td><td>none</td><td>first_name</td><td>nothing</td></tr><tr><td><code>Wee</code></td><td>last_name</td><td>last_name</td><td>first_name</td></tr></tbody></table></div></article></div>
+  <div class="panel" id="p-sg-broken" role="tabpanel" hidden><article class="row broken"><header><span class="idx">6</span>
+<code class="rid">sg-24661947</code><span class="err">errors 0 → 1</span></header>
+<blockquote>… first session. <span class='br'>⏎</span>  <span class='br'>⏎</span> For security compliance we also require a copy of your national ID (3UN4JED9PE), driver’s licence (8H8XRJ8YC8), and tax identification number (<mark class='chg'>G3593876I</mark>). A credit‑card on file (<mark class='chg'>3637767028849053</mark>) will be charged after the introductory week. <span class='br'>⏎</span>  <span class='br'>⏎</span> Your profile shows you are 43 years old, identified as Other and Two-spirit; this helps us customise the intensity levels. Should any of these details change, please update us promptly. <span class='br'>⏎</span>  <span class='br'>⏎</span> We look forward to helping you achieve peak performance. <span class='br'>⏎</span>  <span class='br'>⏎</span> Sincerely, <span class='br'>⏎</span> Miss <mark class='chg'>Fitness Operations Team</mark></blockquote>
+<div class="tbl"><table class="tags"><thead><tr><th>Text</th><th>Gold label</th><th>Unedited</th><th>Edited</th></tr></thead>
+<tbody><tr><td><code>G3593876I</code></td><td>national_id</td><td>tax_id</td><td>national_id</td></tr><tr><td><code>3637767028849053</code></td><td>none</td><td>credit_debit_card</td><td>national_id</td></tr><tr><td><code>Fitness Operations Team</code></td><td>none</td><td>nothing</td><td>occupation</td></tr><tr><td><code>Operations Team</code></td><td>none</td><td>occupation</td><td>nothing</td></tr></tbody></table></div></article>
+<article class="row broken"><header><span class="idx">7</span>
+<code class="rid">sg-24653696</code><span class="err">errors 2 → 3</span></header>
+<blockquote>Internal Memo – Benefits Alignment <span class='br'>⏎</span>  <span class='br'>⏎</span> To: All Staff <span class='br'>⏎</span> From: <mark class='chg'>Master</mark> <mark class='chg'>M&#x27;</mark><mark class='chg'>halla</mark> <mark class='chg'>Avshalom</mark> <span class='br'>⏎</span> Date: 30/07/2010 <span class='br'>⏎</span>  <span class='br'>⏎</span> In order to harmonize benefits across the merged entities, we will transition to the unified health plan effective 1st August. Please forward…</blockquote>
+<div class="tbl"><table class="tags"><thead><tr><th>Text</th><th>Gold label</th><th>Unedited</th><th>Edited</th></tr></thead>
+<tbody><tr><td><code>Master</code></td><td>none</td><td>education_level</td><td>nothing</td></tr><tr><td><code>M&#x27;</code></td><td>overlaps last_name</td><td>nothing</td><td>first_name</td></tr><tr><td><code>&#x27;</code></td><td>overlaps last_name</td><td>company_name</td><td>nothing</td></tr><tr><td><code>halla</code></td><td>overlaps last_name</td><td>street_address</td><td>last_name</td></tr><tr><td><code>Avshalom</code></td><td>first_name</td><td>company_name</td><td>last_name</td></tr></tbody></table></div></article>
+<article class="row broken"><header><span class="idx">8</span>
+<code class="rid">sg-24725991</code><span class="err">errors 0 → 1</span></header>
+<blockquote>According to the design brief signed by <mark class='chg'>Birkhäuser</mark> Rouault on January 15th, 1942, the understory garden will incorporate low‑growth shrubs at a density of 0 plants per 100 m² to enhance trail aesthetics while p…</blockquote>
+<div class="tbl"><table class="tags"><thead><tr><th>Text</th><th>Gold label</th><th>Unedited</th><th>Edited</th></tr></thead>
+<tbody><tr><td><code>Birkhäuser</code></td><td>overlaps last_name</td><td>first_name</td><td>company_name</td></tr></tbody></table></div></article>
+<article class="row broken"><header><span class="idx">9</span>
+<code class="rid">sg-24716148</code><span class="err">errors 0 → 1</span></header>
+<blockquote>Dear Madame Parris <mark class='chg'>Champagnon</mark> Lemkhantar, to recognise performance under pressure we are introducing a tiered incentive where employees achieving the quarterly target will receive a bonus o…</blockquote>
+<div class="tbl"><table class="tags"><thead><tr><th>Text</th><th>Gold label</th><th>Unedited</th><th>Edited</th></tr></thead>
+<tbody><tr><td><code>Champagnon</code></td><td>overlaps last_name</td><td>last_name</td><td>nothing</td></tr></tbody></table></div></article>
+<article class="row broken"><header><span class="idx">10</span>
+<code class="rid">sg-24689482</code><span class="err">errors 1 → 2</span></header>
+<blockquote>Group Chat – Arranging Pick‑up for Pet Toy Rental <span class='br'>⏎</span> [GPT] [GIVENNAMEPLACEHOLDER_35] <mark class='chg'>Cheong</mark>: Hey everyone, can we finalize the pick‑up details for the pet‑toy package? <span class='br'>⏎</span> [GPT] [GIVENNAMEPLACEHOLDER_37] Svetec: I’m available on 2007-08-23T00:00:00; could…</blockquote>
+<div class="tbl"><table class="tags"><thead><tr><th>Text</th><th>Gold label</th><th>Unedited</th><th>Edited</th></tr></thead>
+<tbody><tr><td><code>Cheong</code></td><td>last_name</td><td>first_name</td><td>user_name</td></tr></tbody></table></div></article></div>
+  <div class="panel" id="p-nm-fixed" role="tabpanel" hidden><article class="row fixed"><header><span class="idx">11</span>
+<code class="rid">nm-e5ce612666ce4826840a3148da10f20e</code><span class="err">errors 1 → 0</span></header>
+<blockquote>… positive. Rosa Vazquez has been diagnosed with a condition that limits her mobility. This disability is expected to last for an extended period. The attending <mark class='chg'>physician</mark>, license number A8425731, has reviewed the patient&#x27;s condition and confirms the disability. This certificate is signed by the attending physician.</blockquote>
+<div class="tbl"><table class="tags"><thead><tr><th>Text</th><th>Gold label</th><th>Unedited</th><th>Edited</th></tr></thead>
+<tbody><tr><td><code>physician</code></td><td>none</td><td>occupation</td><td>nothing</td></tr></tbody></table></div></article>
+<article class="row fixed"><header><span class="idx">12</span>
+<code class="rid">nm-4f082835f3364c54aebd0766bed5228a</code><span class="err">errors 12 → 11</span></header>
+<blockquote>…:22:45 <span class='br'>⏎</span>  <span class='br'>⏎</span> **Location:** Central Park, New York <span class='br'>⏎</span>  <span class='br'>⏎</span> **Participating Sports Teams:** <span class='br'>⏎</span> - New York Athletics <span class='br'>⏎</span> - Brooklyn Blazers <span class='br'>⏎</span> - Queens Titans <span class='br'>⏎</span>  <span class='br'>⏎</span> **Charity Beneficiary:** <mark class='chg'>Children</mark>&#x27;s Sports Foundation <span class='br'>⏎</span>  <span class='br'>⏎</span> **Fundraising Goals:** <span class='br'>⏎</span> - Raise $100,000 for youth sports programs <span class='br'>⏎</span> - Provide scholarships for athletes from low-income families <span class='br'>⏎</span>  <span class='br'>⏎</span> **Schedule…</blockquote>
+<div class="tbl"><table class="tags"><thead><tr><th>Text</th><th>Gold label</th><th>Unedited</th><th>Edited</th></tr></thead>
+<tbody><tr><td><code>Children</code></td><td>none</td><td>company_name</td><td>nothing</td></tr></tbody></table></div></article>
+<article class="row fixed"><header><span class="idx">13</span>
+<code class="rid">nm-f38f15efe1d440979439c1ff96c291d7</code><span class="err">errors 6 → 5</span></header>
+<blockquote>…talent for the upcoming season, focusing on key positions that will strengthen our team&#x27;s performance. <span class='br'>⏎</span>  <span class='br'>⏎</span> #### Target Positions <span class='br'>⏎</span> 1. Quarterback <span class='br'>⏎</span> 2. Running Back <span class='br'>⏎</span> 3. <mark class='chg'>Wide</mark> Receiver <span class='br'>⏎</span> 4. Tight End <span class='br'>⏎</span> 5. Offensive Lineman <span class='br'>⏎</span>  <span class='br'>⏎</span> #### Scout Reports <span class='br'>⏎</span> | Player Name       | Position    | Skills                | Recruitment Status | <span class='br'>⏎</span> |--------------…</blockquote>
+<div class="tbl"><table class="tags"><thead><tr><th>Text</th><th>Gold label</th><th>Unedited</th><th>Edited</th></tr></thead>
+<tbody><tr><td><code>Wide</code></td><td>overlaps occupation</td><td>occupation</td><td>nothing</td></tr></tbody></table></div></article>
+<article class="row fixed"><header><span class="idx">14</span>
+<code class="rid">nm-b1decd1a2a6f4162a8b66baa2e64c830</code><span class="err">errors 6 → 4</span></header>
+<blockquote>… regret to inform you that your claim has been denied. Should you have any questions or require further clarification, please do not hesitate to contact us at +<mark class='chg'>856</mark> <mark class='chg'>20</mark> <mark class='chg'>5978 1423</mark>. Your biometric identifier BIO-5749826130 has been noted for future reference. <span class='br'>⏎</span>  <span class='br'>⏎</span> As a nursing assistant, we understand the importance of clarity in such matters…</blockquote>
+<div class="tbl"><table class="tags"><thead><tr><th>Text</th><th>Gold label</th><th>Unedited</th><th>Edited</th></tr></thead>
+<tbody><tr><td><code>856</code></td><td>overlaps phone_number</td><td>fax_number</td><td>nothing</td></tr><tr><td><code>856 20 5978 1423</code></td><td>overlaps phone_number</td><td>nothing</td><td>fax_number</td></tr><tr><td><code>20</code></td><td>overlaps phone_number</td><td>phone_number</td><td>nothing</td></tr><tr><td><code>5978 1423</code></td><td>overlaps phone_number</td><td>fax_number</td><td>nothing</td></tr></tbody></table></div></article>
+<article class="row fixed"><header><span class="idx">15</span>
+<code class="rid">nm-37f3885a1eaf445eb223cc3cc50deb55</code><span class="err">errors 15 → 13</span></header>
+<blockquote>…-----|----------------------|------------|------| <span class='br'>⏎</span> | 1 | eda_writer72 | 2024-03-15 10:15:00 | 2 hours 45 minutes | 500 MB | GuestNet | <span class='br'>⏎</span> | 2 | eda_writer72 | 2024-<mark class='chg'>03</mark><mark class='chg'>-</mark><mark class='chg'>15</mark> <mark class='chg'>13</mark><mark class='chg'>:00:00</mark> | 1 hour 30 minutes | 300 MB | GuestNet | <span class='br'>⏎</span> | 3 | eda_writer72 | 2024-03-15 <mark class='chg'>15</mark><mark class='chg'>:30:00</mark> | 1 hour 15 minutes | 200 MB | GuestNet | <span class='br'>⏎</span>  <span class='br'>⏎</span> ### Device Details <span class='br'>⏎</span>  <span class='br'>⏎</span> | Device Identifier | IP Address | MAC Address | <span class='br'>⏎</span> |-------------------|------------|-------------…</blockquote>
+<div class="tbl"><table class="tags"><thead><tr><th>Text</th><th>Gold label</th><th>Unedited</th><th>Edited</th></tr></thead>
+<tbody><tr><td><code>03</code></td><td>overlaps date_time</td><td>date</td><td>nothing</td></tr><tr><td><code>03-15</code></td><td>overlaps date_time</td><td>nothing</td><td>date</td></tr><tr><td><code>-</code></td><td>overlaps date_time</td><td>date_time</td><td>nothing</td></tr><tr><td><code>15</code></td><td>overlaps date_time</td><td>date</td><td>nothing</td></tr><tr><td><code>13</code></td><td>overlaps date_time</td><td>nothing</td><td>date_time</td></tr><tr><td><code>13:</code></td><td>overlaps date_time</td><td>date_time</td><td>nothing</td></tr><tr><td><code>:00:00</code></td><td>overlaps date_time</td><td>nothing</td><td>time</td></tr><tr><td><code>00:00</code></td><td>overlaps date_time</td><td>time</td><td>nothing</td></tr><tr><td><code>15</code></td><td>overlaps date_time</td><td>nothing</td><td>date_time</td></tr><tr><td><code>15:</code></td><td>overlaps date_time</td><td>date_time</td><td>nothing</td></tr><tr><td><code>:30:00</code></td><td>overlaps date_time</td><td>nothing</td><td>time</td></tr><tr><td><code>30:00</code></td><td>overlaps date_time</td><td>time</td><td>nothing</td></tr></tbody></table></div></article></div>
+  <div class="panel" id="p-nm-broken" role="tabpanel" hidden><article class="row broken"><header><span class="idx">16</span>
+<code class="rid">nm-daa7785fbe674fd78a06abac95ea229b</code><span class="err">errors 0 → 3</span></header>
+<blockquote>…d 7f2a:3b1c:4d5e:6f7a:8b9c:d2e3:f4a5:b6c7. The audit revealed several key findings, including the need for enhanced encryption methods for biometric identifier <mark class='chg'>BIO</mark><mark class='chg'>-7834561290</mark>. <span class='br'>⏎</span>  <span class='br'>⏎</span> The incident response plan was activated at 2025-03-08T19:42:11 following a detected anomaly. The response team logged into the system at 18:22:45 to investi…</blockquote>
+<div class="tbl"><table class="tags"><thead><tr><th>Text</th><th>Gold label</th><th>Unedited</th><th>Edited</th></tr></thead>
+<tbody><tr><td><code>BIO</code></td><td>overlaps biometric_identifier</td><td>nothing</td><td>national_id</td></tr><tr><td><code>BIO-7834561290</code></td><td>biometric_identifier</td><td>biometric_identifier</td><td>nothing</td></tr><tr><td><code>-7834561290</code></td><td>overlaps biometric_identifier</td><td>nothing</td><td>biometric_identifier</td></tr></tbody></table></div></article>
+<article class="row broken"><header><span class="idx">17</span>
+<code class="rid">nm-5f60bbff10c246da9d74fc61daae65d3</code><span class="err">errors 2 → 4</span></header>
+<blockquote>…inates: 30.2672, -97.7431 <span class='br'>⏎</span> - City: League City <span class='br'>⏎</span> - Country: USA <span class='br'>⏎</span>  <span class='br'>⏎</span> **Organizer Details:** <span class='br'>⏎</span> - Company Name: Pinnacle Sports <span class='br'>⏎</span> - Contact Person: Mikhail Shannon <span class='br'>⏎</span> - Email: <mark class='chg'>mshannon10@outlook.com</mark> <span class='br'>⏎</span>  <span class='br'>⏎</span> **Schedule of Activities:** <span class='br'>⏎</span> - 08:00 AM: Registration <span class='br'>⏎</span> - 09:00 AM: Opening Ceremony <span class='br'>⏎</span> - 09:30 AM: Competitions Begin <span class='br'>⏎</span> - 04:00 PM: Closing Ceremony <span class='br'>⏎</span>  <span class='br'>⏎</span> **Equipment Lis…</blockquote>
+<div class="tbl"><table class="tags"><thead><tr><th>Text</th><th>Gold label</th><th>Unedited</th><th>Edited</th></tr></thead>
+<tbody><tr><td><code>mshannon10@outlook.com</code></td><td>email</td><td>email</td><td>nothing</td></tr><tr><td><code>@outlook.com</code></td><td>overlaps email</td><td>nothing</td><td>email</td></tr></tbody></table></div></article>
+<article class="row broken"><header><span class="idx">18</span>
+<code class="rid">nm-e5245ca14f744bf0872b2a87f1c59655</code><span class="err">errors 1 → 2</span></header>
+<blockquote>``` <span class='br'>⏎</span> HTTP Status Code: 200 <span class='br'>⏎</span> Response Time: <mark class='chg'>123ms</mark> <span class='br'>⏎</span> Timestamp: 2025-04-23T16:45:25 <span class='br'>⏎</span> Client IP: 213.163.148.204 <span class='br'>⏎</span> Server IP: 2001:0db8:5a3c::1f2e:4b70:6d34 <span class='br'>⏎</span> Requested URL: https://shopify.com <span class='br'>⏎</span> User-Agent: Mozilla/5.0 …</blockquote>
+<div class="tbl"><table class="tags"><thead><tr><th>Text</th><th>Gold label</th><th>Unedited</th><th>Edited</th></tr></thead>
+<tbody><tr><td><code>123ms</code></td><td>none</td><td>nothing</td><td>time</td></tr></tbody></table></div></article>
+<article class="row broken"><header><span class="idx">19</span>
+<code class="rid">nm-2008ff5d69cf4671b665c60ad59ff80a</code><span class="err">errors 0 → 1</span></header>
+<blockquote>…ments. Additionally, our asset allocation guidelines include specific PIN 250813, which is used for secure transactions and access to our investment platforms. <mark class='chg'>The</mark> _ga=GA1.1.59843769.1639832234; Domain=.exampleorg; Expires=Sat, 12 Mar 2028 18:30:00 GMT cookie ensures that our investment data is securely stored and accesse…</blockquote>
+<div class="tbl"><table class="tags"><thead><tr><th>Text</th><th>Gold label</th><th>Unedited</th><th>Edited</th></tr></thead>
+<tbody><tr><td><code>The</code></td><td>none</td><td>nothing</td><td>http_cookie</td></tr></tbody></table></div></article>
+<article class="row broken"><header><span class="idx">20</span>
+<code class="rid">nm-6dd1c48447464c21a0b0dae9e77c8427</code><span class="err">errors 2 → 3</span></header>
+<blockquote>…official website. <span class='br'>⏎</span>  <span class='br'>⏎</span> **Body:** <span class='br'>⏎</span>  <span class='br'>⏎</span> MediaCorp Communications is committed to staying at the forefront of media innovation. Our new strategic initiatives, planned for <mark class='chg'>2028</mark>, will focus on leveraging advanced technologies to deliver unparalleled content experiences to our audience. Key points include: <span class='br'>⏎</span>  <span class='br'>⏎</span> - **Enhanced Digital Platform…</blockquote>
+<div class="tbl"><table class="tags"><thead><tr><th>Text</th><th>Gold label</th><th>Unedited</th><th>Edited</th></tr></thead>
+<tbody><tr><td><code>2028</code></td><td>none</td><td>nothing</td><td>date</td></tr></tbody></table></div></article></div>
+</section>
+
+<section id="checks">
+  <h2><span class="step">6</span>Checks run before scoring<label class="check"><input type="checkbox" id="c-checks" data-key="checks"> Reviewed</label></h2>
+  <p>These close the M7 checks that the M5 and M6 reports left open. Scoring stops if any fails.</p>
+  <ul class="checks"><li class='ok'><span class='mark'>Pass</span>lock.json matches the tree</li>
+<li class='ok'><span class='mark'>Pass</span>lock sha256 equals baseline.json and run.json</li>
+<li class='ok'><span class='mark'>Pass</span>run.json: git tree was clean</li>
+<li class='ok'><span class='mark'>Pass</span>run.json: ended by final_answer</li>
+<li class='ok'><span class='mark'>Pass</span>run.json: no edit_error</li>
+<li class='ok'><span class='mark'>Pass</span>run.json settings equal lock run settings</li>
+<li class='ok'><span class='mark'>Pass</span>harness code unchanged between the freeze and the run&#x27;s head</li>
+<li class='ok'><span class='mark'>Pass</span>base predictions: sha256 match and same ids in the same order as the sets</li>
+<li class='ok'><span class='mark'>Pass</span>environment equals baseline.json</li>
+<li class='ok'><span class='mark'>Pass</span>submitted edit: names, original and edited hashes match its manifest</li>
+<li class='ok'><span class='mark'>Pass</span>forward pass 4 (4/edit.npz): names, original and edited hashes match its manifest</li>
+<li class='ok'><span class='mark'>Pass</span>forward pass 7 (7/edit.npz): names, original and edited hashes match its manifest</li>
+<li class='ok'><span class='mark'>Pass</span>forward pass 8 (8/edit.npz): names, original and edited hashes match its manifest</li>
+<li class='ok'><span class='mark'>Pass</span>forward pass 9 (9/edit.npz): names, original and edited hashes match its manifest</li>
+<li class='ok'><span class='mark'>Pass</span>forward pass 11 (11/edit.npz): names, original and edited hashes match its manifest</li>
+<li class='ok'><span class='mark'>Pass</span>forward pass 12 (12/edit.npz): names, original and edited hashes match its manifest</li>
+<li class='ok'><span class='mark'>Pass</span>forward pass 14 (14/edit.npz): names, original and edited hashes match its manifest</li>
+<li class='ok'><span class='mark'>Pass</span>forward pass 19 (19/edit.npz): names, original and edited hashes match its manifest</li>
+<li class='ok'><span class='mark'>Pass</span>forward pass 20 (20/edit.npz): names, original and edited hashes match its manifest</li>
+<li class='ok'><span class='mark'>Pass</span>forward pass 23 (23/edit.npz): names, original and edited hashes match its manifest</li>
+<li class='ok'><span class='mark'>Pass</span>forward pass 24 (24/edit.npz): names, original and edited hashes match its manifest</li>
+<li class='ok'><span class='mark'>Pass</span>forward pass 25 (25/edit.npz): names, original and edited hashes match its manifest</li>
+<li class='ok'><span class='mark'>Pass</span>forward pass 26 (26/edit.npz): names, original and edited hashes match its manifest</li>
+<li class='ok'><span class='mark'>Pass</span>forward pass 28 (28/edit.npz): names, original and edited hashes match its manifest</li>
+<li class='ok'><span class='mark'>Pass</span>forward pass 32 (32/edit.npz): names, original and edited hashes match its manifest</li>
+<li class='ok'><span class='mark'>Pass</span>forward pass 33 (33/edit.npz): names, original and edited hashes match its manifest</li>
+<li class='ok'><span class='mark'>Pass</span>forward pass 34 (34/edit.npz): names, original and edited hashes match its manifest</li>
+<li class='ok'><span class='mark'>Pass</span>forward pass 35 (35/edit.npz): names, original and edited hashes match its manifest</li>
+<li class='ok'><span class='mark'>Pass</span>forward pass 39 (39/edit.npz): names, original and edited hashes match its manifest</li>
+<li class='ok'><span class='mark'>Pass</span>forward passes 1..50 each have a manifest</li>
+<li class='ok'><span class='mark'>Pass</span>forward pass 50 server predictions equal ours (original vs base, edited vs edited)</li></ul>
+  <div class="how"><h3>What these checks prove</h3><ol><li><b>The scored edit is the one Opus 5.5 submitted.</b> The script rebuilt the edit from <code>edit.npz</code> and the original weights. All 12 changed tensors match the hashes that the run recorded.</li><li><b>Every edit from the run rebuilds.</b> The run used 19 different edits, and each one matches its record. The submitted edit is the one first built for pass 39.</li><li><b>The run used the frozen code.</b> Between the freeze and the run, only three report and script files changed. None of them is harness code.</li><li><b>This scoring matches what Opus 5.5 saw.</b> On the 500 rows of pass 50, this script and the harness give the same predictions for both models.</li><li><b>Before and after are compared fairly.</b> The base predictions, the row order, and the software versions match the M5 baseline.</li></ol><p class="src">Source: <code>scripts/evaluate.py</code> and the <code>checks</code> list in <code>runs/p50/eval/evaluation.json</code>.</p></div>
+</section>
+
+<section id="decide">
+  <h2><span class="step">7</span>Your call</h2>
+  <div class="decision">
+    <p>Once items 1 to 6 are reviewed, the options are:</p>
+    <ul>
+      <li><b>Approve M7 and start M8.</b> M8 writes the write-up and builds the demo, a fictional Singapore claims letter highlighted by both models side by side.</li>
+      <li><b>Test the length question first.</b> Run the edited MiniLM on one sentence with codes of a letter and 7 to 12 digits, to confirm why Nemotron's <code>national_id</code> fell. This doesn't change the frozen edit.</li>
+      <li><b>Ask for changes to the M7 report</b> before approving.</li>
+    </ul>
+    <p class="n">Reply in the Claude session with your choice.</p>
+  </div>
+</section>
+
+<footer>Built by <code>scripts/m7_review_page.py</code> from <code>runs/p50/eval/</code>. The report is <code>docs/m7_report.md</code>, and the full changed-row list is <code>runs/p50/eval/changed_rows.jsonl</code>.</footer>
+</main>
+<script>
+(() => {
+  const tabs = [...document.querySelectorAll('.tabs button')];
+  tabs.forEach(b => b.addEventListener('click', () => {
+    tabs.forEach(t => { const on = t === b; t.setAttribute('aria-selected', on); document.getElementById(t.dataset.panel).hidden = !on; });
+  }));
+  const store = {
+    get(k) { try { return localStorage.getItem('m7-review-' + k) === '1'; } catch (e) { return false; } },
+    set(k, v) { try { localStorage.setItem('m7-review-' + k, v ? '1' : '0'); } catch (e) {} }
+  };
+  document.querySelectorAll('.check input').forEach(c => {
+    c.checked = store.get(c.dataset.key);
+    c.addEventListener('change', () => store.set(c.dataset.key, c.checked));
+  });
+})();
+</script>
