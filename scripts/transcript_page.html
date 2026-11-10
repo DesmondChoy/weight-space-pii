@@ -83,7 +83,10 @@ aside section { display: grid; gap: 8px; }
 .passgrid button { font: 500 .7rem var(--mono); padding: 4px 0; border-radius: 3px; border: 1px solid transparent; cursor: pointer; color: #fff; }
 .passgrid .dev { background: var(--dev); } .passgrid .held { background: var(--held); } .passgrid .own { background: var(--own); }
 .passgrid .mixed { background: linear-gradient(135deg, var(--dev) 50%, var(--own) 50%); }
+.passgrid .heldmixed { background: linear-gradient(135deg, var(--held) 50%, var(--own) 50%); }
 .keyrow { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: .78rem; color: var(--muted); }
+.keyrow i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; }
+.keynote { font-size: .78rem; color: var(--muted); }
 
 /* Toolbar */
 .toolbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding-block: 10px; display: grid; gap: 10px; border-bottom: 1px solid var(--line); }
@@ -157,6 +160,7 @@ table.passes { border-collapse: collapse; width: 100%; font-size: .84rem; }
 .passes .stripe { width: 4px; padding: 0; }
 .stripe.dev { background: var(--dev); } .stripe.held { background: var(--held); } .stripe.own { background: var(--own); }
 .stripe.mixed { background: linear-gradient(var(--dev) 50%, var(--own) 50%); }
+.stripe.heldmixed { background: linear-gradient(var(--held) 50%, var(--own) 50%); }
 .empty { color: var(--muted); padding: 20px 0; }
 footer { color: var(--muted); font-size: .84rem; display: grid; gap: 4px; }
 
@@ -199,7 +203,8 @@ footer { color: var(--muted); font-size: .84rem; display: grid; gap: 4px; }
       <section><h3>Key moments</h3><div id="moments"></div></section>
       <section><h3>Forward passes</h3>
         <div class="passgrid" id="passgrid"></div>
-        <div class="keyrow"><span><i style="display:inline-block;width:9px;height:9px;background:var(--dev);border-radius:2px"></i> dev half</span><span><i style="display:inline-block;width:9px;height:9px;background:var(--held);border-radius:2px"></i> held-back half</span><span><i style="display:inline-block;width:9px;height:9px;background:linear-gradient(135deg, var(--dev) 50%, var(--own) 50%);border-radius:2px"></i> dev half and own texts</span><span><i style="display:inline-block;width:9px;height:9px;background:var(--own);border-radius:2px"></i> own texts only</span></div>
+        <div class="keyrow" id="passkey"></div>
+        <p class="keynote" id="passnote"></p>
       </section>
     </aside>
 
@@ -223,7 +228,7 @@ footer { color: var(--muted); font-size: .84rem; display: grid; gap: 4px; }
       </div>
       <div class="view" id="v-conversation"><div class="turns" id="turns"></div><p class="empty" id="empty" hidden>No turn matches. Clear the search or pick another filter.</p></div>
       <div class="view" id="v-passes" hidden>
-        <p>All 50 forward passes. "Rows" counts practice rows from each half of Opus 5.5's own split. "Own texts" are texts Opus 5.5 wrote, which get no grades. The last column quotes the first two sentences of Opus 5.5's explanation in that turn.</p>
+        <p>All 50 forward passes. "Rows" counts practice rows from each part of Opus 5.5's own split of the practice set. The held-back part is not the main eval set, which no pass touches. "Own texts" are texts Opus 5.5 wrote, which get no grades. The last column quotes the first two sentences of Opus 5.5's explanation in that turn.</p>
         <div class="tblwrap"><table class="passes"><thead><tr><th class="stripe"></th><th>Pass</th><th>Turn</th><th>Model</th><th>Rows</th><th>Own texts</th><th>Arrays saved</th><th>Result</th><th>Opening of Opus 5.5's explanation</th></tr></thead><tbody id="passrows"></tbody></table></div>
       </div>
       <div class="view" id="v-prompt" hidden><p>The first message of the run, sent verbatim at turn 1. Every later message is the output of Opus 5.5's last block.</p><pre class="msg doc" id="prompt"></pre></div>
@@ -260,8 +265,16 @@ footer { color: var(--muted); font-size: .84rem; display: grid; gap: 4px; }
     ['Wall time', hm(S.wall)], ['Cost at API prices', '$' + S.cost.toFixed(2)], ['Model', `${S.model}, effort ${S.effort}`],
   ].map(([k, v]) => `<span>${k} <b>${esc(v)}</b></span>`).join('');
 
-  // Rows of a forward pass, by half of Opus 5.5's own split.
-  const rowsKind = p => p.items.held ? 'held' : p.items.dev ? (p.texts ? 'mixed' : 'dev') : 'own';
+  // Rows of a forward pass, by part of Opus 5.5's own split. The parts are halves only when the split is even.
+  const rowsKind = p => p.items.held ? (p.texts ? 'heldmixed' : 'held') : p.items.dev ? (p.texts ? 'mixed' : 'dev') : 'own';
+  const part = S.dev === S.held ? 'half' : 'set';
+  const grad = (a, b) => `linear-gradient(135deg, var(--${a}) 50%, var(--${b}) 50%)`;
+  const kinds = [['dev', 'var(--dev)', `dev ${part}`], ['held', 'var(--held)', `held-back ${part}`],
+    ['mixed', grad('dev', 'own'), `dev ${part} and own texts`], ['heldmixed', grad('held', 'own'), `held-back ${part} and own texts`],
+    ['own', 'var(--own)', 'own texts only']];
+  const used = new Set(D.passes.map(rowsKind));
+  $('passkey').innerHTML = kinds.filter(k => used.has(k[0])).map(([, bg, label]) => `<span><i style="background:${bg}"></i> ${label}</span>`).join('');
+  $('passnote').textContent = `Opus 5.5 split the ${S.dev + S.held} practice rows itself: ${S.dev} to build on (dev) and ${S.held} held back to test on. Neither is the main eval set, which no pass touches.`;
   const rowsText = p => [p.items.dev && `${p.items.dev} dev`, p.items.held && `${p.items.held} held-back`].filter(Boolean).join(', ') || 'none';
   const resultText = r => {
     if (r.diff) return `${f3(r.original.f1)} → ${f3(r.edited.f1)}, ${r.diff[0] >= 0 ? '+' : ''}${f3(r.diff[0])} ± ${f3(r.diff[1])}, ${r.diff[2]} rows better, ${r.diff[3]} worse`;
