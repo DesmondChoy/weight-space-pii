@@ -2,7 +2,7 @@
 
 M6 runs the 50-pass session once, with every setting M5 locked. Opus 5.5 spent 232 turns and all 50 forward passes on MiniLM. It submitted an edit that changes 12 tensors in the MLPs of layers 1, 2 and 4, with a final answer that describes two repairs, one for Singapore titles and one for NRICs. This report covers how the run went, what Opus 5.5 submitted, and the checks on the submitted edit. It does not score the edit on the hidden sets. M7 does that. It follows §2 and §7 of [weight-space-pii-handoff.md](weight-space-pii-handoff.md), with the decisions in the M2 to M5 reports.
 
-Status: complete. The run finished on 2026-11-06, and Desmond approved M6 and started M7 the same day. Committed on `main`, where `git log` lists every M6 commit.
+Status: complete. The run finished on 2026-11-06, and Desmond approved M6 and started M7 the same day. Committed on `main`, where `git log` lists every M6 commit. Amended on 2026-11-10: the links to the final answer and the edit manifest pointed into `runs/`, which git doesn't track. They now point to copies in `results/`.
 
 ## What you need to know first
 
@@ -76,7 +76,7 @@ The transcript and `work_notes/notes.md` show five stretches of work. The turn o
 
 ## What Opus 5.5 submitted
 
-[runs/p50/final_answer.md](../runs/p50/final_answer.md) holds the full answer. In short, Opus 5.5 reports two repairs. Each repair takes 2 or 4 MLP neurons that were almost never active and reuses them as a detector.
+[results/p50_final_answer.md](../results/p50_final_answer.md) holds the full answer. In short, Opus 5.5 reports two repairs. Each repair takes 2 or 4 MLP neurons that were almost never active and reuses them as a detector.
 
 - **Singapore titles, in layers 1 and 2.** MiniLM tags Mr and Mrs as nothing, but it tagged Singapore titles such as Mayoress, Mstr, Miss and Madame as `first_name`. After "Master", it read the following name as a company. Opus 5.5 found that Mr and Mrs carry a feature that tells the last layer to output nothing, and that the Singapore titles lack it. Neurons 54 and 485 in layer 1 and neurons 792 and 1209 in layer 2 detect the titles and write that feature. Neurons 244 and 1258 in layer 2 do the same for Mayoress. On the held-back half, Opus 5.5 reports `name` F1 rising from 0.865 to 0.918.
 - **NRICs, in layer 4.** MiniLM typed an ID number only from nearby words. Next to "tax" it got 84% of NRICs right, and with no such word it got 0 of 27. Opus 5.5 found that the NRIC's shape is readable at the input of layer 4's MLP. Neurons 806 and 1407 detect the shape and write the state MiniLM uses for a national ID. On the held-back half, Opus 5.5 reports `national_id` F1 rising from 0.747 to 0.956.
@@ -107,8 +107,8 @@ The M5 prediction says the edit fixes NRICs without "tax" just before them and l
 
 ## Show me
 
-- The final answer: [runs/p50/final_answer.md](../runs/p50/final_answer.md).
-- The edit manifest: [runs/p50/edit/manifest.json](../runs/p50/edit/manifest.json), summarized in the table under "The edit rebuilds exactly".
+- The final answer: [results/p50_final_answer.md](../results/p50_final_answer.md).
+- The edit manifest: [results/p50_edit_manifest.json](../results/p50_edit_manifest.json), summarized in the table under "The edit rebuilds exactly".
 
 `runs/` is not in git, so both links work only on this machine.
 

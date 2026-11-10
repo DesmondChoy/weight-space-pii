@@ -1,0 +1,132 @@
+{
+ "tensors": [
+  {
+   "name": "bert.encoder.layer.1.intermediate.dense.bias",
+   "shape": [
+    1536
+   ],
+   "entries_changed": 2,
+   "entries": 1536,
+   "sha256_original": "3e75dc20809ba1f2ad57fc3a9a685f4b0c7564ee65da43ed2599972dc16095c7",
+   "sha256_edited": "ad97cb79fa036ad671eac9e959bb88feb20e0b1deb91e28ba076c1cff4463f94"
+  },
+  {
+   "name": "bert.encoder.layer.1.intermediate.dense.weight",
+   "shape": [
+    1536,
+    384
+   ],
+   "entries_changed": 768,
+   "entries": 589824,
+   "sha256_original": "3f43b910c13aec35cdf4814ac11d83b75585008de7bd7aec1474b50c852f32d6",
+   "sha256_edited": "932c39ac8c8d98edb931bbfcbbd3b929234d120d82c4a707bc35c53540602cd2"
+  },
+  {
+   "name": "bert.encoder.layer.1.output.dense.bias",
+   "shape": [
+    384
+   ],
+   "entries_changed": 384,
+   "entries": 384,
+   "sha256_original": "d3a7aaf3f5a55081807f802ad84a2597b5430f06c71a8408b8a5f728c47811c7",
+   "sha256_edited": "f8d81dd224bb6622e0bb41225cfd24b54323a161fcd2cade5e6987bd6c08d3bc"
+  },
+  {
+   "name": "bert.encoder.layer.1.output.dense.weight",
+   "shape": [
+    384,
+    1536
+   ],
+   "entries_changed": 768,
+   "entries": 589824,
+   "sha256_original": "54fde9db00ff05790c88fa2806de3db891f03642bf7bc6b5eb0d813dc79b642e",
+   "sha256_edited": "01432e789567b386e562412dc2a8db170029959cdfadb2917b7bfeffafd03ba9"
+  },
+  {
+   "name": "bert.encoder.layer.2.intermediate.dense.bias",
+   "shape": [
+    1536
+   ],
+   "entries_changed": 4,
+   "entries": 1536,
+   "sha256_original": "a1609cd4338e61cac46b1752e64ba4d9a387da3120a0d1d5dc4e174c733873c0",
+   "sha256_edited": "27360eef643c525cad20f952c320e8a7b3860d89161b8fccdd0ab4f057d107b1"
+  },
+  {
+   "name": "bert.encoder.layer.2.intermediate.dense.weight",
+   "shape": [
+    1536,
+    384
+   ],
+   "entries_changed": 1536,
+   "entries": 589824,
+   "sha256_original": "12688195a14209137e30a05e76cf9f527f8a207aa57ebe3ab6f5473ca64d7f7c",
+   "sha256_edited": "b9431d069410d8249fa6e1c2f07a05c016809edfa0b0a0ac527007b16511e7be"
+  },
+  {
+   "name": "bert.encoder.layer.2.output.dense.bias",
+   "shape": [
+    384
+   ],
+   "entries_changed": 384,
+   "entries": 384,
+   "sha256_original": "a54f7345d198d16411c3dc24305fed2f1d4c96509eefbaee4c95bdef57457870",
+   "sha256_edited": "93d956cb154bb9838f31130f9e90487f826ae2836a0679f21345e5d1fcc99e76"
+  },
+  {
+   "name": "bert.encoder.layer.2.output.dense.weight",
+   "shape": [
+    384,
+    1536
+   ],
+   "entries_changed": 1536,
+   "entries": 589824,
+   "sha256_original": "7f0d4a062ce65c55a5f06b9ca3e207957371d953b8e3ff06edea615fcbffd073",
+   "sha256_edited": "24cea759c734541b4b0a94a0efef75a8d485ead58e5700a23b6c9b56a58c24fc"
+  },
+  {
+   "name": "bert.encoder.layer.4.intermediate.dense.bias",
+   "shape": [
+    1536
+   ],
+   "entries_changed": 2,
+   "entries": 1536,
+   "sha256_original": "3ba649e5a3bfd556af96a58ea2e80e87e0792d38c3d6c632e3c17afe39782686",
+   "sha256_edited": "1f624807142ed707ecb831d27a87995578363ed451dc1f80d8f7bc149746ef00"
+  },
+  {
+   "name": "bert.encoder.layer.4.intermediate.dense.weight",
+   "shape": [
+    1536,
+    384
+   ],
+   "entries_changed": 768,
+   "entries": 589824,
+   "sha256_original": "bf422f393d13f459603b76c72327dfc9ac7d3cba96e7bbe54f05e0f40fa3b1dc",
+   "sha256_edited": "c0fe1e6dbd150a37f4a82967ea12a9649e1e9f5b5974e21c48364f797e48eba0"
+  },
+  {
+   "name": "bert.encoder.layer.4.output.dense.bias",
+   "shape": [
+    384
+   ],
+   "entries_changed": 384,
+   "entries": 384,
+   "sha256_original": "0a4bafb34c29e3405b50d23670eae8eb11866fd92e6cf188a45341315e600024",
+   "sha256_edited": "13a130d6ebcd6919510cfe30aed71ac9d7295474da4cb94e45fa772dd485789b"
+  },
+  {
+   "name": "bert.encoder.layer.4.output.dense.weight",
+   "shape": [
+    384,
+    1536
+   ],
+   "entries_changed": 768,
+   "entries": 589824,
+   "sha256_original": "a7a2b4f8acd484c3b01e945d10de92a375fc87823b3659be5a4f6762431af5bd",
+   "sha256_edited": "131db149ad1d6fc8a7796b7d3e2840c052a4f29c0bc07d2587d1866e7000c70c"
+  }
+ ],
+ "n_tensors": 12,
+ "entries_changed": 7304
+}

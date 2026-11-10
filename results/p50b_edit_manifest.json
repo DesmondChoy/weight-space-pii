@@ -1,0 +1,90 @@
+{
+ "tensors": [
+  {
+   "name": "bert.encoder.layer.1.intermediate.dense.bias",
+   "shape": [
+    1536
+   ],
+   "entries_changed": 12,
+   "entries": 1536,
+   "sha256_original": "3e75dc20809ba1f2ad57fc3a9a685f4b0c7564ee65da43ed2599972dc16095c7",
+   "sha256_edited": "e196e5b2e2f5ae785a0348d5161f314ad8edb54a44e9fd9aa0a9a0caed192e29"
+  },
+  {
+   "name": "bert.encoder.layer.1.intermediate.dense.weight",
+   "shape": [
+    1536,
+    384
+   ],
+   "entries_changed": 4608,
+   "entries": 589824,
+   "sha256_original": "3f43b910c13aec35cdf4814ac11d83b75585008de7bd7aec1474b50c852f32d6",
+   "sha256_edited": "cffa9632472b82dc91e9ac8562578fd2b4f62e9f3e42dcf66d59b8ebf26d482f"
+  },
+  {
+   "name": "bert.encoder.layer.1.output.dense.bias",
+   "shape": [
+    384
+   ],
+   "entries_changed": 384,
+   "entries": 384,
+   "sha256_original": "d3a7aaf3f5a55081807f802ad84a2597b5430f06c71a8408b8a5f728c47811c7",
+   "sha256_edited": "9024b23c7d80600d2554d577cd0e746193675c428d25fafa36bd50b1bb8e8f2d"
+  },
+  {
+   "name": "bert.encoder.layer.1.output.dense.weight",
+   "shape": [
+    384,
+    1536
+   ],
+   "entries_changed": 4608,
+   "entries": 589824,
+   "sha256_original": "54fde9db00ff05790c88fa2806de3db891f03642bf7bc6b5eb0d813dc79b642e",
+   "sha256_edited": "287bcdc74a7067086d7f8689b2a0c0944291dcb3c718024d628c267e5c8db927"
+  },
+  {
+   "name": "bert.encoder.layer.4.intermediate.dense.bias",
+   "shape": [
+    1536
+   ],
+   "entries_changed": 2,
+   "entries": 1536,
+   "sha256_original": "3ba649e5a3bfd556af96a58ea2e80e87e0792d38c3d6c632e3c17afe39782686",
+   "sha256_edited": "547dfcb20be127e6bbd28c09077069f5df7fd1bea9cf19d7d4b4752ca85380c4"
+  },
+  {
+   "name": "bert.encoder.layer.4.intermediate.dense.weight",
+   "shape": [
+    1536,
+    384
+   ],
+   "entries_changed": 768,
+   "entries": 589824,
+   "sha256_original": "bf422f393d13f459603b76c72327dfc9ac7d3cba96e7bbe54f05e0f40fa3b1dc",
+   "sha256_edited": "3e2a29810be8fbfaa073c0e209bb995fbab4a7b2bdd98988ef2f1b62ff601df6"
+  },
+  {
+   "name": "bert.encoder.layer.4.output.dense.bias",
+   "shape": [
+    384
+   ],
+   "entries_changed": 384,
+   "entries": 384,
+   "sha256_original": "0a4bafb34c29e3405b50d23670eae8eb11866fd92e6cf188a45341315e600024",
+   "sha256_edited": "9b414d7be2d822f19ec498f5cbf41e1af7c67c64c986aa1230ceeca3e0a233ea"
+  },
+  {
+   "name": "bert.encoder.layer.4.output.dense.weight",
+   "shape": [
+    384,
+    1536
+   ],
+   "entries_changed": 768,
+   "entries": 589824,
+   "sha256_original": "a7a2b4f8acd484c3b01e945d10de92a375fc87823b3659be5a4f6762431af5bd",
+   "sha256_edited": "51703d68ef64a08f0cc1193fca61b3158f4fdb5e97ad0108ca4f272a087b3598"
+  }
+ ],
+ "n_tensors": 8,
+ "entries_changed": 11534
+}

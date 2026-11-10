@@ -1,6 +1,8 @@
 # Weight-space programming on a PII detector
 
-A small version of Experiment 8 from MIT CSAIL's [Sparks of Weight-Space Programming](https://rikiyat.github.io/blog/weight-space-programming/). Opus 5.5 reads the weights of MiniLM, a small PII detector trained on American data, and edits them directly to make MiniLM better on Singapore text. No gradient descent or optimizer runs.
+A small version of Experiment 8 from [Sparks of Weight-Space Programming](https://rikiyat.github.io/blog/weight-space-programming/), a blog post by four researchers at MIT CSAIL. Opus 5.5 reads the weights of MiniLM, a small PII detector trained on American data, and edits them directly to make MiniLM better on Singapore text. No gradient descent or optimizer runs. Opus 5.5 does fit small detectors to 1,000 practice rows with answers, each in one closed-form calculation, and it chooses between candidate edits by their F1 on those rows.
+
+The Singapore text is the Singapore rows of openpii, a synthetic dataset. The hidden rows that grade each edit come from the same dataset as the practice rows, so the result describes this dataset, not Singapore text in general.
 
 ## Result
 
@@ -16,17 +18,17 @@ Opus 5.5 found two repairs, and a second run with the same settings found the sa
 | Nemotron `national_id` F1 | 0.960 | 0.913 | 0.889 |
 
 - **Title repair.** MiniLM stops tagging titles such as Madame and Mstr as names. This gives about three quarters of the gain.
-- **NRIC repair.** MiniLM tags an NRIC as `national_id` from its shape, without a nearby cue word.
+- **NRIC repair.** MiniLM tags an NRIC as `national_id` from its shape, without a nearby cue word. The task prompt states an NRIC's format as part of the scoring rules, so Opus 5.5 didn't have to discover it. The prompt says nothing about titles.
 - **Cost.** On Nemotron, biometric IDs shaped like a letter and 11 digits are now tagged `national_id`.
 - **How much the title repair counts depends on the scoring.** The scoring, frozen before the runs, counts "Madame" tagged as a name as a mistake, because a title is not a name. But openpii marks titles as personal information of another type, and masking a title leaks nothing. If that tag isn't counted as a mistake, the gain falls from +0.059 to +0.026. The second row of the table gives both runs under that rule.
 
-Whether this matches the paper's finding, that edits can remove an obstacle but can't add a missing ability, is still an open question. [docs/m7_report.md](docs/m7_report.md) and [results/p50b_report.md](results/p50b_report.md) give the details.
+In the paper's Experiment 8, editing could remove an obstacle that hid an ability, but it could not add an ability the model lacked. Whether this result fits that pattern is still an open question. [docs/m7_report.md](docs/m7_report.md) and [results/p50b_report.md](results/p50b_report.md) give the details.
 
 ## Where to read
 
 - [docs/weight-space-pii-handoff.md](docs/weight-space-pii-handoff.md): the brief, with the setup and the eight milestones.
 - `docs/m1_report.md` to `docs/m7_report.md`: one report per milestone. Each later report overrides the brief and the earlier reports where they disagree.
-- [results/](results/): the `p50b` report, the logbooks of both runs (`p50_logbook.html`, `p50b_logbook.html`) and the M7 review page.
+- [results/](results/): the `p50b` report, each run's final answer and edit manifest, the logbooks of both runs (`p50_logbook.html`, `p50b_logbook.html`) and the M7 review page.
 - [AGENTS.md](AGENTS.md): how to pick up work in this repo.
 
 ## Layout
@@ -44,7 +46,7 @@ Whether this matches the paper's finding, that edits can remove an obstacle but 
 
 ## Setup
 
-Python 3.13 and every dependency are pinned in `pyproject.toml` and `uv.lock`.
+You need macOS, [uv](https://docs.astral.sh/uv/) and Node.js. The harness runs Opus 5.5's code in a sandbox, Anthropic's `sandbox-runtime`, which it starts through `npx` with a macOS Seatbelt profile. The harness tests start that sandbox too. Python 3.13 and every dependency are pinned in `pyproject.toml` and `uv.lock`.
 
 ```bash
 uv sync
@@ -71,6 +73,8 @@ uv run python -I -m unittest discover -s tests
 ## Running
 
 A run calls the Claude Code CLI as Opus 5.5 and costs money. It refuses to start unless the tree matches `lock.json`.
+
+The locked runs `p50` and `p50b` replay only on the machine that made them. `lock.json` pins Node.js v22.23.4 and Claude Code 2.1.318, and the frozen prompt holds that machine's sandbox path. `runs/` isn't published either, so `scripts/evaluate.py` can't rescore them from a clone. Every run first checks the tree against `lock.json`, so a run on another machine needs that Node.js version. With it, a run under a new name and without `--replicate-of` starts, because only the locked run and its repeats get the settings and prompt checks. The commands below are the ones this repo ran.
 
 ```bash
 uv run python -I scripts/run_editor.py --name p50 --budget 50
