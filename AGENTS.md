@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This repo runs a small version of MIT CSAIL's "Sparks of Weight-Space Programming", Experiment 8: an LLM editor edits the weights of a MiniLM PII detector to improve it on Singapore text. The brief in [docs/weight-space-pii-handoff.md](docs/weight-space-pii-handoff.md) sets the initial scope.
+This repo applies the method of Experiment 8 from "Sparks of Weight-Space Programming", a blog post by four MIT CSAIL researchers, to Singapore PII data: an LLM editor edits the weights of a MiniLM PII detector to improve it on Singapore text. The brief in [docs/weight-space-pii-handoff.md](docs/weight-space-pii-handoff.md) sets the initial scope.
 
 ## Decisions override the brief
 

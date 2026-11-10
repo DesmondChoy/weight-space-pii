@@ -1,6 +1,6 @@
 # Weight-space programming on a PII detector
 
-A small version of Experiment 8 from [Sparks of Weight-Space Programming](https://rikiyat.github.io/blog/weight-space-programming/), a blog post by four researchers at MIT CSAIL. Opus 5.5 reads the weights of MiniLM, a small PII detector trained on American data, and edits them directly to make MiniLM better on Singapore text. No gradient descent or optimizer runs. Opus 5.5 does fit small detectors to 1,000 practice rows with answers, each in one closed-form calculation, and it chooses between candidate edits by their F1 on those rows.
+This repo applies the method of Experiment 8 from [Sparks of Weight-Space Programming](https://rikiyat.github.io/blog/weight-space-programming/), a blog post by four researchers at MIT CSAIL, to Singapore PII data. It keeps the experiment's rules and changes the model, the task and the data. Opus 5.5 reads the weights of MiniLM, a small PII detector trained on American data, and edits them directly to make MiniLM better on Singapore text. No gradient descent or optimizer runs. Opus 5.5 does fit small detectors to 1,000 practice rows with answers, each in one closed-form calculation, and it chooses between candidate edits by their F1 on those rows.
 
 The Singapore text is the Singapore rows of openpii, a synthetic dataset. The hidden rows that grade each edit come from the same dataset as the practice rows, so the result describes this dataset, not Singapore text in general.
 
