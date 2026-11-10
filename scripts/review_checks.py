@@ -5,14 +5,17 @@ how much of each run's Singapore F1 gain comes from each scored label, how often
 hidden set, how many of the one-word given names MiniLM misses before and after the edit look like chat speaker
 labels, the national_id tags that the Singapore scoring drops because they sit on an unscored ID span, and Nemotron
 national_id precision.
+
+For the 2026-11-10 amendment it also reads data/raw/openpii_sg_validation.jsonl and prints Singapore F1 when a
+scored tag on an openpii TITLE span counts neither right nor wrong.
 """
 
 import json
 import re
 from collections import Counter
 
-from wsp.data import ROOT, SETS, Span, read_jsonl
-from wsp.score import SG_LABELS, Tally, _overlaps, merged, scored_label, split_names
+from wsp.data import DATA, ROOT, SETS, Doc, Span, read_jsonl
+from wsp.score import SG_LABELS, Tally, _overlaps, bootstrap, grade, merged, scored_label, split_names, summarize
 
 RUNS = ("p50", "p50b")
 TITLES = ("Madame", "Master", "Miss", "Mstr", "Mayoress", "Mister")
@@ -81,6 +84,17 @@ def tags_on(docs, preds, openpii_label: str) -> Counter:
     return out
 
 
+def with_titles_ignored(docs) -> list[Doc]:
+    """The main eval with openpii's TITLE spans added to each row's ignore spans, so score.grade drops a scored tag
+    on a title as it already drops one on a passport number."""
+    titles = {}
+    with (DATA / "raw" / "openpii_sg_validation.jsonl").open() as f:
+        for r in map(json.loads, f):
+            titles[f"sg-{r['uid']}"] = [Span(s["start"], s["end"], s["label"])
+                                        for s in r["privacy_mask"] if s["label"] == "TITLE"]
+    return [Doc(d.id, d.text, d.spans, tuple(sorted({*d.ignore, *titles[d.id]}))) for d in docs]
+
+
 def main() -> None:
     print("Singapore F1 gain when only one label's tallies change")
     for run in RUNS:
@@ -109,6 +123,16 @@ def main() -> None:
         for name, pred in preds.items():
             c = tags_on(docs, pred, openpii_label)
             print(f"  {name:<5} of {sum(c.values())}: " + ", ".join(f"{k} {v}" for k, v in c.most_common(4)))
+
+    print("\nSingapore F1 by how a scored tag on an openpii TITLE span is counted")
+    for rule, rows in (("a false positive, as frozen", docs), ("neither right nor wrong", with_titles_ignored(docs))):
+        graded = {name: [grade(d, p, SG_LABELS) for d, p in zip(rows, pred, strict=True)]
+                  for name, pred in preds.items()}
+        base = summarize(graded["base"])["overall"]
+        print(f"  {rule}: base F1 {base['f1']:.4f}, base false positives {base['fp']}")
+        for run in RUNS:
+            b = bootstrap(graded["base"], graded[run])
+            print(f"    {run}: F1 {b['f1'] + b['diff']:.4f}, {b['diff']:+.4f} ± {b['diff_se']:.4f}")
 
     print("\nNemotron regression check, national_id")
     for run in RUNS:

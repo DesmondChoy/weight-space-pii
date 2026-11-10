@@ -9,6 +9,7 @@ Opus 5.5 found two repairs, and a second run with the same settings found the sa
 | | Unedited | `p50` | `p50b` |
 |---|---|---|---|
 | Singapore F1 (5,004 hidden rows) | 0.865 | 0.924 | 0.923 |
+| The same score, if tagging a title as a name isn't a mistake | 0.901 | 0.927 | 0.926 |
 | NRICs without a cue word, share right | 0% | 85% | 93% |
 | Targeted titles tagged as a name | 909 | 2 | 14 |
 | Nemotron F1, all 55 labels (18,515 rows) | 0.952 | 0.952 | 0.952 |
@@ -17,6 +18,7 @@ Opus 5.5 found two repairs, and a second run with the same settings found the sa
 - **Title repair.** MiniLM stops tagging titles such as Madame and Mstr as names. This gives about three quarters of the gain.
 - **NRIC repair.** MiniLM tags an NRIC as `national_id` from its shape, without a nearby cue word.
 - **Cost.** On Nemotron, biometric IDs shaped like a letter and 11 digits are now tagged `national_id`.
+- **How much the title repair counts depends on the scoring.** The scoring, frozen before the runs, counts "Madame" tagged as a name as a mistake, because a title is not a name. But openpii marks titles as personal information of another type, and masking a title leaks nothing. If that tag isn't counted as a mistake, the gain falls from +0.059 to +0.026. The second row of the table gives both runs under that rule.
 
 Whether this matches the paper's finding, that edits can remove an obstacle but can't add a missing ability, is still an open question. [docs/m7_report.md](docs/m7_report.md) and [results/p50b_report.md](results/p50b_report.md) give the details.
 
@@ -81,3 +83,16 @@ uv run python -I scripts/evaluate.py --run p50
 ```
 
 A repeat run uses `--replicate-of p50` with both scripts. [docs/m6_report.md](docs/m6_report.md) and [docs/m7_report.md](docs/m7_report.md) list the exact commands each milestone ran.
+
+## Data, licences and credits
+
+Both datasets are synthetic. The names, ID numbers and addresses quoted in the reports and logbooks belong to no real person.
+
+| Material | Source | Licence | Use in this repo |
+|---|---|---|---|
+| The experiment's design and the task prompt | [Sparks of Weight-Space Programming](https://rikiyat.github.io/blog/weight-space-programming/) by Rikiya Takehi, Jayden Teoh, Alex Zhang and Omar Khattab, MIT CSAIL, and its logs at [RikiyaT/lm_understand-logs](https://github.com/RikiyaT/lm_understand-logs) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) for the logs and prompts | `src/wsp/harness/task_prompt.txt` is adapted from the Experiment 8 prompt, `exp8_math/runs/p50c/turns/t001/prompt.txt`. The model, task, data and scoring rules are changed. The logbooks and `docs/m4_dry_run_transcript.md` quote the adapted prompt |
+| Singapore rows | [ai4privacy/pii-masking-openpii-1.5m](https://huggingface.co/datasets/ai4privacy/pii-masking-openpii-1.5m) by Ai4Privacy / Ai Suisse SA | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | Rows with `region == "SG"`, relabelled into MiniLM's label names. The reports, figures and logbooks quote rows, with annotations added |
+| Regression rows | [nvidia/Nemotron-PII](https://huggingface.co/datasets/nvidia/Nemotron-PII) by NVIDIA | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | MiniLM's held-out split, rebuilt from its training notebook. `docs/m7_changed_rows.md` and `results/m7_review.html` quote rows, with annotations added |
+| MiniLM, its model card and its training notebook | [Negative-Star-Innovators/MiniLM-L6-finetuned-pii-detection](https://huggingface.co/Negative-Star-Innovators/MiniLM-L6-finetuned-pii-detection) by Negative Star Innovators | MIT, in [docs/sources/LICENSE-local-pii-detector-minilm](docs/sources/LICENSE-local-pii-detector-minilm) | Copies of the model card and the notebook are in `docs/sources/`. The weights are downloaded, not committed |
+
+The code and reports written for this repo are under the [MIT licence](LICENSE). The quoted dataset rows and the adapted prompt stay under their own licences.
