@@ -1,4 +1,6 @@
 .venv/
+.env
+.DS_Store
 data/*
 !data/revisions.json
 !data/sets.json
